@@ -189,7 +189,10 @@ export default function MemberDetailPage() {
   const canDeleteMembers = isSuperAdmin || hasCapability('members.delete');
 
   const member = memberQuery.data;
-  const groupingOptions = tenantSettingsQuery.data?.content?.groupings || [];
+  const groupingOptions = useMemo(
+    () => tenantSettingsQuery.data?.content?.groupings || [],
+    [tenantSettingsQuery.data?.content?.groupings],
+  );
   const groupingPathLabels = useMemo(
     () => buildGroupingPathLabels(groupingOptions, member?.groupingIds || []),
     [groupingOptions, member?.groupingIds],

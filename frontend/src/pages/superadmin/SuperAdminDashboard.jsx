@@ -15,6 +15,7 @@ import {
 import { getPlatformAttendanceOverview } from '../../api/endpoints/attendance';
 import { activateTenant, getAllTenants, getPlatformAnalytics, suspendTenant } from '../../api/endpoints/tenants';
 import { getPlatformCommunicationStats } from '../../api/endpoints/communication';
+import { getPlatformVisitorOverview } from '../../api/endpoints/visitors';
 import SuperAdminShell from '../../components/layout/SuperAdminShell';
 import Button from '../../components/ui/Button';
 import Card from '../../components/ui/Card';
@@ -41,6 +42,10 @@ export default function SuperAdminDashboard() {
   const attendanceQuery = useQuery({
     queryKey: ['platform-attendance-overview-card'],
     queryFn: getPlatformAttendanceOverview,
+  });
+  const visitorsQuery = useQuery({
+    queryKey: ['platform-visitors-overview-card'],
+    queryFn: getPlatformVisitorOverview,
   });
 
   const toggleMutation = useMutation({
@@ -159,6 +164,18 @@ export default function SuperAdminDashboard() {
           </div>
           <Button variant="secondary" onClick={() => navigate('/superadmin/attendance')}>
             Open Attendance
+          </Button>
+        </Card>
+
+        <Card className="flex flex-col gap-4 p-5 lg:flex-row lg:items-center lg:justify-between">
+          <div>
+            <p className="text-[11px] uppercase tracking-[0.22em] text-white/55">Visitors Summary</p>
+            <h2 className="mt-2 text-xl font-semibold text-white">
+              {visitorsQuery.data?.totalVisitors || 0} visitors tracked across all churches
+            </h2>
+          </div>
+          <Button variant="secondary" onClick={() => navigate('/superadmin/visitors')}>
+            Open Visitors
           </Button>
         </Card>
 

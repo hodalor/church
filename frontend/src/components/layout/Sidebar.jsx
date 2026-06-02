@@ -14,6 +14,7 @@ import {
   Settings,
   Shield,
   Users,
+  UserRoundPlus,
 } from 'lucide-react';
 import { NavLink, useLocation } from 'react-router-dom';
 import Button from '../ui/Button';
@@ -31,6 +32,7 @@ const churchNavigation = [
     title: 'Ministry',
     items: [
       { label: 'Members', to: '/members', icon: Users, capability: 'members.view' },
+      { label: 'Visitors', to: '/visitors', icon: UserRoundPlus, capability: 'members.view' },
       { label: 'Users', to: '/users', icon: Shield, capability: 'users.view' },
       { label: 'Inbox', to: '/communication/inbox', icon: Bell, capability: 'notifications.view' },
       { label: 'Pastoral Care', to: '/dashboard', icon: HeartHandshake, capability: 'members.view', disabled: true },
@@ -66,6 +68,15 @@ const communicationSubItems = [
   { label: 'Inbox', to: '/communication/inbox', capability: 'notifications.view' },
 ];
 
+const visitorSubItems = [
+  { label: 'Register', to: '/visitors/register' },
+  { label: 'List', to: '/visitors' },
+  { label: 'Pipeline', to: '/visitors/pipeline' },
+  { label: 'Follow-ups', to: '/visitors/follow-ups' },
+  { label: 'Workflow', to: '/visitors/workflow' },
+  { label: 'Reports', to: '/visitors/reports' },
+];
+
 export default function Sidebar({ isOpen, onToggle }) {
   const globalBranding = useBrandingStore((state) => state.globalBranding);
   const { hasCapability } = useCapabilities();
@@ -73,6 +84,7 @@ export default function Sidebar({ isOpen, onToggle }) {
   const [financeOpen, setFinanceOpen] = useState(location.pathname.startsWith('/finance'));
   const [attendanceOpen, setAttendanceOpen] = useState(location.pathname.startsWith('/attendance'));
   const [communicationOpen, setCommunicationOpen] = useState(location.pathname.startsWith('/communication'));
+  const [visitorsOpen, setVisitorsOpen] = useState(location.pathname.startsWith('/visitors'));
   const productName = globalBranding.appName || 'Ecclesia';
   const productTagline = globalBranding.tagline || 'Church OS';
 
@@ -85,6 +97,9 @@ export default function Sidebar({ isOpen, onToggle }) {
     }
     if (location.pathname.startsWith('/communication')) {
       setCommunicationOpen(true);
+    }
+    if (location.pathname.startsWith('/visitors')) {
+      setVisitorsOpen(true);
     }
   }, [location.pathname]);
   const visibleNavigation = churchNavigation
@@ -256,6 +271,49 @@ export default function Sidebar({ isOpen, onToggle }) {
                               {subItem.label}
                             </NavLink>
                           ))}
+                      </div>
+                    ) : null}
+                  </div>
+                ) : label === 'Visitors' && !disabled ? (
+                  <div className="space-y-1">
+                    <button
+                      type="button"
+                      onClick={() => setVisitorsOpen((current) => !current)}
+                      className={`flex w-full items-center justify-between rounded-2xl px-3 py-2.5 text-[14px] font-medium transition ${
+                        location.pathname.startsWith('/visitors') || visitorsOpen
+                          ? 'bg-[linear-gradient(90deg,rgba(201,168,76,0.18),rgba(201,168,76,0.08))] text-[#f5deb0]'
+                          : 'text-white/68 hover:bg-white/[0.05] hover:text-white'
+                      }`}
+                      aria-label={visitorsOpen ? 'Collapse visitors menu' : 'Expand visitors menu'}
+                    >
+                      <span className="flex items-center gap-3">
+                        <Icon className="h-4 w-4" />
+                        <span>Visitors</span>
+                      </span>
+                      <ChevronDown
+                        className={`h-4 w-4 transition-transform ${visitorsOpen ? 'rotate-180 text-accent' : ''}`}
+                      />
+                    </button>
+                    {visitorsOpen ? (
+                      <div className="ml-7 mt-1 space-y-1 border-l border-white/8 pl-4">
+                        {visitorSubItems.map((subItem) => (
+                          <NavLink
+                            key={subItem.to}
+                            to={subItem.to}
+                            className={({ isActive }) =>
+                              `block rounded-xl px-3 py-2 text-[12px] uppercase tracking-[0.2em] ${
+                                isActive ? 'bg-white/[0.06] text-accent' : 'text-white/40 hover:text-white/70'
+                              }`
+                            }
+                            onClick={() => {
+                              if (window.innerWidth < 1024) {
+                                onToggle();
+                              }
+                            }}
+                          >
+                            {subItem.label}
+                          </NavLink>
+                        ))}
                       </div>
                     ) : null}
                   </div>

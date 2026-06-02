@@ -88,7 +88,7 @@ export default function CreateMemberPage() {
   };
 
   const content = tenantSettingsQuery.data?.content || {};
-  const groupingOptions = content.groupings || [];
+  const groupingOptions = useMemo(() => content.groupings || [], [content.groupings]);
 
   const payload = useMemo(
     () => ({

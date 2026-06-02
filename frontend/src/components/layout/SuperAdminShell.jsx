@@ -17,6 +17,7 @@ import {
   Settings,
   Shield,
   Users,
+  UserRoundPlus,
 } from 'lucide-react';
 import { NavLink, useLocation } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
@@ -84,6 +85,7 @@ const navigation = [
         children: attendanceSubItems,
         matchPrefixes: ['/superadmin/attendance', '/attendance'],
       },
+      { label: 'Visitors', to: '/superadmin/visitors', icon: UserRoundPlus },
     ],
   },
   {

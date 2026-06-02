@@ -40,10 +40,18 @@ import ReportsPage from './pages/finance/ReportsPage';
 import TransactionDetailPage from './pages/finance/TransactionDetailPage';
 import TransactionsPage from './pages/finance/TransactionsPage';
 import SettingsPage from './pages/settings/SettingsPage';
+import FollowUpsPage from './pages/visitors/FollowUpsPage';
+import PipelinePage from './pages/visitors/PipelinePage';
+import RegisterVisitorPage from './pages/visitors/RegisterVisitorPage';
+import VisitorDetailPage from './pages/visitors/VisitorDetailPage';
+import VisitorReportsPage from './pages/visitors/VisitorReportsPage';
+import VisitorsListPage from './pages/visitors/VisitorsListPage';
+import WorkflowBuilderPage from './pages/visitors/WorkflowBuilderPage';
 import SuperAdminCommunicationPage from './pages/superadmin/SuperAdminCommunicationPage';
 import SuperAdminAttendancePage from './pages/superadmin/SuperAdminAttendancePage';
 import SuperAdminDashboard from './pages/superadmin/SuperAdminDashboard';
 import SuperAdminNotificationsPage from './pages/superadmin/SuperAdminNotificationsPage';
+import SuperAdminVisitorsPage from './pages/superadmin/SuperAdminVisitorsPage';
 import TenantDetailPage from './pages/superadmin/TenantDetailPage';
 import TenantsListPage from './pages/superadmin/TenantsListPage';
 import SuperAdminUsersPage from './pages/superadmin/SuperAdminUsersPage';
@@ -170,6 +178,62 @@ export default function App() {
         element={
           <ProtectedRoute>
             <AbsenteesPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/visitors"
+        element={
+          <ProtectedRoute>
+            <VisitorsListPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/visitors/register"
+        element={
+          <ProtectedRoute>
+            <RegisterVisitorPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/visitors/pipeline"
+        element={
+          <ProtectedRoute>
+            <PipelinePage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/visitors/follow-ups"
+        element={
+          <ProtectedRoute>
+            <FollowUpsPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/visitors/workflow"
+        element={
+          <ProtectedRoute>
+            <WorkflowBuilderPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/visitors/reports"
+        element={
+          <ProtectedRoute>
+            <VisitorReportsPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/visitors/:visitorId"
+        element={
+          <ProtectedRoute>
+            <VisitorDetailPage />
           </ProtectedRoute>
         }
       />
@@ -330,6 +394,14 @@ export default function App() {
         element={
           <ProtectedRoute allowedRoles={['super_admin']}>
             <SuperAdminUsersPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/superadmin/visitors"
+        element={
+          <ProtectedRoute allowedRoles={['super_admin']}>
+            <SuperAdminVisitorsPage />
           </ProtectedRoute>
         }
       />

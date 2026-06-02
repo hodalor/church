@@ -12,6 +12,7 @@ import memberRoutes from './modules/members/member.routes.js';
 import notificationRoutes from './modules/notifications/routes.js';
 import { tenantRouter, adminTenantRouter } from './modules/tenants/routes.js';
 import userRoutes from './modules/users/routes.js';
+import { visitorsRouter, adminVisitorsRouter } from './modules/visitors/visitors.routes.js';
 import errorHandler from './middleware/errorHandler.js';
 import { error } from './utils/apiResponse.js';
 
@@ -54,8 +55,10 @@ apiRouter.use('/finance', financeRoutes);
 apiRouter.use('/attendance', attendanceRouter);
 apiRouter.use('/communication', communicationRoutes);
 apiRouter.use('/notifications', notificationRoutes);
+apiRouter.use('/visitors', visitorsRouter);
 apiRouter.use('/admin/attendance', adminAttendanceRouter);
 apiRouter.use('/admin/tenants', adminTenantRouter);
+apiRouter.use('/admin/visitors', adminVisitorsRouter);
 
 app.use('/api/v1', apiRouter);
 
