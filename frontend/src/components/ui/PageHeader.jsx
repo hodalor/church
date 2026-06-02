@@ -1,0 +1,12 @@
+export default function PageHeader({ title, subtitle, action }) {
+  return (
+    <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+      <div>
+        <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-white/52">
+          {title}
+        </p>
+      </div>
+      {action ? <div className="shrink-0">{action}</div> : null}
+    </div>
+  );
+}
