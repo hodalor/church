@@ -53,9 +53,8 @@ const visitorWorkflowSchema = new Schema(
   },
 );
 
-visitorWorkflowSchema.pre('save', function visitorWorkflowPreSave(next) {
+visitorWorkflowSchema.pre('save', function visitorWorkflowPreSave() {
   this.updatedAt = new Date();
-  next();
 });
 
 const VisitorWorkflow = mongoose.model('VisitorWorkflow', visitorWorkflowSchema);

@@ -17,6 +17,16 @@ class Endpoints {
   static const String attendanceServices = '$attendance/services';
   static const String attendanceReports = '$attendance/reports';
   static const String attendanceAbsentees = '$attendance/absentees';
+  static const String visitors = '$apiV1/visitors';
+  static const String visitorsFollowUps = '$visitors/follow-ups';
+  static const String visitorsPipeline = '$visitors/pipeline';
+  static const String visitorsWorkflow = '$visitors/workflow';
+  static const String visitorsReports = '$visitors/reports';
+  static const String visitorsSearch = '$visitors/search';
+  static const String visitorsDuplicateCheck = '$visitors/duplicate-check';
+  static const String visitorsAssignableLeaders = '$visitors/assignable-leaders';
+  static const String visitorsKioskRegister = '$visitors/kiosk/register';
+  static const String adminVisitorsOverview = '$apiV1/admin/visitors/overview';
 
   static String inboxMessage(String messageId) => '$communicationInbox/$messageId';
 
@@ -48,4 +58,22 @@ class Endpoints {
 
   static String attendanceServiceRecords(String serviceId) =>
       '$attendanceServices/$serviceId/check-ins';
+
+  static String visitor(String visitorId) => '$visitors/$visitorId';
+
+  static String visitorStage(String visitorId) => '$visitors/$visitorId/stage';
+
+  static String visitorReturnVisit(String visitorId) =>
+      '$visitors/$visitorId/return-visit';
+
+  static String visitorConvert(String visitorId) => '$visitors/$visitorId/convert';
+
+  static String visitorFollowUps(String visitorId) =>
+      '$visitors/$visitorId/follow-ups';
+
+  static String visitorCompleteFollowUp(String visitorId, String followUpId) =>
+      '$visitors/$visitorId/follow-ups/$followUpId/complete';
+
+  static String visitorRescheduleFollowUp(String visitorId, String followUpId) =>
+      '$visitors/$visitorId/follow-ups/$followUpId/reschedule';
 }

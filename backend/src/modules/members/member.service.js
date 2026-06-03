@@ -5,6 +5,7 @@ import { createHttpError } from '../../utils/httpError.js';
 import { autoLinkMemberToUser } from '../users/memberLink.service.js';
 import { createUser } from '../users/service.js';
 import { ensureDocumentBranchAccess, normalizeBranchList } from '../../utils/branchScope.js';
+import MemberDiscipleship from '../pastoralCare/models/memberDiscipleship.model.js';
 import User from '../users/model.js';
 
 const DEFAULT_PAGE = 1;
@@ -664,7 +665,7 @@ const calculateParticipationScore = async (tenantId, memberId, sinceDate) => {
   return Number((participationRate * 25).toFixed(2));
 };
 
-const calculateInvolvementScore = (member) => {
+const calculateInvolvementScore = async (tenantId, memberId, member) => {
   let score = 0;
 
   if (Array.isArray(member.department) && member.department.length) {
@@ -683,7 +684,21 @@ const calculateInvolvementScore = (member) => {
     score += 6;
   }
 
-  return score;
+  const discipleshipEnrollments = await MemberDiscipleship.find({
+    tenantId,
+    memberId,
+  }).select('status');
+
+  if (discipleshipEnrollments.some((enrollment) => enrollment.status === 'active')) {
+    score += 5;
+  }
+
+  // Completed track bonus is granted once even if the member has multiple completed tracks.
+  if (discipleshipEnrollments.some((enrollment) => enrollment.status === 'completed')) {
+    score += 5;
+  }
+
+  return Math.min(score, 30);
 };
 
 const determineHealthStatus = ({ overall, hasActivity, isNewMember }) => {
@@ -935,7 +950,7 @@ export const recalculateHealthScore = async (tenantId, memberId, user) => {
   }
 
   try {
-    involvement = calculateInvolvementScore(member);
+    involvement = await calculateInvolvementScore(tenantId, memberId, member);
   } catch {
     involvement = 0;
   }

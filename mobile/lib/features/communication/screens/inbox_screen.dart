@@ -106,7 +106,7 @@ class _InboxScreenState extends ConsumerState<InboxScreen>
           ],
         ),
       ),
-      bottomNavigationBar: const MemberBottomNavigation(currentIndex: 3),
+      bottomNavigationBar: const MemberBottomNavigation(currentIndex: 4),
       body: RefreshIndicator(
         onRefresh: () => ref.read(inboxProvider.notifier).refresh(),
         child: Builder(

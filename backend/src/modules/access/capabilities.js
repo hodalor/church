@@ -28,6 +28,10 @@ const capabilitySections = [
     actions: ['view', 'create', 'modify', 'delete'],
   },
   {
+    module: 'pastoral',
+    actions: ['view', 'create', 'modify', 'delete'],
+  },
+  {
     module: 'settings',
     actions: ['view', 'modify'],
   },
@@ -56,7 +60,16 @@ const leadershipCapabilities = [
   'visitors.view',
   'visitors.create',
   'visitors.modify',
+  'pastoral.view',
+  'pastoral.create',
+  'pastoral.modify',
   'notifications.view',
+];
+const pastoralLeadershipCapabilities = [
+  'pastoral.view',
+  'pastoral.create',
+  'pastoral.modify',
+  'pastoral.delete',
 ];
 const financeFullCapabilities = [
   'dashboard.view',
@@ -87,12 +100,19 @@ const adminCapabilities = [
 export const defaultCapabilitiesByRole = {
   super_admin: [...supportedCapabilities],
   head_pastor: [...supportedCapabilities],
-  branch_pastor: [...financeReportCapabilities, 'members.view', 'visitors.view'],
-  associate_pastor: [...leadershipCapabilities, 'members.delete', 'visitors.delete', 'settings.view', 'finance.view'],
+  branch_pastor: [...financeReportCapabilities, 'members.view', 'visitors.view', ...pastoralLeadershipCapabilities],
+  associate_pastor: [
+    ...leadershipCapabilities,
+    'members.delete',
+    'visitors.delete',
+    'settings.view',
+    'finance.view',
+    ...pastoralLeadershipCapabilities,
+  ],
   treasurer: [...financeFullCapabilities, 'settings.view', 'members.view'],
   finance_officer: [...financeRecordOnlyCapabilities],
   media_team: [...mediaCapabilities],
-  care_leader: [...leadershipCapabilities, 'visitors.delete'],
+  care_leader: [...leadershipCapabilities, 'visitors.delete', ...pastoralLeadershipCapabilities],
   volunteer_leader: [...leadershipCapabilities],
   member: [...memberCapabilities],
 };

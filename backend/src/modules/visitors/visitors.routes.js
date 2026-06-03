@@ -10,6 +10,7 @@ import {
   convertVisitorValidation,
   createFollowUpValidation,
   duplicatePhoneValidation,
+  kioskRegisterVisitorValidation,
   listVisitorsValidation,
   registerVisitorValidation,
   rescheduleFollowUpValidation,
@@ -21,6 +22,13 @@ import {
 
 const visitorsRouter = Router();
 const adminVisitorsRouter = Router();
+
+visitorsRouter.post(
+  '/kiosk/register',
+  kioskRegisterVisitorValidation,
+  validate,
+  visitorsController.registerVisitorFromKiosk,
+);
 
 visitorsRouter.use(auth, tenantScope);
 

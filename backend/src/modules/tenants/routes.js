@@ -11,6 +11,10 @@ const tenantRouter = Router();
 const adminTenantRouter = Router();
 
 const tenantSettingsValidation = [
+  body('kioskPasscode')
+    .optional({ values: 'falsy' })
+    .isLength({ min: 4, max: 12 })
+    .withMessage('Kiosk passcode must be 4 to 12 characters long.'),
   body('logoUrl')
     .optional({ values: 'falsy' })
     .isURL()

@@ -98,8 +98,12 @@ class AuthNotifier extends StateNotifier<AuthState> {
     state = state.copyWith(isLoading: true, clearError: true);
 
     try {
-      final accessToken = await _storage.getAccessToken();
-      final user = await _storage.getUserProfile();
+      final accessToken = await _storage
+          .getAccessToken()
+          .timeout(const Duration(seconds: 3), onTimeout: () => null);
+      final user = await _storage
+          .getUserProfile()
+          .timeout(const Duration(seconds: 3), onTimeout: () => null);
       state = state.copyWith(
         isLoading: false,
         isAuthenticated: accessToken != null && accessToken.isNotEmpty,

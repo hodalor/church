@@ -42,7 +42,7 @@ class PushNotificationService {
     }
 
     try {
-      await Firebase.initializeApp();
+      await Firebase.initializeApp().timeout(const Duration(seconds: 5));
     } catch (error) {
       debugPrint('Firebase initialize skipped: $error');
       return;
@@ -53,9 +53,9 @@ class PushNotificationService {
         firebaseMessagingBackgroundHandler,
       );
 
-      await _requestPermissions();
-      await _configureLocalNotifications();
-      await _syncCurrentToken();
+      await _requestPermissions().timeout(const Duration(seconds: 5));
+      await _configureLocalNotifications().timeout(const Duration(seconds: 5));
+      await _syncCurrentToken().timeout(const Duration(seconds: 5));
 
       _firebaseMessaging.onTokenRefresh.listen((token) async {
         await _updateBackendToken(token);
@@ -112,7 +112,7 @@ class PushNotificationService {
   }
 
   Future<void> _syncCurrentToken() async {
-    final token = await _firebaseMessaging.getToken();
+    final token = await _firebaseMessaging.getToken().timeout(const Duration(seconds: 5));
     if (token == null || token.isEmpty) {
       return;
     }

@@ -81,7 +81,7 @@ class _MembersScreenState extends ConsumerState<MembersScreen> {
           ),
         ],
       ),
-      bottomNavigationBar: const MemberBottomNavigation(currentIndex: 1),
+      bottomNavigationBar: const MemberBottomNavigation(currentIndex: 2),
       body: Column(
         children: <Widget>[
           AnimatedCrossFade(

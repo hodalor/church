@@ -13,7 +13,7 @@ class FinancePlaceholderScreen extends StatelessWidget {
       appBar: AppBar(
         title: Text('Finance', style: AppTextStyles.titleMedium),
       ),
-      bottomNavigationBar: const MemberBottomNavigation(currentIndex: 2),
+      bottomNavigationBar: const MemberBottomNavigation(currentIndex: 3),
       body: Center(
         child: Padding(
           padding: const EdgeInsets.all(24),

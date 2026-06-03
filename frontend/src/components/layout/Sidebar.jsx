@@ -35,7 +35,7 @@ const churchNavigation = [
       { label: 'Visitors', to: '/visitors', icon: UserRoundPlus, capability: 'members.view' },
       { label: 'Users', to: '/users', icon: Shield, capability: 'users.view' },
       { label: 'Inbox', to: '/communication/inbox', icon: Bell, capability: 'notifications.view' },
-      { label: 'Pastoral Care', to: '/dashboard', icon: HeartHandshake, capability: 'members.view', disabled: true },
+      { label: 'Pastoral Care', to: '/pastoral', icon: HeartHandshake, capability: 'pastoral.view' },
     ],
   },
   {

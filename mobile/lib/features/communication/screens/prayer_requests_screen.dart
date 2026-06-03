@@ -60,7 +60,7 @@ class _PrayerRequestsScreenState extends ConsumerState<PrayerRequestsScreen> {
           ),
         ],
       ),
-      bottomNavigationBar: const MemberBottomNavigation(currentIndex: 3),
+      bottomNavigationBar: const MemberBottomNavigation(currentIndex: 4),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => context.push('/prayer-requests/submit'),
         backgroundColor: AppColors.accent,

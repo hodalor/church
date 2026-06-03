@@ -19,6 +19,11 @@ import 'features/dashboard/screens/finance_placeholder_screen.dart';
 import 'features/members/screens/member_detail_screen.dart';
 import 'features/members/screens/members_screen.dart';
 import 'features/members/screens/my_profile_screen.dart';
+import 'features/visitors/screens/follow_ups_screen.dart';
+import 'features/visitors/screens/kiosk_registration_screen.dart';
+import 'features/visitors/screens/visitor_detail_screen.dart';
+import 'features/visitors/screens/visitor_registration_screen.dart';
+import 'features/visitors/screens/visitors_screen.dart';
 
 final GlobalKey<NavigatorState> rootNavigatorKey = GlobalKey<NavigatorState>();
 
@@ -58,6 +63,28 @@ class PrynovaApp extends ConsumerWidget {
         GoRoute(
           path: '/dashboard',
           builder: (context, state) => const DashboardScreen(),
+        ),
+        GoRoute(
+          path: '/visitors',
+          builder: (context, state) => const VisitorsScreen(),
+        ),
+        GoRoute(
+          path: '/visitors/register',
+          builder: (context, state) => const VisitorRegistrationScreen(),
+        ),
+        GoRoute(
+          path: '/visitors/:visitorId',
+          builder: (context, state) => VisitorDetailScreen(
+            visitorId: state.pathParameters['visitorId'] ?? '',
+          ),
+        ),
+        GoRoute(
+          path: '/visitors/follow-ups',
+          builder: (context, state) => const FollowUpsScreen(),
+        ),
+        GoRoute(
+          path: '/kiosk',
+          builder: (context, state) => const KioskRegistrationScreen(),
         ),
         GoRoute(
           path: '/members',
@@ -135,6 +162,9 @@ class PrynovaApp extends ConsumerWidget {
         }
 
         if (!isAuthenticated && !isLoggingIn) {
+          if (state.matchedLocation == '/kiosk') {
+            return null;
+          }
           return '/login';
         }
 

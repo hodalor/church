@@ -31,7 +31,7 @@ class _PollsScreenState extends ConsumerState<PollsScreen> {
       appBar: AppBar(
         title: Text('Church Polls', style: AppTextStyles.titleMedium),
       ),
-      bottomNavigationBar: const MemberBottomNavigation(currentIndex: 3),
+      bottomNavigationBar: const MemberBottomNavigation(currentIndex: 4),
       body: RefreshIndicator(
         onRefresh: () => ref.read(pollsProvider.notifier).loadPolls(),
         child: ListView(

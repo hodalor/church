@@ -8,6 +8,8 @@ import '../../attendance/attendance_utils.dart';
 import '../../attendance/providers/attendance_provider.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../../members/widgets/member_bottom_navigation.dart';
+import '../../visitors/providers/follow_ups_provider.dart';
+import '../../visitors/visitors_utils.dart';
 
 class DashboardScreen extends ConsumerWidget {
   const DashboardScreen({super.key});
@@ -16,7 +18,10 @@ class DashboardScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final storage = ref.watch(secureStorageProvider);
     final attendanceState = ref.watch(attendanceProvider);
+    final followUpsState = ref.watch(followUpsProvider);
+    final authState = ref.watch(authProvider);
     final openService = attendanceState.currentService;
+    final isLeader = isVisitorLeaderRole(authState.user?.role);
 
     return Scaffold(
       backgroundColor: AppColors.surface,
@@ -186,6 +191,38 @@ class DashboardScreen extends ConsumerWidget {
                     ),
                   ],
                 ),
+                const SizedBox(height: 12),
+                SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton.icon(
+                    onPressed: () => context.go('/visitors'),
+                    icon: const Icon(Icons.person_add_alt_1_rounded),
+                    label: Text(
+                      isLeader
+                          ? 'Visitors & Follow-ups'
+                          : 'Invite a Friend',
+                    ),
+                  ),
+                ),
+                if (isLeader && followUpsState.overdueFollowUps.isNotEmpty) ...<Widget>[
+                  const SizedBox(height: 8),
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(14),
+                    decoration: BoxDecoration(
+                      color: AppColors.danger.withValues(alpha: 0.08),
+                      borderRadius: BorderRadius.circular(18),
+                      border: Border.all(color: AppColors.danger.withValues(alpha: 0.22)),
+                    ),
+                    child: Text(
+                      '${followUpsState.overdueFollowUps.length} overdue follow-up${followUpsState.overdueFollowUps.length == 1 ? '' : 's'} need attention.',
+                      style: AppTextStyles.bodyLarge.copyWith(
+                        color: AppColors.danger,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                ],
                 const SizedBox(height: 12),
                 SizedBox(
                   width: double.infinity,

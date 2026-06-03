@@ -22,6 +22,17 @@ import CreateMemberPage from './pages/members/CreateMemberPage';
 import MemberDetailPage from './pages/members/MemberDetailPage';
 import MembersListPage from './pages/members/MembersListPage';
 import NotificationsPage from './pages/notifications/NotificationsPage';
+import AppointmentsPage from './pages/pastoral/AppointmentsPage';
+import CaseDetailPage from './pages/pastoral/CaseDetailPage';
+import CasesPage from './pages/pastoral/CasesPage';
+import CreateAppointmentPage from './pages/pastoral/CreateAppointmentPage';
+import CreateCasePage from './pages/pastoral/CreateCasePage';
+import CreateTrackPage from './pages/pastoral/CreateTrackPage';
+import DiscipleshipPage from './pages/pastoral/DiscipleshipPage';
+import EnrollmentDetailPage from './pages/pastoral/EnrollmentDetailPage';
+import PastoralDashboard from './pages/pastoral/PastoralDashboard';
+import PastoralReportsPage from './pages/pastoral/PastoralReportsPage';
+import TracksPage from './pages/pastoral/TracksPage';
 import UsersPage from './pages/users/UsersPage';
 import AuditLogPage from './pages/finance/AuditLogPage';
 import BudgetDetailPage from './pages/finance/BudgetDetailPage';
@@ -51,6 +62,7 @@ import SuperAdminCommunicationPage from './pages/superadmin/SuperAdminCommunicat
 import SuperAdminAttendancePage from './pages/superadmin/SuperAdminAttendancePage';
 import SuperAdminDashboard from './pages/superadmin/SuperAdminDashboard';
 import SuperAdminNotificationsPage from './pages/superadmin/SuperAdminNotificationsPage';
+import SuperAdminPastoralPage from './pages/superadmin/SuperAdminPastoralPage';
 import SuperAdminVisitorsPage from './pages/superadmin/SuperAdminVisitorsPage';
 import TenantDetailPage from './pages/superadmin/TenantDetailPage';
 import TenantsListPage from './pages/superadmin/TenantsListPage';
@@ -333,6 +345,94 @@ export default function App() {
           </ProtectedRoute>
         }
       />
+      <Route
+        path="/pastoral"
+        element={
+          <ProtectedRoute>
+            <PastoralDashboard />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/pastoral/cases"
+        element={
+          <ProtectedRoute>
+            <CasesPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/pastoral/cases/new"
+        element={
+          <ProtectedRoute>
+            <CreateCasePage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/pastoral/cases/:caseId"
+        element={
+          <ProtectedRoute>
+            <CaseDetailPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/pastoral/appointments"
+        element={
+          <ProtectedRoute>
+            <AppointmentsPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/pastoral/appointments/new"
+        element={
+          <ProtectedRoute>
+            <CreateAppointmentPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/pastoral/discipleship"
+        element={
+          <ProtectedRoute>
+            <DiscipleshipPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/pastoral/discipleship/tracks"
+        element={
+          <ProtectedRoute>
+            <TracksPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/pastoral/discipleship/tracks/new"
+        element={
+          <ProtectedRoute>
+            <CreateTrackPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/pastoral/discipleship/:enrollmentId"
+        element={
+          <ProtectedRoute>
+            <EnrollmentDetailPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/pastoral/reports"
+        element={
+          <ProtectedRoute>
+            <PastoralReportsPage />
+          </ProtectedRoute>
+        }
+      />
       <Route path="/finance" element={<ProtectedRoute><FinanceDashboard /></ProtectedRoute>} />
       <Route path="/finance/transactions" element={<ProtectedRoute><TransactionsPage /></ProtectedRoute>} />
       <Route path="/finance/transactions/new" element={<ProtectedRoute><RecordTransactionPage /></ProtectedRoute>} />
@@ -418,6 +518,14 @@ export default function App() {
         element={
           <ProtectedRoute allowedRoles={['super_admin']}>
             <SuperAdminAttendancePage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/superadmin/pastoral"
+        element={
+          <ProtectedRoute allowedRoles={['super_admin']}>
+            <SuperAdminPastoralPage />
           </ProtectedRoute>
         }
       />

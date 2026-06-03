@@ -85,6 +85,11 @@ export const registerVisitor = asyncHandler(async (req, res) => {
   return success(res, data, 'Visitor registered successfully.', 201);
 });
 
+export const registerVisitorFromKiosk = asyncHandler(async (req, res) => {
+  const data = await visitorsService.registerVisitorFromKiosk(req.body);
+  return success(res, data, 'Visitor registered successfully from kiosk.', 201);
+});
+
 export const getVisitors = asyncHandler(async (req, res) => {
   ensureVisitorsCapability(req, 'visitors.view');
   const data = await visitorsService.getVisitors(

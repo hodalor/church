@@ -122,6 +122,10 @@ const tenantSchema = new mongoose.Schema(
       type: tenantContentSchema,
       default: () => ({}),
     },
+    kioskPasscode: {
+      type: String,
+      trim: true,
+    },
     isActive: {
       type: Boolean,
       default: true,

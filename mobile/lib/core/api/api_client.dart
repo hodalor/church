@@ -51,12 +51,14 @@ class ApiClient {
         onRequest: (options, handler) async {
           final token = await _storage.getAccessToken();
           final tenantId = await _storage.getTenantId();
+          final skipAuth = options.extra['skipAuth'] == true;
+          final skipTenant = options.extra['skipTenant'] == true;
 
-          if (token != null && token.isNotEmpty) {
+          if (!skipAuth && token != null && token.isNotEmpty) {
             options.headers['Authorization'] = 'Bearer $token';
           }
 
-          if (tenantId != null && tenantId.isNotEmpty) {
+          if (!skipTenant && tenantId != null && tenantId.isNotEmpty) {
             options.headers['X-Tenant-ID'] = tenantId;
           }
 

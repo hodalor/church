@@ -70,6 +70,38 @@ const normalizeString = (value, { lowercase = false } = {}) => {
   return lowercase ? nextValue.toLowerCase() : nextValue;
 };
 
+const normalizeTenantId = (value) => normalizeString(value, { lowercase: true });
+
+const buildVisitorSearchFilters = (searchValue) => {
+  const normalizedSearch = normalizeString(searchValue);
+  if (!normalizedSearch) {
+    return [];
+  }
+
+  const baseRegex = new RegExp(escapeRegex(normalizedSearch), 'i');
+  const clauses = [
+    { firstName: baseRegex },
+    { lastName: baseRegex },
+    { phone: baseRegex },
+    { email: baseRegex },
+    { visitorId: baseRegex },
+  ];
+
+  const terms = normalizedSearch.split(/\s+/).filter(Boolean);
+  if (terms.length > 1) {
+    clauses.push({
+      $and: terms.map((term) => {
+        const termRegex = new RegExp(escapeRegex(term), 'i');
+        return {
+          $or: [{ firstName: termRegex }, { lastName: termRegex }],
+        };
+      }),
+    });
+  }
+
+  return clauses;
+};
+
 const normalizeArray = (value) => {
   if (Array.isArray(value)) {
     return value.map((item) => normalizeString(String(item))).filter(Boolean);
@@ -340,14 +372,7 @@ const resolveVisitorFilters = (tenantId, query = {}) => {
   const converted = parseBool(query.converted);
 
   if (search) {
-    const regex = new RegExp(escapeRegex(search), 'i');
-    filters.$or = [
-      { firstName: regex },
-      { lastName: regex },
-      { phone: regex },
-      { email: regex },
-      { visitorId: regex },
-    ];
+    filters.$or = buildVisitorSearchFilters(search);
   }
 
   if (stage && stage !== 'all') {
@@ -543,15 +568,9 @@ export const searchVisitors = async (tenantId, query = {}) => {
     return { items: [] };
   }
 
-  const regex = new RegExp(escapeRegex(search), 'i');
   const visitors = await Visitor.find({
     tenantId,
-    $or: [
-      { firstName: regex },
-      { lastName: regex },
-      { phone: regex },
-      { visitorId: regex },
-    ],
+    $or: buildVisitorSearchFilters(search),
   })
     .sort({ createdAt: -1 })
     .limit(Math.min(Math.max(Number(query.limit) || 8, 1), 25));
@@ -646,6 +665,50 @@ export const registerVisitor = async (tenantId, payload = {}, actor = {}) => {
     visitor: serializeVisitor(visitor),
     message: 'Visitor registered successfully.',
     assignedCareLeader: serializeCareLeader(leader),
+  };
+};
+
+export const registerVisitorFromKiosk = async (payload = {}) => {
+  const tenantId = normalizeTenantId(payload.tenantId);
+  const kioskPasscode = normalizeString(payload.kioskPasscode);
+
+  if (!tenantId) {
+    throw createHttpError(400, 'Tenant ID is required for kiosk registration.');
+  }
+
+  const tenant = await Tenant.findOne({ tenantId }).select(
+    'tenantId churchName content kioskPasscode isActive isSuspended',
+  );
+
+  if (!tenant || tenant.isActive === false || tenant.isSuspended === true) {
+    throw createHttpError(404, 'Kiosk workspace is not available.');
+  }
+
+  const expectedPasscode =
+    normalizeString(tenant.kioskPasscode) ||
+    normalizeString(process.env.DEFAULT_KIOSK_PASSCODE) ||
+    '1234';
+
+  if (!kioskPasscode || kioskPasscode !== expectedPasscode) {
+    throw createHttpError(403, 'Kiosk passcode is invalid.');
+  }
+
+  const fallbackBranch = Array.isArray(tenant.content?.branches) ? tenant.content.branches[0] : undefined;
+  const result = await registerVisitor(
+    tenantId,
+    {
+      ...payload,
+      branch: normalizeString(payload.branch) || fallbackBranch,
+    },
+    {
+      role: 'kiosk',
+      name: 'Kiosk Registration',
+    },
+  );
+
+  return {
+    ...result,
+    churchName: tenant.churchName,
   };
 };
 

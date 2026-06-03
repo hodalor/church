@@ -10,6 +10,7 @@ import communicationRoutes from './modules/communication/communication.routes.js
 import financeRoutes from './modules/finance/finance.routes.js';
 import memberRoutes from './modules/members/member.routes.js';
 import notificationRoutes from './modules/notifications/routes.js';
+import { adminPastoralRouter, pastoralRouter } from './modules/pastoralCare/pastoral.routes.js';
 import { tenantRouter, adminTenantRouter } from './modules/tenants/routes.js';
 import userRoutes from './modules/users/routes.js';
 import { visitorsRouter, adminVisitorsRouter } from './modules/visitors/visitors.routes.js';
@@ -55,8 +56,10 @@ apiRouter.use('/finance', financeRoutes);
 apiRouter.use('/attendance', attendanceRouter);
 apiRouter.use('/communication', communicationRoutes);
 apiRouter.use('/notifications', notificationRoutes);
+apiRouter.use('/pastoral', pastoralRouter);
 apiRouter.use('/visitors', visitorsRouter);
 apiRouter.use('/admin/attendance', adminAttendanceRouter);
+apiRouter.use('/admin/pastoral', adminPastoralRouter);
 apiRouter.use('/admin/tenants', adminTenantRouter);
 apiRouter.use('/admin/visitors', adminVisitorsRouter);
 

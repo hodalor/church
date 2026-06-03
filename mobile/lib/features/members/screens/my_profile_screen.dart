@@ -20,7 +20,7 @@ class MyProfileScreen extends ConsumerWidget {
       appBar: AppBar(
         title: Text('My Profile', style: AppTextStyles.titleMedium),
       ),
-      bottomNavigationBar: const MemberBottomNavigation(currentIndex: 2),
+      bottomNavigationBar: const MemberBottomNavigation(currentIndex: 5),
       body: profileAsync.when(
         data: (member) => RefreshIndicator(
           onRefresh: () => ref.refresh(myProfileProvider.future),

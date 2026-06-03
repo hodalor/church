@@ -93,9 +93,8 @@ const navigation = [
     items: [
       {
         label: 'Pastoral Care',
-        to: '/superadmin/dashboard',
+        to: '/superadmin/pastoral',
         icon: HeartHandshake,
-        disabled: true,
       },
     ],
   },

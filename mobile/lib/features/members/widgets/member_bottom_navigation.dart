@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/utils/app_colors.dart';
 import '../../communication/providers/inbox_provider.dart';
+import '../../visitors/providers/follow_ups_provider.dart';
 
 class MemberBottomNavigation extends ConsumerStatefulWidget {
   const MemberBottomNavigation({
@@ -40,6 +41,8 @@ class _MemberBottomNavigationState
   Widget build(BuildContext context) {
     final unreadAsync = ref.watch(unreadCountProvider);
     final unreadCount = unreadAsync.value ?? 0;
+    final followUpsState = ref.watch(followUpsProvider);
+    final overdueCount = followUpsState.overdueFollowUps.length;
 
     return NavigationBar(
       selectedIndex: widget.currentIndex,
@@ -51,15 +54,18 @@ class _MemberBottomNavigationState
             context.go('/dashboard');
             return;
           case 1:
-            context.go('/members');
+            context.go('/visitors');
             return;
           case 2:
-            context.go('/finance');
+            context.go('/members');
             return;
           case 3:
-            context.go('/inbox');
+            context.go('/finance');
             return;
           case 4:
+            context.go('/inbox');
+            return;
+          case 5:
             context.go('/profile');
             return;
         }
@@ -69,6 +75,23 @@ class _MemberBottomNavigationState
           icon: Icon(Icons.dashboard_outlined),
           selectedIcon: Icon(Icons.dashboard_rounded),
           label: 'Home',
+        ),
+        NavigationDestination(
+          icon: overdueCount > 0
+              ? Badge(
+                  label: Text(overdueCount > 99 ? '99+' : '$overdueCount'),
+                  backgroundColor: AppColors.danger,
+                  child: const Icon(Icons.person_add_alt_1_outlined),
+                )
+              : const Icon(Icons.person_add_alt_1_outlined),
+          selectedIcon: overdueCount > 0
+              ? Badge(
+                  label: Text(overdueCount > 99 ? '99+' : '$overdueCount'),
+                  backgroundColor: AppColors.danger,
+                  child: const Icon(Icons.person_add_alt_1_rounded),
+                )
+              : const Icon(Icons.person_add_alt_1_rounded),
+          label: 'Visitors',
         ),
         NavigationDestination(
           icon: Icon(Icons.groups_outlined),

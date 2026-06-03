@@ -49,6 +49,30 @@ const registerVisitorValidation = [
   body('interests').optional().isArray().withMessage('Interests must be an array.'),
 ];
 
+const kioskRegisterVisitorValidation = [
+  body('tenantId').trim().notEmpty().withMessage('Tenant ID is required.'),
+  body('kioskPasscode').trim().notEmpty().withMessage('Kiosk passcode is required.'),
+  body('firstName').trim().notEmpty().withMessage('First name is required.'),
+  body('lastName').trim().notEmpty().withMessage('Last name is required.'),
+  body('phone')
+    .trim()
+    .matches(phoneRegex)
+    .withMessage('Phone number format is invalid.'),
+  body('email').optional({ values: 'falsy' }).isEmail().withMessage('Email must be valid.'),
+  body('ageGroup')
+    .optional({ values: 'falsy' })
+    .isIn(ageGroupOptions)
+    .withMessage('Age group is invalid.'),
+  body('gender')
+    .optional({ values: 'falsy' })
+    .isIn(['male', 'female', 'other'])
+    .withMessage('Gender is invalid.'),
+  body('firstVisitDate')
+    .optional({ values: 'falsy' })
+    .custom(validDate)
+    .withMessage('First visit date must be valid.'),
+];
+
 const duplicatePhoneValidation = [
   query('phone').trim().notEmpty().withMessage('Phone number is required.'),
 ];
@@ -145,6 +169,7 @@ export {
   createFollowUpValidation,
   duplicatePhoneValidation,
   followUpIdParamValidation,
+  kioskRegisterVisitorValidation,
   listVisitorsValidation,
   registerVisitorValidation,
   rescheduleFollowUpValidation,

@@ -15,6 +15,7 @@ import {
 import { getPlatformAttendanceOverview } from '../../api/endpoints/attendance';
 import { activateTenant, getAllTenants, getPlatformAnalytics, suspendTenant } from '../../api/endpoints/tenants';
 import { getPlatformCommunicationStats } from '../../api/endpoints/communication';
+import { getPlatformPastoralOverview } from '../../api/endpoints/pastoral';
 import { getPlatformVisitorOverview } from '../../api/endpoints/visitors';
 import SuperAdminShell from '../../components/layout/SuperAdminShell';
 import Button from '../../components/ui/Button';
@@ -46,6 +47,10 @@ export default function SuperAdminDashboard() {
   const visitorsQuery = useQuery({
     queryKey: ['platform-visitors-overview-card'],
     queryFn: getPlatformVisitorOverview,
+  });
+  const pastoralQuery = useQuery({
+    queryKey: ['platform-pastoral-overview-card'],
+    queryFn: getPlatformPastoralOverview,
   });
 
   const toggleMutation = useMutation({
@@ -176,6 +181,22 @@ export default function SuperAdminDashboard() {
           </div>
           <Button variant="secondary" onClick={() => navigate('/superadmin/visitors')}>
             Open Visitors
+          </Button>
+        </Card>
+
+        <Card
+          className={`flex flex-col gap-4 p-5 lg:flex-row lg:items-center lg:justify-between ${
+            (pastoralQuery.data?.totalCriticalCases || 0) > 0 ? 'border-rose-500/30 bg-rose-500/10' : ''
+          }`}
+        >
+          <div>
+            <p className="text-[11px] uppercase tracking-[0.22em] text-white/55">Pastoral Summary</p>
+            <h2 className="mt-2 text-xl font-semibold text-white">
+              {pastoralQuery.data?.totalCriticalCases || 0} critical care cases across all churches
+            </h2>
+          </div>
+          <Button variant="secondary" onClick={() => navigate('/superadmin/pastoral')}>
+            Open Pastoral
           </Button>
         </Card>
 

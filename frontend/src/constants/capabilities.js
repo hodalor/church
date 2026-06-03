@@ -61,6 +61,17 @@ export const capabilitySections = [
     ],
   },
   {
+    module: 'pastoral',
+    label: 'Pastoral Care',
+    description: 'Access pastoral care, appointments, discipleship, and pastoral reporting.',
+    actions: [
+      { key: 'view', label: 'View' },
+      { key: 'create', label: 'Create' },
+      { key: 'modify', label: 'Modify' },
+      { key: 'delete', label: 'Delete' },
+    ],
+  },
+  {
     module: 'settings',
     label: 'Settings',
     description: 'Open and update tenant workspace settings.',
@@ -96,6 +107,9 @@ const leadershipCapabilities = [
   'attendance.view',
   'attendance.create',
   'attendance.modify',
+  'pastoral.view',
+  'pastoral.create',
+  'pastoral.modify',
   'notifications.view',
 ];
 const financeFullCapabilities = [
@@ -123,8 +137,22 @@ const mediaCapabilities = [
 export const defaultCapabilitiesByRole = {
   super_admin: [...allCapabilities],
   head_pastor: [...allCapabilities],
-  branch_pastor: [...financeReportCapabilities, 'members.view'],
-  associate_pastor: [...leadershipCapabilities, 'members.delete', 'settings.view', 'finance.view'],
+  branch_pastor: [
+    ...financeReportCapabilities,
+    'members.view',
+    'communication.view',
+    'attendance.view',
+    'pastoral.view',
+    'pastoral.create',
+    'pastoral.modify',
+  ],
+  associate_pastor: [
+    ...leadershipCapabilities,
+    'members.delete',
+    'settings.view',
+    'finance.view',
+    'pastoral.delete',
+  ],
   treasurer: [...financeFullCapabilities, 'settings.view', 'members.view'],
   finance_officer: [...financeRecordOnlyCapabilities],
   media_team: [...mediaCapabilities],

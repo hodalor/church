@@ -12,9 +12,13 @@ import {
   updateMember,
   updateMemberPhoto,
 } from '../../api/endpoints/members';
+import { getAllAppointments, getMemberCases, getMemberDiscipleship } from '../../api/endpoints/pastoral';
 import { getCurrentTenant, getTenantById } from '../../api/endpoints/tenants';
 import AppShell from '../../components/layout/AppShell';
 import SuperAdminShell from '../../components/layout/SuperAdminShell';
+import AppointmentStatusBadge from '../../components/pastoral/AppointmentStatusBadge';
+import CaseStatusBadge from '../../components/pastoral/CaseStatusBadge';
+import DiscipleshipProgressRing from '../../components/pastoral/DiscipleshipProgressRing';
 import Button from '../../components/ui/Button';
 import Card from '../../components/ui/Card';
 import ConfirmModal from '../../components/ui/ConfirmModal';
@@ -28,6 +32,7 @@ import { useCapabilities } from '../../hooks/useCapabilities';
 import { supabaseUpload } from '../../utils/supabaseUpload';
 import { formatDate } from '../../utils/formatDate';
 import { buildGroupingPathLabels, sanitizeGroupingPath } from '../../utils/groupings';
+import { formatPastoralLabel } from '../../utils/pastoral';
 
 const membershipOptions = ['visitor', 'new_convert', 'member', 'worker', 'leader', 'clergy'];
 const genderOptions = ['male', 'female', 'other'];
@@ -100,6 +105,22 @@ export default function MemberDetailPage() {
     queryKey: ['member-family-group', familyGroupId],
     queryFn: () => getFamilyGroup(familyGroupId),
     enabled: Boolean(familyGroupId),
+  });
+  const canViewPastoralActivity = role !== 'member' && (isSuperAdmin || hasCapability('pastoral.view'));
+  const pastoralCasesQuery = useQuery({
+    queryKey: ['member-pastoral-cases', memberId],
+    queryFn: () => getMemberCases(memberId),
+    enabled: canViewPastoralActivity,
+  });
+  const pastoralAppointmentsQuery = useQuery({
+    queryKey: ['member-pastoral-appointments', memberId],
+    queryFn: () => getAllAppointments({ memberId, limit: 100 }),
+    enabled: canViewPastoralActivity,
+  });
+  const discipleshipQuery = useQuery({
+    queryKey: ['member-pastoral-discipleship', memberId],
+    queryFn: () => getMemberDiscipleship(memberId),
+    enabled: canViewPastoralActivity,
   });
 
   useEffect(() => {
@@ -189,6 +210,14 @@ export default function MemberDetailPage() {
   const canDeleteMembers = isSuperAdmin || hasCapability('members.delete');
 
   const member = memberQuery.data;
+  const pastoralCases = pastoralCasesQuery.data || [];
+  const pastoralAppointments = pastoralAppointmentsQuery.data?.items || [];
+  const upcomingAppointments = pastoralAppointments.filter(
+    (appointment) => new Date(appointment.scheduledAt) >= new Date(),
+  );
+  const pastAppointments = pastoralAppointments.filter((appointment) => new Date(appointment.scheduledAt) < new Date());
+  const activeEnrollments = (discipleshipQuery.data || []).filter((item) => item.status !== 'completed');
+  const completedTracks = (discipleshipQuery.data || []).filter((item) => item.status === 'completed');
   const groupingOptions = useMemo(
     () => tenantSettingsQuery.data?.content?.groupings || [],
     [tenantSettingsQuery.data?.content?.groupings],
@@ -531,6 +560,112 @@ export default function MemberDetailPage() {
             </Card>
           </div>
         </div>
+
+        {canViewPastoralActivity ? (
+          <div className="grid gap-6 xl:grid-cols-3">
+            <Card className="space-y-4">
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <p className="text-sm uppercase tracking-[0.25em] text-accent">Care Cases</p>
+                  <h3 className="mt-2 text-xl font-semibold text-white">Pastoral follow-up</h3>
+                </div>
+                <Button variant="secondary" onClick={() => navigate(`/pastoral/cases/new?memberId=${member?.memberId || ''}`)}>
+                  Open New Case
+                </Button>
+              </div>
+              <div className="space-y-3">
+                {pastoralCases.map((careCase) => (
+                  <div key={careCase.caseId} className="rounded-2xl border border-white/10 bg-white/5 px-4 py-4">
+                    <CaseStatusBadge status={careCase.status} urgency={careCase.urgency} />
+                    <p className="mt-3 font-semibold text-white">{careCase.title}</p>
+                    <p className="mt-1 text-sm text-white/55">{formatPastoralLabel(careCase.type)}</p>
+                    <p className="mt-2 text-sm text-white/45">
+                      Assigned to {careCase.assignedToName || 'Unassigned'} · {Math.max(0, Math.floor((Date.now() - new Date(careCase.createdAt).getTime()) / (1000 * 60 * 60 * 24)))} days open
+                    </p>
+                    <Link to={`/pastoral/cases/${careCase.caseId}`} className="mt-3 inline-flex text-sm font-semibold text-accent">
+                      View Full Case
+                    </Link>
+                  </div>
+                ))}
+                {!pastoralCases.length ? (
+                  <p className="rounded-2xl border border-white/10 bg-white/5 px-4 py-6 text-sm text-white/55">
+                    No pastoral care cases linked to this member yet.
+                  </p>
+                ) : null}
+              </div>
+            </Card>
+
+            <Card className="space-y-4">
+              <div>
+                <p className="text-sm uppercase tracking-[0.25em] text-accent">Discipleship</p>
+                <h3 className="mt-2 text-xl font-semibold text-white">Growth progress</h3>
+              </div>
+              <div className="space-y-3">
+                {activeEnrollments.map((enrollment) => (
+                  <div key={enrollment._id} className="flex items-center gap-4 rounded-2xl border border-white/10 bg-white/5 px-4 py-4">
+                    <DiscipleshipProgressRing percent={enrollment.completionPercent} status={enrollment.status} />
+                    <div>
+                      <p className="font-semibold text-white">{enrollment.trackName}</p>
+                      <p className="mt-1 text-sm text-white/55">{formatPastoralLabel(enrollment.status)}</p>
+                    </div>
+                  </div>
+                ))}
+                {completedTracks.map((enrollment) => (
+                  <div key={enrollment._id} className="rounded-2xl border border-emerald-500/20 bg-emerald-500/10 px-4 py-4">
+                    <p className="font-semibold text-white">{enrollment.trackName}</p>
+                    <p className="mt-1 text-sm text-emerald-100">
+                      Completed {formatDate(enrollment.completedAt || enrollment.updatedAt)}
+                    </p>
+                  </div>
+                ))}
+                {!activeEnrollments.length && !completedTracks.length ? (
+                  <p className="rounded-2xl border border-white/10 bg-white/5 px-4 py-6 text-sm text-white/55">
+                    No discipleship enrollments found for this member.
+                  </p>
+                ) : null}
+              </div>
+            </Card>
+
+            <Card className="space-y-4">
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <p className="text-sm uppercase tracking-[0.25em] text-accent">Appointments</p>
+                  <h3 className="mt-2 text-xl font-semibold text-white">Upcoming and past</h3>
+                </div>
+                <Button
+                  variant="ghost"
+                  onClick={() =>
+                    navigate(
+                      `/pastoral/appointments/new?memberId=${member?.memberId || ''}&memberName=${encodeURIComponent(
+                        `${member?.firstName || ''} ${member?.lastName || ''}`.trim(),
+                      )}`,
+                    )
+                  }
+                >
+                  Schedule Appointment
+                </Button>
+              </div>
+              <div className="space-y-3">
+                {[...upcomingAppointments.slice(0, 3), ...pastAppointments.slice(0, 2)].map((appointment) => (
+                  <div key={appointment._id || appointment.appointmentId} className="rounded-2xl border border-white/10 bg-white/5 px-4 py-4">
+                    <div className="flex flex-wrap items-start justify-between gap-3">
+                      <div>
+                        <p className="font-semibold text-white">{appointment.title}</p>
+                        <p className="mt-1 text-sm text-white/55">{formatDate(appointment.scheduledAt)}</p>
+                      </div>
+                      <AppointmentStatusBadge status={appointment.status} />
+                    </div>
+                  </div>
+                ))}
+                {!pastoralAppointments.length ? (
+                  <p className="rounded-2xl border border-white/10 bg-white/5 px-4 py-6 text-sm text-white/55">
+                    No pastoral appointments are linked to this member.
+                  </p>
+                ) : null}
+              </div>
+            </Card>
+          </div>
+        ) : null}
       </div>
 
       <Modal

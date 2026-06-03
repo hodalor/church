@@ -94,9 +94,10 @@ const serializeTenant = (tenantDocument) => {
   const tenant = tenantDocument?.toObject ? tenantDocument.toObject() : tenantDocument;
   const branding = buildTenantBranding(tenant);
   const content = buildTenantContent(tenant);
+  const { kioskPasscode, ...safeTenant } = tenant || {};
 
   return {
-    ...tenant,
+    ...safeTenant,
     capabilities: resolveTenantCapabilities(tenant),
     branding,
     content,
@@ -251,6 +252,7 @@ export const updateTenant = async (tenantId, payload) => {
       ...(payload.country ? { country: payload.country.trim() } : {}),
       ...(payload.logoUrl ? { logoUrl: payload.logoUrl.trim() } : {}),
       ...(payload.subscriptionPlan ? { subscriptionPlan: payload.subscriptionPlan } : {}),
+      ...(payload.kioskPasscode !== undefined ? { kioskPasscode: payload.kioskPasscode?.trim() || '' } : {}),
       ...(normalizedCapabilities ? { capabilities: normalizedCapabilities } : {}),
       ...(branding ? { branding } : {}),
       ...(content ? { content } : {}),
