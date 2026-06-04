@@ -1,11 +1,40 @@
 import axios from 'axios';
 import { useAuthStore } from '../stores/authStore';
 
-const API_BASE_URL = (
-  process.env.REACT_APP_API_BASE_URL ||
-  process.env.REACT_APP_API_URL ||
-  'http://localhost:5000/api/v1'
-).replace(/\/$/, '');
+const normalizeApiBaseUrl = (value) => {
+  const raw = String(value || '').trim();
+  if (!raw) {
+    return 'http://localhost:5000/api/v1';
+  }
+
+  try {
+    const url = new URL(raw);
+    const pathname = url.pathname.replace(/\/+$/, '');
+
+    if (!pathname || pathname === '') {
+      url.pathname = '/api/v1';
+      return url.toString().replace(/\/$/, '');
+    }
+
+    if (pathname === '/api/v1' || pathname.endsWith('/api/v1')) {
+      return url.toString().replace(/\/$/, '');
+    }
+
+    url.pathname = `${pathname}/api/v1`;
+    return url.toString().replace(/\/$/, '');
+  } catch {
+    const normalized = raw.replace(/\/+$/, '');
+    if (normalized === '/api/v1' || normalized.endsWith('/api/v1')) {
+      return normalized;
+    }
+
+    return `${normalized}/api/v1`;
+  }
+};
+
+const API_BASE_URL = normalizeApiBaseUrl(
+  process.env.REACT_APP_API_BASE_URL || process.env.REACT_APP_API_URL,
+);
 
 const api = axios.create({
   baseURL: API_BASE_URL,
