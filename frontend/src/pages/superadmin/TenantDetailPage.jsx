@@ -9,6 +9,7 @@ import {
   updateTenant,
 } from '../../api/endpoints/tenants';
 import SuperAdminShell from '../../components/layout/SuperAdminShell';
+import CapabilityMatrix from '../../components/access/CapabilityMatrix';
 import Button from '../../components/ui/Button';
 import Card from '../../components/ui/Card';
 import ConfirmModal from '../../components/ui/ConfirmModal';
@@ -16,7 +17,7 @@ import Input from '../../components/ui/Input';
 import PageHeader from '../../components/ui/PageHeader';
 import StatusBadge from '../../components/ui/StatusBadge';
 import { formatDate } from '../../utils/formatDate';
-import { capabilitySections } from '../../constants/capabilities';
+import { allCapabilities, capabilitySections } from '../../constants/capabilities';
 
 export default function TenantDetailPage() {
   const { tenantId } = useParams();
@@ -33,6 +34,7 @@ export default function TenantDetailPage() {
     country: '',
     logoUrl: '',
     subscriptionPlan: 'small',
+    capabilities: [],
   });
 
   const tenantQuery = useQuery({
@@ -88,6 +90,7 @@ export default function TenantDetailPage() {
       country: tenant.country || '',
       logoUrl: tenant.logoUrl || '',
       subscriptionPlan: tenant.subscriptionPlan || 'small',
+      capabilities: tenant.capabilities || [],
     });
   }, [isEditing, tenant]);
 
@@ -129,7 +132,8 @@ export default function TenantDetailPage() {
             </div>
 
             {isEditing ? (
-              <div className="grid gap-4 md:grid-cols-2">
+              <div className="space-y-4">
+                <div className="grid gap-4 md:grid-cols-2">
                 <Input label="Church Name" value={form.churchName} onChange={(event) => setForm((current) => ({ ...current, churchName: event.target.value }))} />
                 <Input label="Email" value={form.email} onChange={(event) => setForm((current) => ({ ...current, email: event.target.value }))} />
                 <Input label="Phone" value={form.phone} onChange={(event) => setForm((current) => ({ ...current, phone: event.target.value }))} />
@@ -147,7 +151,15 @@ export default function TenantDetailPage() {
                     ))}
                   </select>
                 </label>
-                <div className="md:col-span-2">
+                </div>
+                <CapabilityMatrix
+                  title="Tenant Grants"
+                  description="Add or remove the church-level menus and actions this tenant is allowed to use."
+                  value={form.capabilities}
+                  onChange={(nextValue) => setForm((current) => ({ ...current, capabilities: nextValue }))}
+                  allowedCapabilities={allCapabilities}
+                />
+                <div>
                   <Button variant="secondary" onClick={() => updateMutation.mutate(form)} disabled={updateMutation.isPending}>
                     {updateMutation.isPending ? 'Saving...' : 'Save Tenant Changes'}
                   </Button>

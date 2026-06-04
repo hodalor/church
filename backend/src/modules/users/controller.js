@@ -66,3 +66,41 @@ export const createUser = asyncHandler(async (req, res) => {
   });
   return success(res, user, 'User created successfully.', 201);
 });
+
+export const updateUser = asyncHandler(async (req, res) => {
+  ensurePermission(req, 'users.modify');
+
+  const requestedCapabilities = Array.isArray(req.body.capabilities)
+    ? normalizeCapabilities(req.body.capabilities)
+    : undefined;
+
+  if (
+    requestedCapabilities &&
+    req.user?.role !== 'super_admin' &&
+    Array.isArray(req.user?.capabilities) &&
+    !isCapabilitySubset(requestedCapabilities, req.user.capabilities)
+  ) {
+    throw createHttpError(
+      403,
+      'You can only assign capabilities that exist within your own access scope.',
+    );
+  }
+
+  const user = await userService.updateUser({
+    tenantId: resolveScopedTenantId(req),
+    userId: req.params.userId,
+    username: req.body.username,
+    pin: req.body.pin,
+    role: req.body.role,
+    fullName: req.body.fullName,
+    email: req.body.email,
+    phone: req.body.phone,
+    allBranches: req.body.allBranches,
+    assignedBranches: req.body.assignedBranches,
+    memberId: req.body.memberId,
+    photoUrl: req.body.photoUrl,
+    capabilities: requestedCapabilities,
+  });
+
+  return success(res, user, 'User updated successfully.');
+});

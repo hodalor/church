@@ -53,6 +53,14 @@ const attendanceSubItems = [
   { label: 'Absentees', to: '/attendance/absentees' },
 ];
 
+const pastoralSubItems = [
+  { label: 'Overview', to: '/pastoral' },
+  { label: 'Cases', to: '/pastoral/cases' },
+  { label: 'Appointments', to: '/pastoral/appointments' },
+  { label: 'Discipleship', to: '/pastoral/discipleship' },
+  { label: 'Reports', to: '/pastoral/reports' },
+];
+
 const navigation = [
   {
     title: 'Workspace',
@@ -93,8 +101,9 @@ const navigation = [
     items: [
       {
         label: 'Pastoral Care',
-        to: '/superadmin/pastoral',
         icon: HeartHandshake,
+        children: pastoralSubItems,
+        matchPrefixes: ['/superadmin/pastoral', '/pastoral'],
       },
     ],
   },
@@ -120,6 +129,9 @@ export default function SuperAdminShell({ children }) {
   const [attendanceOpen, setAttendanceOpen] = useState(
     location.pathname.startsWith('/superadmin/attendance') || location.pathname.startsWith('/attendance'),
   );
+  const [pastoralOpen, setPastoralOpen] = useState(
+    location.pathname.startsWith('/superadmin/pastoral') || location.pathname.startsWith('/pastoral'),
+  );
   const globalBranding = useBrandingStore((state) => state.globalBranding);
   const tenantsQuery = useQuery({
     queryKey: ['shell-tenants-count'],
@@ -142,6 +154,12 @@ export default function SuperAdminShell({ children }) {
       location.pathname.startsWith('/attendance')
     ) {
       setAttendanceOpen(true);
+    }
+    if (
+      location.pathname.startsWith('/superadmin/pastoral') ||
+      location.pathname.startsWith('/pastoral')
+    ) {
+      setPastoralOpen(true);
     }
   }, [location.pathname]);
 
@@ -319,7 +337,50 @@ export default function SuperAdminShell({ children }) {
                               {label}
                             </span>
                           </div>
-                        ) : (
+                    ) : label === 'Pastoral Care' ? (
+                      <div className="space-y-1">
+                        <button
+                          type="button"
+                          onClick={() => setPastoralOpen((current) => !current)}
+                          className={`flex w-full items-center justify-between rounded-2xl px-3 py-2.5 text-[14px] font-medium ${
+                            isExpandableActive(['/superadmin/pastoral', '/pastoral']) || pastoralOpen
+                              ? 'bg-[linear-gradient(90deg,rgba(201,168,76,0.18),rgba(201,168,76,0.08))] text-[#f5deb0]'
+                              : 'text-white/68 hover:bg-white/[0.05] hover:text-white'
+                          }`}
+                          aria-label={pastoralOpen ? 'Collapse pastoral menu' : 'Expand pastoral menu'}
+                        >
+                          <span className="flex items-center gap-3">
+                            <Icon className="h-4 w-4" />
+                            {label}
+                          </span>
+                          <ChevronDown
+                            className={`h-4 w-4 transition-transform ${pastoralOpen ? 'rotate-180 text-accent' : ''}`}
+                          />
+                        </button>
+                        {pastoralOpen ? (
+                          <div className="ml-7 mt-1 space-y-1 border-l border-white/8 pl-4">
+                            {pastoralSubItems.map((subItem) => (
+                              <NavLink
+                                key={subItem.to}
+                                to={subItem.to}
+                                className={({ isActive }) =>
+                                  `block rounded-xl px-3 py-2 text-[12px] uppercase tracking-[0.2em] ${
+                                    isActive ? 'bg-white/[0.06] text-accent' : 'text-white/40 hover:text-white/70'
+                                  }`
+                                }
+                                onClick={() => {
+                                  if (window.innerWidth < 1024) {
+                                    setIsOpen(false);
+                                  }
+                                }}
+                              >
+                                {subItem.label}
+                              </NavLink>
+                            ))}
+                          </div>
+                        ) : null}
+                      </div>
+                    ) : (
                           <NavLink
                             to={to}
                             className={({ isActive }) =>

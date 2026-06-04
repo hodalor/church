@@ -1,10 +1,11 @@
 import axios from 'axios';
 import { useAuthStore } from '../stores/authStore';
 
-const API_BASE_URL = (process.env.REACT_APP_API_BASE_URL || 'http://localhost:5000/api/v1').replace(
-  /\/$/,
-  '',
-);
+const API_BASE_URL = (
+  process.env.REACT_APP_API_BASE_URL ||
+  process.env.REACT_APP_API_URL ||
+  'http://localhost:5000/api/v1'
+).replace(/\/$/, '');
 
 const api = axios.create({
   baseURL: API_BASE_URL,

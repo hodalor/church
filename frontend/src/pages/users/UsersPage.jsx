@@ -19,9 +19,11 @@ export default function UsersPage() {
   const { tenantId } = useAuth();
   const { capabilities, hasCapability } = useCapabilities();
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [editingUser, setEditingUser] = useState(null);
 
   const canViewUsers = hasCapability('users.view');
   const canCreateUsers = hasCapability('users.create');
+  const canModifyUsers = hasCapability('users.modify');
 
   const usersQuery = useQuery({
     queryKey: ['tenant-users'],
@@ -105,8 +107,20 @@ export default function UsersPage() {
         header: 'Last Login',
         render: (user) => formatDate(user.lastLogin),
       },
+      {
+        key: 'actions',
+        header: 'Actions',
+        render: (user) =>
+          canModifyUsers ? (
+            <Button variant="ghost" onClick={() => setEditingUser(user)}>
+              Edit
+            </Button>
+          ) : (
+            <span className="text-white/35">Read only</span>
+          ),
+      },
     ],
-    [],
+    [canModifyUsers],
   );
 
   if (!canViewUsers) {
@@ -171,6 +185,17 @@ export default function UsersPage() {
         onCreated={() => queryClient.invalidateQueries({ queryKey: ['tenant-users'] })}
         title="Add Staff User"
         description="Create a church user and grant only the menus and actions they should have."
+      />
+      <UserFormModal
+        isOpen={Boolean(editingUser)}
+        onClose={() => setEditingUser(null)}
+        tenantId={tenantId}
+        allowedCapabilities={capabilities}
+        availableBranches={tenantSettingsQuery.data?.content?.branches || []}
+        user={editingUser}
+        onSaved={() => queryClient.invalidateQueries({ queryKey: ['tenant-users'] })}
+        title="Edit Staff User"
+        description="Update profile details, branch scope, and grants for this church user."
       />
     </AppShell>
   );

@@ -69,12 +69,13 @@ export default function AppointmentsPage() {
     },
   });
 
-  const appointments = appointmentsQuery.data?.items || [];
-  const now = new Date();
-  const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-  const todayEnd = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999);
+  const appointments = useMemo(() => appointmentsQuery.data?.items || [], [appointmentsQuery.data?.items]);
 
   const filteredAppointments = useMemo(() => {
+    const now = new Date();
+    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const todayEnd = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999);
+
     return appointments.filter((appointment) => {
       const scheduledAt = new Date(appointment.scheduledAt);
       if (activeTab === 'today') {
@@ -91,7 +92,7 @@ export default function AppointmentsPage() {
       }
       return true;
     });
-  }, [activeTab, appointments, todayEnd, todayStart]);
+  }, [activeTab, appointments]);
 
   const calendarEvents = useMemo(
     () =>

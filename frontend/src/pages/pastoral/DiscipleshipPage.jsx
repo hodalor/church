@@ -70,8 +70,11 @@ export default function DiscipleshipPage() {
     },
   });
 
-  const enrollments = enrollmentsQuery.data?.items || [];
-  const tracks = tracksQuery.data || [];
+  const enrollments = useMemo(
+    () => enrollmentsQuery.data?.items || [],
+    [enrollmentsQuery.data?.items],
+  );
+  const tracks = useMemo(() => tracksQuery.data || [], [tracksQuery.data]);
 
   const trackStats = useMemo(
     () =>

@@ -16,6 +16,7 @@ export default function SuperAdminUsersPage() {
   const queryClient = useQueryClient();
   const [selectedTenantId, setSelectedTenantId] = useState('');
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [editingUser, setEditingUser] = useState(null);
 
   const tenantsQuery = useQuery({
     queryKey: ['superadmin-users-tenants'],
@@ -110,6 +111,15 @@ export default function SuperAdminUsersPage() {
         header: 'Last Login',
         render: (user) => formatDate(user.lastLogin),
       },
+      {
+        key: 'actions',
+        header: 'Actions',
+        render: (user) => (
+          <Button variant="ghost" onClick={() => setEditingUser(user)}>
+            Edit
+          </Button>
+        ),
+      },
     ],
     [],
   );
@@ -192,6 +202,19 @@ export default function SuperAdminUsersPage() {
         }
         title="Add Staff User"
         description="Create a tenant user and decide exactly which menus and actions they can access."
+      />
+      <UserFormModal
+        isOpen={Boolean(editingUser)}
+        onClose={() => setEditingUser(null)}
+        tenantId={selectedTenantId}
+        allowedCapabilities={selectedTenant?.capabilities || []}
+        availableBranches={tenantSettingsQuery.data?.content?.branches || []}
+        user={editingUser}
+        onSaved={() =>
+          queryClient.invalidateQueries({ queryKey: ['superadmin-users', selectedTenantId] })
+        }
+        title="Edit Staff User"
+        description="Update tenant user details and add or remove grants for this church account."
       />
     </SuperAdminShell>
   );

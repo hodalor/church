@@ -4,29 +4,34 @@ import Modal from '../ui/Modal';
 import Button from '../ui/Button';
 import Input from '../ui/Input';
 import CapabilityMatrix from '../access/CapabilityMatrix';
-import { createUser } from '../../api/endpoints/users';
+import { createUser, updateUser } from '../../api/endpoints/users';
 import {
   getRoleDefaultCapabilities,
   normalizeCapabilities,
   userRoleOptions,
 } from '../../constants/capabilities';
 
-const buildInitialState = (allowedCapabilities = [], defaultRole = 'associate_pastor') => ({
-  username: '',
-  pin: '',
-  role: defaultRole,
-  fullName: '',
-  email: '',
-  phone: '',
-  allBranches: true,
-  assignedBranches: [],
-  memberId: '',
-  photoUrl: '',
-  capabilities: normalizeCapabilities(
-    getRoleDefaultCapabilities(defaultRole),
-    allowedCapabilities,
-  ).filter((capability) => normalizeCapabilities(allowedCapabilities).includes(capability)),
-});
+const buildInitialState = (allowedCapabilities = [], defaultRole = 'associate_pastor', user = null) => {
+  const nextRole = user?.role || defaultRole;
+  const normalizedAllowedCapabilities = normalizeCapabilities(allowedCapabilities);
+
+  return {
+    username: user?.username || '',
+    pin: '',
+    role: nextRole,
+    fullName: user?.fullName || '',
+    email: user?.email || '',
+    phone: user?.phone || '',
+    allBranches: user?.allBranches !== false,
+    assignedBranches: user?.assignedBranches || [],
+    memberId: user?.memberId || '',
+    photoUrl: user?.photoUrl || '',
+    capabilities: normalizeCapabilities(
+      user?.capabilities || getRoleDefaultCapabilities(nextRole),
+      normalizedAllowedCapabilities,
+    ).filter((capability) => normalizedAllowedCapabilities.includes(capability)),
+  };
+};
 
 export default function UserFormModal({
   isOpen,
@@ -38,29 +43,44 @@ export default function UserFormModal({
   description = 'Create a staff account and choose exactly what they can do.',
   defaultRole = 'associate_pastor',
   availableBranches = [],
+  user = null,
+  onSaved,
 }) {
   const normalizedAllowedCapabilities = useMemo(
     () => normalizeCapabilities(allowedCapabilities),
     [allowedCapabilities],
   );
-  const [form, setForm] = useState(buildInitialState(normalizedAllowedCapabilities, defaultRole));
+  const isEditing = Boolean(user?._id);
+  const [form, setForm] = useState(
+    buildInitialState(normalizedAllowedCapabilities, defaultRole, user),
+  );
   const [error, setError] = useState('');
 
   useEffect(() => {
     if (!isOpen) {
-      setForm(buildInitialState(normalizedAllowedCapabilities, defaultRole));
       setError('');
+      return;
     }
-  }, [defaultRole, isOpen, normalizedAllowedCapabilities]);
+
+    setForm(buildInitialState(normalizedAllowedCapabilities, defaultRole, user));
+    setError('');
+  }, [defaultRole, isOpen, normalizedAllowedCapabilities, user]);
 
   const mutation = useMutation({
-    mutationFn: createUser,
+    mutationFn: (payload) =>
+      isEditing
+        ? updateUser(user._id, payload, tenantId ? { tenantId } : undefined)
+        : createUser(payload),
     onSuccess: (data) => {
       onCreated?.(data);
+      onSaved?.(data);
       onClose();
     },
     onError: (mutationError) => {
-      setError(mutationError.response?.data?.message || 'Unable to create user right now.');
+      setError(
+        mutationError.response?.data?.message ||
+          `Unable to ${isEditing ? 'update' : 'create'} user right now.`,
+      );
     },
   });
 
@@ -87,8 +107,13 @@ export default function UserFormModal({
       return;
     }
 
-    if (!form.username.trim() || !form.pin.trim()) {
-      setError('Username and PIN are required.');
+    if (!form.username.trim()) {
+      setError('Username is required.');
+      return;
+    }
+
+    if (!isEditing && !form.pin.trim()) {
+      setError('PIN is required for new users.');
       return;
     }
 
@@ -97,11 +122,20 @@ export default function UserFormModal({
       return;
     }
 
-    mutation.mutate({
-      tenantId,
+    const payload = {
       ...form,
       capabilities: normalizeCapabilities(form.capabilities, normalizedAllowedCapabilities),
-    });
+    };
+
+    if (!isEditing) {
+      payload.tenantId = tenantId;
+    }
+
+    if (isEditing && !form.pin.trim()) {
+      delete payload.pin;
+    }
+
+    mutation.mutate(payload);
   };
 
   return (
@@ -137,7 +171,7 @@ export default function UserFormModal({
                 label="PIN"
                 value={form.pin}
                 onChange={(event) => updateField('pin', event.target.value)}
-                placeholder="0903"
+                placeholder={isEditing ? 'Leave blank to keep current PIN' : '0903'}
               />
               <label className="block space-y-2">
                 <span className="text-sm font-medium text-white/80">Role</span>
@@ -238,7 +272,13 @@ export default function UserFormModal({
               Cancel
             </Button>
             <Button type="submit" variant="secondary" disabled={mutation.isPending}>
-              {mutation.isPending ? 'Creating...' : 'Create Staff User'}
+              {mutation.isPending
+                ? isEditing
+                  ? 'Saving...'
+                  : 'Creating...'
+                : isEditing
+                  ? 'Save Staff User'
+                  : 'Create Staff User'}
             </Button>
           </div>
         </div>
