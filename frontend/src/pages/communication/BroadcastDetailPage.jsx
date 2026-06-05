@@ -9,11 +9,13 @@ import BroadcastStatusBadge from '../../components/communication/BroadcastStatus
 import ChannelIcons from '../../components/communication/ChannelIcons';
 import DeliveryRateBar from '../../components/communication/DeliveryRateBar';
 import { cancelBroadcast, getBroadcastById, getBroadcastLogs, resendFailedBroadcast } from '../../api/endpoints/communication';
+import { useCommunicationAccess } from '../../hooks/useCommunicationAccess';
 import { formatDate } from '../../utils/formatDate';
 
 export default function BroadcastDetailPage() {
   const { broadcastId } = useParams();
   const queryClient = useQueryClient();
+  const { canViewBroadcasts, canSendBroadcasts } = useCommunicationAccess();
   const detailQuery = useQuery({
     queryKey: ['communication-broadcast', broadcastId],
     queryFn: () => getBroadcastById(broadcastId),
@@ -42,6 +44,20 @@ export default function BroadcastDetailPage() {
   const broadcast = detailQuery.data;
   const logs = logsQuery.data?.items || [];
 
+  if (!canViewBroadcasts) {
+    return (
+      <AppShell>
+        <Card>
+          <p className="text-sm uppercase tracking-[0.22em] text-accent">Communication</p>
+          <h1 className="mt-3 text-2xl font-semibold text-white">Access limited</h1>
+          <p className="mt-3 text-sm text-white/60">
+            Your account does not currently have access to this broadcast.
+          </p>
+        </Card>
+      </AppShell>
+    );
+  }
+
   const logColumns = [
     { key: 'recipientName', header: 'Recipient' },
     { key: 'contact', header: 'Contact', render: (row) => row.phone || row.email || 'N/A' },
@@ -63,14 +79,16 @@ export default function BroadcastDetailPage() {
           title="Broadcast Detail"
           action={
             <div className="flex flex-wrap gap-2">
-              {broadcast?.status === 'scheduled' ? (
+              {broadcast?.status === 'scheduled' && canSendBroadcasts ? (
                 <Button variant="ghost" onClick={() => cancelMutation.mutate()}>
                   Cancel
                 </Button>
               ) : null}
-              <Button variant="secondary" onClick={() => resendMutation.mutate()}>
-                Resend to Failed
-              </Button>
+              {canSendBroadcasts ? (
+                <Button variant="secondary" onClick={() => resendMutation.mutate()}>
+                  Resend to Failed
+                </Button>
+              ) : null}
             </div>
           }
         />

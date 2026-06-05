@@ -16,12 +16,15 @@ import {
   duplicateBroadcast,
   getBroadcasts,
 } from '../../api/endpoints/communication';
+import { useCommunicationAccess } from '../../hooks/useCommunicationAccess';
 import { formatDate } from '../../utils/formatDate';
 
 const tabs = ['all', 'sent', 'scheduled', 'draft', 'failed'];
 
 export default function BroadcastsPage() {
   const queryClient = useQueryClient();
+  const { canViewBroadcasts, canCreateBroadcasts, canSendBroadcasts, canDeleteCommunication } =
+    useCommunicationAccess();
   const [searchParams, setSearchParams] = useSearchParams();
   const page = Number(searchParams.get('page') || 1);
   const status = searchParams.get('status') || 'all';
@@ -67,6 +70,20 @@ export default function BroadcastsPage() {
   };
 
   const items = broadcastsQuery.data?.items || [];
+
+  if (!canViewBroadcasts) {
+    return (
+      <AppShell>
+        <Card>
+          <p className="text-sm uppercase tracking-[0.22em] text-accent">Communication</p>
+          <h1 className="mt-3 text-2xl font-semibold text-white">Access limited</h1>
+          <p className="mt-3 text-sm text-white/60">
+            Your account does not currently have access to broadcasts.
+          </p>
+        </Card>
+      </AppShell>
+    );
+  }
 
   const columns = [
     { key: 'title', header: 'Title' },
@@ -117,20 +134,22 @@ export default function BroadcastsPage() {
           <Link to={`/communication/broadcasts/${row._id}`}>
             <Button variant="subtle">View</Button>
           </Link>
-          {row.status === 'draft' ? (
+          {row.status === 'draft' && canCreateBroadcasts ? (
             <Link to={`/communication/broadcasts/new?duplicate=${row._id}`}>
               <Button variant="ghost">Edit</Button>
             </Link>
           ) : null}
-          {row.status === 'scheduled' ? (
+          {row.status === 'scheduled' && canSendBroadcasts ? (
             <Button variant="ghost" onClick={() => cancelMutation.mutate(row._id)}>
               Cancel
             </Button>
           ) : null}
-          <Button variant="ghost" onClick={() => duplicateMutation.mutate(row._id)}>
-            Duplicate
-          </Button>
-          {row.status === 'draft' ? (
+          {canCreateBroadcasts ? (
+            <Button variant="ghost" onClick={() => duplicateMutation.mutate(row._id)}>
+              Duplicate
+            </Button>
+          ) : null}
+          {row.status === 'draft' && canDeleteCommunication ? (
             <Button variant="ghost" onClick={() => deleteMutation.mutate(row._id)}>
               Delete
             </Button>
@@ -146,9 +165,11 @@ export default function BroadcastsPage() {
         <PageHeader
           title="Broadcasts"
           action={
-            <Link to="/communication/broadcasts/new">
-              <Button variant="secondary">+ New Broadcast</Button>
-            </Link>
+            canCreateBroadcasts ? (
+              <Link to="/communication/broadcasts/new">
+                <Button variant="secondary">+ New Broadcast</Button>
+              </Link>
+            ) : null
           }
         />
 

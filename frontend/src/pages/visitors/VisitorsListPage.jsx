@@ -17,12 +17,24 @@ import {
   getVisitors,
   updateVisitorStage,
 } from '../../api/endpoints/visitors';
+import { useCommunicationAccess } from '../../hooks/useCommunicationAccess';
+import useVisitorsAccess from '../../hooks/useVisitorsAccess';
 import { createCsv, VISITOR_STAGE_ORDER } from '../../utils/visitors';
 import { formatDate } from '../../utils/formatDate';
 
 export default function VisitorsListPage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const {
+    canOpenList,
+    canAssignVisitors,
+    canMoveVisitors,
+    canConvertVisitors,
+    canOpenPipeline,
+    canOpenRegister,
+    canExportVisitors,
+  } = useVisitorsAccess();
+  const { canCreateBroadcasts } = useCommunicationAccess();
   const [searchParams, setSearchParams] = useSearchParams();
   const [selectedIds, setSelectedIds] = useState([]);
   const [bulkLeaderId, setBulkLeaderId] = useState('');
@@ -46,6 +58,7 @@ export default function VisitorsListPage() {
   const leadersQuery = useQuery({
     queryKey: ['visitor-care-leaders'],
     queryFn: getVisitorAssignableLeaders,
+    enabled: canAssignVisitors,
   });
 
   const refreshVisitors = () => {
@@ -92,6 +105,7 @@ export default function VisitorsListPage() {
 
   const items = useMemo(() => visitorsQuery.data?.items || [], [visitorsQuery.data?.items]);
   const allSelectedOnPage = items.length > 0 && items.every((visitor) => selectedIds.includes(visitor.id));
+  const canSelectRows = canAssignVisitors || canCreateBroadcasts;
 
   const exportRows = useMemo(
     () =>
@@ -108,7 +122,8 @@ export default function VisitorsListPage() {
   );
 
   const columns = [
-    {
+    ...(canSelectRows
+      ? [{
       key: 'select',
       header: (
         <input
@@ -134,7 +149,8 @@ export default function VisitorsListPage() {
           }
         />
       ),
-    },
+    }]
+      : []),
     {
       key: 'name',
       header: 'Photo + Name',
@@ -194,24 +210,42 @@ export default function VisitorsListPage() {
           <Link to={`/visitors/${visitor.id}`}>
             <Button variant="subtle">View</Button>
           </Link>
-          <select
-            value={visitor.stage}
-            onChange={(event) => stageMutation.mutate({ visitorId: visitor.id, stage: event.target.value })}
-            className="rounded-xl border border-white/10 bg-[#101827] px-3 py-2 text-xs text-white outline-none"
-          >
-            {VISITOR_STAGE_ORDER.map((stage) => (
-              <option key={stage} value={stage}>
-                {stage.replaceAll('_', ' ')}
-              </option>
-            ))}
-          </select>
-          <Button variant="secondary" onClick={() => setConvertingVisitor(visitor)}>
-            Convert
-          </Button>
+          {canMoveVisitors ? (
+            <select
+              value={visitor.stage}
+              onChange={(event) => stageMutation.mutate({ visitorId: visitor.id, stage: event.target.value })}
+              className="rounded-xl border border-white/10 bg-[#101827] px-3 py-2 text-xs text-white outline-none"
+            >
+              {VISITOR_STAGE_ORDER.map((stage) => (
+                <option key={stage} value={stage}>
+                  {stage.replaceAll('_', ' ')}
+                </option>
+              ))}
+            </select>
+          ) : null}
+          {canConvertVisitors ? (
+            <Button variant="secondary" onClick={() => setConvertingVisitor(visitor)}>
+              Convert
+            </Button>
+          ) : null}
         </div>
       ),
     },
   ];
+
+  if (!canOpenList) {
+    return (
+      <AppShell>
+        <Card>
+          <p className="text-sm uppercase tracking-[0.22em] text-accent">Visitors</p>
+          <h1 className="mt-3 text-2xl font-semibold text-white">Access limited</h1>
+          <p className="mt-3 text-sm text-white/60">
+            Your account does not currently have access to the visitor list.
+          </p>
+        </Card>
+      </AppShell>
+    );
+  }
 
   return (
     <AppShell>
@@ -222,12 +256,16 @@ export default function VisitorsListPage() {
             <h1 className="mt-2 text-2xl font-semibold text-white">Visitors List</h1>
           </div>
           <div className="flex flex-wrap gap-3">
-            <Link to="/visitors/pipeline">
-              <Button variant="ghost">Open Pipeline</Button>
-            </Link>
-            <Link to="/visitors/register">
-              <Button variant="secondary">+ Register Visitor</Button>
-            </Link>
+            {canOpenPipeline ? (
+              <Link to="/visitors/pipeline">
+                <Button variant="ghost">Open Pipeline</Button>
+              </Link>
+            ) : null}
+            {canOpenRegister ? (
+              <Link to="/visitors/register">
+                <Button variant="secondary">+ Register Visitor</Button>
+              </Link>
+            ) : null}
           </div>
         </div>
 
@@ -275,48 +313,56 @@ export default function VisitorsListPage() {
         <Card className="space-y-4">
           <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
             <div className="flex flex-wrap gap-3">
-              <select
-                value={bulkLeaderId}
-                onChange={(event) => setBulkLeaderId(event.target.value)}
-                className="rounded-xl border border-white/10 bg-[#101827] px-4 py-2.5 text-sm text-white outline-none"
-              >
-                <option value="">Bulk assign to care leader</option>
-                {(leadersQuery.data || []).map((leader) => (
-                  <option key={leader.id} value={leader.id}>
-                    {leader.name}
-                  </option>
-                ))}
-              </select>
-              <Button
-                variant="secondary"
-                disabled={!selectedIds.length || !bulkLeaderId || assignMutation.isPending}
-                onClick={() => assignMutation.mutate({ visitorIds: selectedIds, leaderId: bulkLeaderId })}
-              >
-                Bulk Assign
-              </Button>
-              <Button
-                variant="ghost"
-                disabled={!items.length}
-                onClick={() => {
-                  const csv = createCsv(exportRows);
-                  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-                  const url = URL.createObjectURL(blob);
-                  const link = document.createElement('a');
-                  link.href = url;
-                  link.download = 'visitors-export.csv';
-                  link.click();
-                  URL.revokeObjectURL(url);
-                }}
-              >
-                Bulk Export CSV
-              </Button>
-              <Button
-                variant="ghost"
-                disabled={!selectedIds.length}
-                onClick={() => navigate(`/communication/broadcasts/new?audience=visitors&ids=${selectedIds.join(',')}`)}
-              >
-                Bulk Send Message
-              </Button>
+              {canAssignVisitors ? (
+                <>
+                  <select
+                    value={bulkLeaderId}
+                    onChange={(event) => setBulkLeaderId(event.target.value)}
+                    className="rounded-xl border border-white/10 bg-[#101827] px-4 py-2.5 text-sm text-white outline-none"
+                  >
+                    <option value="">Bulk assign to care leader</option>
+                    {(leadersQuery.data || []).map((leader) => (
+                      <option key={leader.id} value={leader.id}>
+                        {leader.name}
+                      </option>
+                    ))}
+                  </select>
+                  <Button
+                    variant="secondary"
+                    disabled={!selectedIds.length || !bulkLeaderId || assignMutation.isPending}
+                    onClick={() => assignMutation.mutate({ visitorIds: selectedIds, leaderId: bulkLeaderId })}
+                  >
+                    Bulk Assign
+                  </Button>
+                </>
+              ) : null}
+              {canExportVisitors ? (
+                <Button
+                  variant="ghost"
+                  disabled={!items.length}
+                  onClick={() => {
+                    const csv = createCsv(exportRows);
+                    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+                    const url = URL.createObjectURL(blob);
+                    const link = document.createElement('a');
+                    link.href = url;
+                    link.download = 'visitors-export.csv';
+                    link.click();
+                    URL.revokeObjectURL(url);
+                  }}
+                >
+                  Bulk Export CSV
+                </Button>
+              ) : null}
+              {canCreateBroadcasts ? (
+                <Button
+                  variant="ghost"
+                  disabled={!selectedIds.length}
+                  onClick={() => navigate(`/communication/broadcasts/new?audience=visitors&ids=${selectedIds.join(',')}`)}
+                >
+                  Bulk Send Message
+                </Button>
+              ) : null}
             </div>
             <p className="text-sm text-white/45">{selectedIds.length} selected</p>
           </div>
@@ -330,18 +376,20 @@ export default function VisitorsListPage() {
         </Card>
       </div>
 
-      <ConversionModal
-        isOpen={Boolean(convertingVisitor)}
-        visitor={convertingVisitor}
-        onClose={() => setConvertingVisitor(null)}
-        isLoading={convertMutation.isPending}
-        onConvert={(payload) =>
-          convertMutation.mutate({
-            visitorId: convertingVisitor.id,
-            payload,
-          })
-        }
-      />
+      {canConvertVisitors ? (
+        <ConversionModal
+          isOpen={Boolean(convertingVisitor)}
+          visitor={convertingVisitor}
+          onClose={() => setConvertingVisitor(null)}
+          isLoading={convertMutation.isPending}
+          onConvert={(payload) =>
+            convertMutation.mutate({
+              visitorId: convertingVisitor.id,
+              payload,
+            })
+          }
+        />
+      ) : null}
     </AppShell>
   );
 }

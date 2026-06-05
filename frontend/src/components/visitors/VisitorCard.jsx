@@ -9,6 +9,9 @@ export default function VisitorCard({
   onView,
   onCompleteFollowUp,
   onConvert,
+  canDrag = true,
+  canOpenFollowUp = true,
+  canConvert = true,
 }) {
   return (
     <div className="space-y-3 rounded-2xl border border-white/10 bg-[#0b1120] p-3 shadow-[0_12px_24px_rgba(0,0,0,0.18)]">
@@ -27,13 +30,15 @@ export default function VisitorCard({
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <button
-            type="button"
-            className="rounded-lg border border-white/10 bg-white/5 p-1.5 text-white/55"
-            {...dragHandleProps}
-          >
-            <GripVertical className="h-4 w-4" />
-          </button>
+          {canDrag ? (
+            <button
+              type="button"
+              className="rounded-lg border border-white/10 bg-white/5 p-1.5 text-white/55"
+              {...dragHandleProps}
+            >
+              <GripVertical className="h-4 w-4" />
+            </button>
+          ) : null}
           <MoreHorizontal className="h-4 w-4 text-white/35" />
         </div>
       </div>
@@ -62,12 +67,20 @@ export default function VisitorCard({
         <Button variant="subtle" className="px-2 py-2 text-xs" onClick={() => onView?.(visitor)}>
           View
         </Button>
-        <Button variant="ghost" className="px-2 py-2 text-xs" onClick={() => onCompleteFollowUp?.(visitor)}>
-          Follow-up
-        </Button>
-        <Button variant="secondary" className="px-2 py-2 text-xs" onClick={() => onConvert?.(visitor)}>
-          Convert
-        </Button>
+        {canOpenFollowUp ? (
+          <Button variant="ghost" className="px-2 py-2 text-xs" onClick={() => onCompleteFollowUp?.(visitor)}>
+            Follow-up
+          </Button>
+        ) : (
+          <div />
+        )}
+        {canConvert ? (
+          <Button variant="secondary" className="px-2 py-2 text-xs" onClick={() => onConvert?.(visitor)}>
+            Convert
+          </Button>
+        ) : (
+          <div />
+        )}
       </div>
     </div>
   );

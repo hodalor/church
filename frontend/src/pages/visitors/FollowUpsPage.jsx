@@ -10,6 +10,7 @@ import {
   getVisitorFollowUps,
   rescheduleVisitorFollowUp,
 } from '../../api/endpoints/visitors';
+import useVisitorsAccess from '../../hooks/useVisitorsAccess';
 import { FOLLOW_UP_METHOD_OPTIONS, FOLLOW_UP_OUTCOME_OPTIONS } from '../../utils/visitors';
 import { formatDate } from '../../utils/formatDate';
 
@@ -17,6 +18,7 @@ const filterTabs = ['my', 'all', 'overdue', 'today', 'upcoming'];
 
 export default function FollowUpsPage() {
   const queryClient = useQueryClient();
+  const { canOpenFollowUps, canCompleteFollowUps, canRescheduleFollowUps } = useVisitorsAccess();
   const [activeTab, setActiveTab] = useState('all');
   const [selectedItem, setSelectedItem] = useState(null);
   const [showCompleteModal, setShowCompleteModal] = useState(false);
@@ -84,6 +86,20 @@ export default function FollowUpsPage() {
     }
   }, [activeTab, followUpsQuery.data]);
 
+  if (!canOpenFollowUps) {
+    return (
+      <AppShell>
+        <Card>
+          <p className="text-sm uppercase tracking-[0.22em] text-accent">Visitors</p>
+          <h1 className="mt-3 text-2xl font-semibold text-white">Access limited</h1>
+          <p className="mt-3 text-sm text-white/60">
+            Your account does not currently have access to visitor follow-ups.
+          </p>
+        </Card>
+      </AppShell>
+    );
+  }
+
   return (
     <AppShell>
       <div className="space-y-6">
@@ -111,6 +127,8 @@ export default function FollowUpsPage() {
           title="Overdue"
           toneClassName="border-rose-400/20 bg-rose-500/8"
           items={grouped.overdue}
+          canComplete={canCompleteFollowUps}
+          canReschedule={canRescheduleFollowUps}
           onComplete={(item) => {
             setSelectedItem(item);
             setShowCompleteModal(true);
@@ -130,6 +148,8 @@ export default function FollowUpsPage() {
           title="Today"
           toneClassName="border-amber-400/20 bg-amber-500/8"
           items={grouped.today}
+          canComplete={canCompleteFollowUps}
+          canReschedule={canRescheduleFollowUps}
           onComplete={(item) => {
             setSelectedItem(item);
             setShowCompleteModal(true);
@@ -149,6 +169,8 @@ export default function FollowUpsPage() {
           title="Upcoming"
           toneClassName="border-white/10 bg-white/[0.03]"
           items={grouped.upcoming}
+          canComplete={canCompleteFollowUps}
+          canReschedule={canRescheduleFollowUps}
           onComplete={(item) => {
             setSelectedItem(item);
             setShowCompleteModal(true);
@@ -231,7 +253,11 @@ export default function FollowUpsPage() {
             <Button variant="ghost" onClick={() => setShowCompleteModal(false)}>
               Cancel
             </Button>
-            <Button variant="secondary" onClick={() => completeMutation.mutate()} disabled={!selectedItem || completeMutation.isPending}>
+            <Button
+              variant="secondary"
+              onClick={() => completeMutation.mutate()}
+              disabled={!selectedItem || completeMutation.isPending || !canCompleteFollowUps}
+            >
               {completeMutation.isPending ? 'Saving...' : 'Save Outcome'}
             </Button>
           </div>
@@ -278,7 +304,11 @@ export default function FollowUpsPage() {
             <Button variant="ghost" onClick={() => setShowRescheduleModal(false)}>
               Cancel
             </Button>
-            <Button variant="secondary" onClick={() => rescheduleMutation.mutate()} disabled={!selectedItem || rescheduleMutation.isPending}>
+            <Button
+              variant="secondary"
+              onClick={() => rescheduleMutation.mutate()}
+              disabled={!selectedItem || rescheduleMutation.isPending || !canRescheduleFollowUps}
+            >
               {rescheduleMutation.isPending ? 'Saving...' : 'Reschedule'}
             </Button>
           </div>
@@ -288,7 +318,7 @@ export default function FollowUpsPage() {
   );
 }
 
-function FollowUpSection({ title, toneClassName, items, onComplete, onReschedule }) {
+function FollowUpSection({ title, toneClassName, items, onComplete, onReschedule, canComplete, canReschedule }) {
   return (
     <Card className={`space-y-4 ${toneClassName}`}>
       <div className="flex items-center justify-between">
@@ -314,12 +344,16 @@ function FollowUpSection({ title, toneClassName, items, onComplete, onReschedule
                 </p>
               </div>
               <div className="flex flex-wrap gap-2">
-                <Button variant="secondary" onClick={() => onComplete(item)}>
-                  Mark Complete
-                </Button>
-                <Button variant="ghost" onClick={() => onReschedule(item)}>
-                  Reschedule
-                </Button>
+                {canComplete ? (
+                  <Button variant="secondary" onClick={() => onComplete(item)}>
+                    Mark Complete
+                  </Button>
+                ) : null}
+                {canReschedule ? (
+                  <Button variant="ghost" onClick={() => onReschedule(item)}>
+                    Reschedule
+                  </Button>
+                ) : null}
               </div>
             </div>
           ))}

@@ -7,6 +7,7 @@ import Card from '../../components/ui/Card';
 import PageHeader from '../../components/ui/PageHeader';
 import Pagination from '../../components/ui/Pagination';
 import { deleteService, getServices } from '../../api/endpoints/attendance';
+import useAttendanceAccess from '../../hooks/useAttendanceAccess';
 
 const tabs = [
   { label: 'Upcoming', value: 'upcoming' },
@@ -17,6 +18,8 @@ const tabs = [
 export default function ServicesPage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const { canViewServices, canCreateServices, canCheckInServices, canModifyServices, canDeleteServices } =
+    useAttendanceAccess();
   const [searchParams, setSearchParams] = useSearchParams();
   const page = Number(searchParams.get('page') || 1);
   const tab = searchParams.get('tab') || 'upcoming';
@@ -61,6 +64,20 @@ export default function ServicesPage() {
     setSearchParams(next);
   };
 
+  if (!canViewServices) {
+    return (
+      <AppShell>
+        <Card>
+          <p className="text-sm uppercase tracking-[0.22em] text-accent">Attendance</p>
+          <h1 className="mt-3 text-2xl font-semibold text-white">Access limited</h1>
+          <p className="mt-3 text-sm text-white/60">
+            Your account does not currently have access to attendance services.
+          </p>
+        </Card>
+      </AppShell>
+    );
+  }
+
   return (
     <AppShell>
       <div className="space-y-6">
@@ -68,9 +85,11 @@ export default function ServicesPage() {
           title="Services"
           subtitle="Create services, open check-in, and review attendance outcomes across branches."
           action={
-            <Link to="/attendance/services/new">
-              <Button variant="secondary">+ Create Service</Button>
-            </Link>
+            canCreateServices ? (
+              <Link to="/attendance/services/new">
+                <Button variant="secondary">+ Create Service</Button>
+              </Link>
+            ) : null
           }
         />
 
@@ -146,6 +165,9 @@ export default function ServicesPage() {
                     deleteMutation.mutate(serviceId);
                   }
                 }}
+                canOpenCheckIn={canCheckInServices}
+                canEdit={canModifyServices}
+                canDelete={canDeleteServices}
               />
             ))}
           </div>

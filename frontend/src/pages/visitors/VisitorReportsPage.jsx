@@ -17,10 +17,12 @@ import AppShell from '../../components/layout/AppShell';
 import FunnelChart from '../../components/visitors/FunnelChart';
 import Card from '../../components/ui/Card';
 import { getVisitorReports } from '../../api/endpoints/visitors';
+import useVisitorsAccess from '../../hooks/useVisitorsAccess';
 
 const tabs = ['funnel', 'analysis', 'satisfaction', 'referrals'];
 
 export default function VisitorReportsPage() {
+  const { canOpenReports } = useVisitorsAccess();
   const [activeTab, setActiveTab] = useState('funnel');
   const reportsQuery = useQuery({
     queryKey: ['visitor-reports'],
@@ -28,6 +30,20 @@ export default function VisitorReportsPage() {
   });
 
   const reports = reportsQuery.data;
+
+  if (!canOpenReports) {
+    return (
+      <AppShell>
+        <Card>
+          <p className="text-sm uppercase tracking-[0.22em] text-accent">Visitors</p>
+          <h1 className="mt-3 text-2xl font-semibold text-white">Access limited</h1>
+          <p className="mt-3 text-sm text-white/60">
+            Your account does not currently have access to visitor reports.
+          </p>
+        </Card>
+      </AppShell>
+    );
+  }
 
   return (
     <AppShell>

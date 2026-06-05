@@ -10,7 +10,7 @@ import { getCommunicationDashboard } from '../../api/endpoints/communication';
 import { useCommunicationAccess } from '../../hooks/useCommunicationAccess';
 
 export default function CommunicationDashboard() {
-  const { canViewCommunication, canCreateCommunication } = useCommunicationAccess();
+  const { canViewCommunication, canCreateBroadcasts, canCreatePolls } = useCommunicationAccess();
   const dashboardQuery = useQuery({
     queryKey: ['communication-dashboard'],
     queryFn: () => getCommunicationDashboard(),
@@ -45,14 +45,18 @@ export default function CommunicationDashboard() {
         <PageHeader
           title="Communication"
           action={
-            canCreateCommunication ? (
+            canCreateBroadcasts || canCreatePolls ? (
               <div className="flex flex-wrap gap-2">
-                <Link to="/communication/broadcasts/new">
-                  <Button variant="secondary">+ New Broadcast</Button>
-                </Link>
-                <Link to="/communication/polls/new">
-                  <Button variant="subtle">+ New Poll</Button>
-                </Link>
+                {canCreateBroadcasts ? (
+                  <Link to="/communication/broadcasts/new">
+                    <Button variant="secondary">+ New Broadcast</Button>
+                  </Link>
+                ) : null}
+                {canCreatePolls ? (
+                  <Link to="/communication/polls/new">
+                    <Button variant="subtle">+ New Poll</Button>
+                  </Link>
+                ) : null}
               </div>
             ) : null
           }

@@ -4,11 +4,13 @@ import Card from '../../components/ui/Card';
 import Button from '../../components/ui/Button';
 import PageHeader from '../../components/ui/PageHeader';
 import { getInbox } from '../../api/endpoints/communication';
+import { useCommunicationAccess } from '../../hooks/useCommunicationAccess';
 import { markAllNotificationsRead, markNotificationRead } from '../../api/endpoints/notifications';
 import { formatDate } from '../../utils/formatDate';
 
 export default function InboxPage() {
   const queryClient = useQueryClient();
+  const { canViewInbox } = useCommunicationAccess();
   const inboxQuery = useQuery({
     queryKey: ['communication-inbox'],
     queryFn: () => getInbox({ limit: 30 }),
@@ -26,6 +28,20 @@ export default function InboxPage() {
 
   const payload = inboxQuery.data || {};
   const items = payload.items || [];
+
+  if (!canViewInbox) {
+    return (
+      <AppShell>
+        <Card>
+          <p className="text-sm uppercase tracking-[0.22em] text-accent">Communication</p>
+          <h1 className="mt-3 text-2xl font-semibold text-white">Access limited</h1>
+          <p className="mt-3 text-sm text-white/60">
+            Your account does not currently have access to inbox messages.
+          </p>
+        </Card>
+      </AppShell>
+    );
+  }
 
   return (
     <AppShell>

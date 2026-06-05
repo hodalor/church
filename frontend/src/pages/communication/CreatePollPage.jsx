@@ -8,9 +8,11 @@ import Input from '../../components/ui/Input';
 import RouteModal from '../../components/ui/RouteModal';
 import AudienceSelector from '../../components/communication/AudienceSelector';
 import { createPoll } from '../../api/endpoints/communication';
+import { useCommunicationAccess } from '../../hooks/useCommunicationAccess';
 
 export default function CreatePollPage() {
   const navigate = useNavigate();
+  const { canCreatePolls } = useCommunicationAccess();
   const [question, setQuestion] = useState('');
   const [options, setOptions] = useState([
     { id: 'option-1', text: '' },
@@ -37,7 +39,16 @@ export default function CreatePollPage() {
         fallbackPath="/communication/polls"
         size="xl"
       >
-        <div className="grid gap-6 xl:grid-cols-[1.25fr_0.95fr]">
+        {!canCreatePolls ? (
+          <Card>
+            <p className="text-sm uppercase tracking-[0.22em] text-accent">Communication</p>
+            <h1 className="mt-3 text-2xl font-semibold text-white">Access limited</h1>
+            <p className="mt-3 text-sm text-white/60">
+              Your account does not currently have permission to create polls.
+            </p>
+          </Card>
+        ) : null}
+        {canCreatePolls ? <div className="grid gap-6 xl:grid-cols-[1.25fr_0.95fr]">
           <Card className="space-y-4">
             <Input label="Question" value={question} onChange={(event) => setQuestion(event.target.value)} placeholder="What day works best for the outreach?" />
 
@@ -109,7 +120,7 @@ export default function CreatePollPage() {
               Submit Poll
             </Button>
           </Card>
-        </div>
+        </div> : null}
       </RouteModal>
     </AppShell>
   );

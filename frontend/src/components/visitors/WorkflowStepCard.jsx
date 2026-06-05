@@ -11,33 +11,44 @@ export default function WorkflowStepCard({
   onAddAction,
   onRemoveAction,
   onRemoveStep,
+  readOnly = false,
 }) {
   return (
     <div className="space-y-4 rounded-3xl border border-white/10 bg-[#0d1320] p-4">
       <div className="flex items-start justify-between gap-3">
         <div className="flex items-center gap-3">
-          <button type="button" className="rounded-xl border border-white/10 bg-white/5 p-2 text-white/55" {...dragHandleProps}>
-            <GripVertical className="h-4 w-4" />
-          </button>
+          {!readOnly ? (
+            <button
+              type="button"
+              className="rounded-xl border border-white/10 bg-white/5 p-2 text-white/55"
+              {...dragHandleProps}
+            >
+              <GripVertical className="h-4 w-4" />
+            </button>
+          ) : null}
           <div>
             <p className="text-xs uppercase tracking-[0.2em] text-white/45">Step {index + 1}</p>
             <input
               value={step.name}
+              disabled={readOnly}
               onChange={(event) => onChange({ ...step, name: event.target.value })}
               className="mt-1 w-full bg-transparent text-lg font-semibold text-white outline-none"
             />
           </div>
         </div>
-        <Button variant="ghost" onClick={() => onRemoveStep(step.id)}>
-          <Trash2 className="mr-2 h-4 w-4" />
-          Remove Step
-        </Button>
+        {!readOnly ? (
+          <Button variant="ghost" onClick={() => onRemoveStep(step.id)}>
+            <Trash2 className="mr-2 h-4 w-4" />
+            Remove Step
+          </Button>
+        ) : null}
       </div>
 
       <Input
         label="Trigger: Day X after first visit"
         type="number"
         value={step.day}
+        disabled={readOnly}
         onChange={(event) => onChange({ ...step, day: Number(event.target.value || 0) })}
       />
 
@@ -48,6 +59,7 @@ export default function WorkflowStepCard({
               <span className="text-sm font-medium text-white/75">Action Type</span>
               <select
                 value={action.type}
+                disabled={readOnly}
                 onChange={(event) =>
                   onChange({
                     ...step,
@@ -71,6 +83,7 @@ export default function WorkflowStepCard({
                 <Input
                   label="Channel"
                   value={action.channel || ''}
+                  disabled={readOnly}
                   onChange={(event) =>
                     onChange({
                       ...step,
@@ -83,6 +96,7 @@ export default function WorkflowStepCard({
                 <Input
                   label="Template"
                   value={action.template || ''}
+                  disabled={readOnly}
                   onChange={(event) =>
                     onChange({
                       ...step,
@@ -97,6 +111,7 @@ export default function WorkflowStepCard({
                   <textarea
                     rows={3}
                     value={action.preview || ''}
+                    disabled={readOnly}
                     onChange={(event) =>
                       onChange({
                         ...step,
@@ -117,6 +132,7 @@ export default function WorkflowStepCard({
                   <span className="text-sm font-medium text-white/75">Method</span>
                   <select
                     value={action.method || ''}
+                    disabled={readOnly}
                     onChange={(event) =>
                       onChange({
                         ...step,
@@ -137,6 +153,7 @@ export default function WorkflowStepCard({
                 <Input
                   label="Note Template"
                   value={action.noteTemplate || ''}
+                  disabled={readOnly}
                   onChange={(event) =>
                     onChange({
                       ...step,
@@ -154,6 +171,7 @@ export default function WorkflowStepCard({
                 <Input
                   label="Urgency"
                   value={action.urgency || ''}
+                  disabled={readOnly}
                   onChange={(event) =>
                     onChange({
                       ...step,
@@ -166,6 +184,7 @@ export default function WorkflowStepCard({
                 <Input
                   label="Message"
                   value={action.message || ''}
+                  disabled={readOnly}
                   onChange={(event) =>
                     onChange({
                       ...step,
@@ -182,6 +201,7 @@ export default function WorkflowStepCard({
               <Input
                 label="Role Selector"
                 value={action.role || ''}
+                disabled={readOnly}
                 onChange={(event) =>
                   onChange({
                     ...step,
@@ -197,6 +217,7 @@ export default function WorkflowStepCard({
               <Input
                 label="Channel"
                 value={action.channel || ''}
+                disabled={readOnly}
                 onChange={(event) =>
                   onChange({
                     ...step,
@@ -209,18 +230,22 @@ export default function WorkflowStepCard({
             ) : null}
 
             <div className="md:col-span-2">
-              <Button variant="ghost" onClick={() => onRemoveAction(step.id, action.id)}>
-                Remove Action
-              </Button>
+              {!readOnly ? (
+                <Button variant="ghost" onClick={() => onRemoveAction(step.id, action.id)}>
+                  Remove Action
+                </Button>
+              ) : null}
             </div>
           </div>
         ))}
       </div>
 
-      <Button variant="subtle" onClick={() => onAddAction(step.id)}>
-        <Plus className="mr-2 h-4 w-4" />
-        Add Action
-      </Button>
+      {!readOnly ? (
+        <Button variant="subtle" onClick={() => onAddAction(step.id)}>
+          <Plus className="mr-2 h-4 w-4" />
+          Add Action
+        </Button>
+      ) : null}
     </div>
   );
 }

@@ -10,6 +10,7 @@ import {
   getServiceById,
   updateService,
 } from '../../api/endpoints/attendance';
+import useAttendanceAccess from '../../hooks/useAttendanceAccess';
 import { serviceTitleSuggestions, serviceTypeOptions } from '../../utils/attendance';
 
 const createInitialForm = () => ({
@@ -26,6 +27,7 @@ const createInitialForm = () => ({
 
 export default function CreateServicePage() {
   const navigate = useNavigate();
+  const { canCreateServices, canModifyServices, canCheckInServices } = useAttendanceAccess();
   const [searchParams] = useSearchParams();
   const serviceId = searchParams.get('serviceId');
   const [form, setForm] = useState(createInitialForm());
@@ -78,6 +80,8 @@ export default function CreateServicePage() {
     navigate(openCheckIn ? `/attendance/check-in/${nextId}` : `/attendance/services/${nextId || ''}`);
   };
 
+  const canSavePage = serviceId ? canModifyServices : canCreateServices;
+
   return (
     <RouteModal
       title={serviceId ? 'Edit Service' : 'Create Service'}
@@ -86,7 +90,17 @@ export default function CreateServicePage() {
       size="lg"
     >
       <div className="space-y-5">
-        <Card className="space-y-4">
+        {!canSavePage ? (
+          <Card>
+            <p className="text-sm uppercase tracking-[0.22em] text-accent">Attendance</p>
+            <h1 className="mt-3 text-2xl font-semibold text-white">Access limited</h1>
+            <p className="mt-3 text-sm text-white/60">
+              Your account does not currently have permission to {serviceId ? 'edit' : 'create'} services.
+            </p>
+          </Card>
+        ) : null}
+
+        {canSavePage ? <Card className="space-y-4">
           <div className="flex flex-wrap gap-2">
             {serviceTitleSuggestions.map((suggestion) => (
               <button
@@ -171,19 +185,23 @@ export default function CreateServicePage() {
               placeholder="Service notes, emphasis, and check-in reminders"
             />
           </label>
-        </Card>
+        </Card> : null}
 
-        <div className="flex flex-wrap justify-end gap-2">
+        {canSavePage ? <div className="flex flex-wrap justify-end gap-2">
           <Button variant="subtle" onClick={() => navigate('/attendance/services')}>
             Cancel
           </Button>
           <Button variant="ghost" onClick={() => handleSave(false)} disabled={saveMutation.isPending}>
             Save Service
           </Button>
-          <Button variant="secondary" onClick={() => handleSave(true)} disabled={saveMutation.isPending}>
+          <Button
+            variant="secondary"
+            onClick={() => handleSave(true)}
+            disabled={saveMutation.isPending || !canCheckInServices}
+          >
             Save &amp; Open Check-in
           </Button>
-        </div>
+        </div> : null}
       </div>
     </RouteModal>
   );

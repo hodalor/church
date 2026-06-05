@@ -13,11 +13,14 @@ import {
   getVisitorPipeline,
   updateVisitorStage,
 } from '../../api/endpoints/visitors';
+import useVisitorsAccess from '../../hooks/useVisitorsAccess';
 import { getStageMeta } from '../../utils/visitors';
 
 export default function PipelinePage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const { canOpenPipeline, canMoveVisitors, canConvertVisitors, canOpenFollowUps, canOpenRegister } =
+    useVisitorsAccess();
   const [searchParams, setSearchParams] = useSearchParams();
   const [board, setBoard] = useState([]);
   const [convertingVisitor, setConvertingVisitor] = useState(null);
@@ -88,6 +91,10 @@ export default function PipelinePage() {
   };
 
   const onDragEnd = (result) => {
+    if (!canMoveVisitors) {
+      return;
+    }
+
     const { destination, source } = result;
     if (!destination) {
       return;
@@ -122,6 +129,20 @@ export default function PipelinePage() {
     }
   };
 
+  if (!canOpenPipeline) {
+    return (
+      <AppShell>
+        <Card>
+          <p className="text-sm uppercase tracking-[0.22em] text-accent">Visitors</p>
+          <h1 className="mt-3 text-2xl font-semibold text-white">Access limited</h1>
+          <p className="mt-3 text-sm text-white/60">
+            Your account does not currently have access to the visitor pipeline.
+          </p>
+        </Card>
+      </AppShell>
+    );
+  }
+
   return (
     <AppShell>
       <div className="space-y-6">
@@ -134,9 +155,11 @@ export default function PipelinePage() {
             <Button variant="ghost" onClick={() => navigate(`/visitors?${searchParams.toString()}`)}>
               List View
             </Button>
-            <Link to="/visitors/register">
-              <Button variant="secondary">+ Register Visitor</Button>
-            </Link>
+            {canOpenRegister ? (
+              <Link to="/visitors/register">
+                <Button variant="secondary">+ Register Visitor</Button>
+              </Link>
+            ) : null}
           </div>
         </div>
 
@@ -191,10 +214,13 @@ export default function PipelinePage() {
                               >
                                 <VisitorCard
                                   visitor={visitor}
-                                  dragHandleProps={draggableProvided.dragHandleProps}
+                                  dragHandleProps={canMoveVisitors ? draggableProvided.dragHandleProps : {}}
                                   onView={() => navigate(`/visitors/${visitor.id}`)}
                                   onCompleteFollowUp={() => navigate(`/visitors/follow-ups?visitorId=${visitor.id}`)}
                                   onConvert={() => setConvertingVisitor(visitor)}
+                                  canDrag={canMoveVisitors}
+                                  canOpenFollowUp={canOpenFollowUps}
+                                  canConvert={canConvertVisitors}
                                 />
                               </div>
                             )}
@@ -211,18 +237,20 @@ export default function PipelinePage() {
         </DragDropContext>
       </div>
 
-      <ConversionModal
-        isOpen={Boolean(convertingVisitor)}
-        visitor={convertingVisitor}
-        onClose={() => setConvertingVisitor(null)}
-        isLoading={convertMutation.isPending}
-        onConvert={(payload) =>
-          convertMutation.mutate({
-            visitorId: convertingVisitor.id,
-            payload,
-          })
-        }
-      />
+      {canConvertVisitors ? (
+        <ConversionModal
+          isOpen={Boolean(convertingVisitor)}
+          visitor={convertingVisitor}
+          onClose={() => setConvertingVisitor(null)}
+          isLoading={convertMutation.isPending}
+          onConvert={(payload) =>
+            convertMutation.mutate({
+              visitorId: convertingVisitor.id,
+              payload,
+            })
+          }
+        />
+      ) : null}
     </AppShell>
   );
 }

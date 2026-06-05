@@ -25,6 +25,7 @@ import {
   getMethodLabel,
 } from '../../utils/attendance';
 import { useCapabilities } from '../../hooks/useCapabilities';
+import useAttendanceAccess from '../../hooks/useAttendanceAccess';
 
 const statCards = [
   ['Total', 'total'],
@@ -39,6 +40,7 @@ export default function ServiceDetailPage() {
   const queryClient = useQueryClient();
   const { serviceId } = useParams();
   const { hasAnyCapability } = useCapabilities();
+  const { canViewServices, canCheckInServices, canModifyServices } = useAttendanceAccess();
   const [searchParams, setSearchParams] = useSearchParams();
   const [offlineForm, setOfflineForm] = useState({
     adults: '',
@@ -168,6 +170,20 @@ export default function ServiceDetailPage() {
     },
   ];
 
+  if (!canViewServices) {
+    return (
+      <AppShell>
+        <Card>
+          <p className="text-sm uppercase tracking-[0.22em] text-accent">Attendance</p>
+          <h1 className="mt-3 text-2xl font-semibold text-white">Access limited</h1>
+          <p className="mt-3 text-sm text-white/60">
+            Your account does not currently have access to this service.
+          </p>
+        </Card>
+      </AppShell>
+    );
+  }
+
   return (
     <AppShell>
       <div className="space-y-6">
@@ -176,18 +192,24 @@ export default function ServiceDetailPage() {
           subtitle="Track the live service turnout and review attendance after the service closes."
           action={
             <div className="flex flex-wrap gap-2">
-              <Button
-                variant={service.checkInOpen ? 'ghost' : 'secondary'}
-                onClick={() => toggleMutation.mutate(!service.checkInOpen)}
-              >
-                {service.checkInOpen ? 'Close Check-in' : 'Open Check-in'}
-              </Button>
-              <Button variant="subtle" onClick={() => computeMutation.mutate()}>
-                Compute Stats
-              </Button>
-              <Link to={`/attendance/services/new?serviceId=${serviceId}`}>
-                <Button variant="subtle">Edit Service</Button>
-              </Link>
+              {canCheckInServices ? (
+                <Button
+                  variant={service.checkInOpen ? 'ghost' : 'secondary'}
+                  onClick={() => toggleMutation.mutate(!service.checkInOpen)}
+                >
+                  {service.checkInOpen ? 'Close Check-in' : 'Open Check-in'}
+                </Button>
+              ) : null}
+              {canModifyServices ? (
+                <Button variant="subtle" onClick={() => computeMutation.mutate()}>
+                  Compute Stats
+                </Button>
+              ) : null}
+              {canModifyServices ? (
+                <Link to={`/attendance/services/new?serviceId=${serviceId}`}>
+                  <Button variant="subtle">Edit Service</Button>
+                </Link>
+              ) : null}
             </div>
           }
         />
@@ -210,9 +232,11 @@ export default function ServiceDetailPage() {
                 />
               </div>
             </div>
-            <Link to={`/attendance/check-in/${serviceId}`}>
-              <Button variant="secondary">Open Check-in Console</Button>
-            </Link>
+            {canCheckInServices ? (
+              <Link to={`/attendance/check-in/${serviceId}`}>
+                <Button variant="secondary">Open Check-in Console</Button>
+              </Link>
+            ) : null}
           </div>
         </Card>
 

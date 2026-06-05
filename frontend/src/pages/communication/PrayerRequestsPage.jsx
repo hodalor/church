@@ -1,7 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import AppShell from '../../components/layout/AppShell';
 import Card from '../../components/ui/Card';
-import Button from '../../components/ui/Button';
 import PageHeader from '../../components/ui/PageHeader';
 import PrayerRequestCard from '../../components/communication/PrayerRequestCard';
 import {
@@ -9,9 +8,11 @@ import {
   prayForRequest,
   updatePrayerRequest,
 } from '../../api/endpoints/communication';
+import { useCommunicationAccess } from '../../hooks/useCommunicationAccess';
 
 export default function PrayerRequestsPage() {
   const queryClient = useQueryClient();
+  const { canViewPrayerRequests, canRespondPrayerRequests } = useCommunicationAccess();
   const requestsQuery = useQuery({
     queryKey: ['communication-prayer-requests'],
     queryFn: () => getPrayerRequests(),
@@ -30,10 +31,24 @@ export default function PrayerRequestsPage() {
   const stats = requestsQuery.data?.stats || {};
   const items = requestsQuery.data?.items || [];
 
+  if (!canViewPrayerRequests) {
+    return (
+      <AppShell>
+        <Card>
+          <p className="text-sm uppercase tracking-[0.22em] text-accent">Communication</p>
+          <h1 className="mt-3 text-2xl font-semibold text-white">Access limited</h1>
+          <p className="mt-3 text-sm text-white/60">
+            Your account does not currently have access to prayer requests.
+          </p>
+        </Card>
+      </AppShell>
+    );
+  }
+
   return (
     <AppShell>
       <div className="space-y-6">
-        <PageHeader title="Prayer Requests" action={<Button variant="secondary">+ New Request</Button>} />
+        <PageHeader title="Prayer Requests" action={null} />
 
         <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
           {[
@@ -54,7 +69,8 @@ export default function PrayerRequestsPage() {
             <PrayerRequestCard
               key={request._id}
               request={request}
-              canModify
+              canModify={canRespondPrayerRequests}
+              canChangeStatus={canRespondPrayerRequests}
               onAssignToMe={() => updateMutation.mutate({ id: request._id, payload: { assignToMe: true } })}
               onStatusChange={(status) =>
                 updateMutation.mutate({

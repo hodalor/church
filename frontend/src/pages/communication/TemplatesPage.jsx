@@ -13,6 +13,7 @@ import {
   previewTemplate,
   updateTemplate,
 } from '../../api/endpoints/communication';
+import { useCommunicationAccess } from '../../hooks/useCommunicationAccess';
 
 const emptyForm = {
   name: '',
@@ -24,6 +25,8 @@ const emptyForm = {
 
 export default function TemplatesPage() {
   const queryClient = useQueryClient();
+  const { canViewTemplates, canCreateTemplates, canModifyTemplates, canDeleteCommunication } =
+    useCommunicationAccess();
   const [form, setForm] = useState(emptyForm);
   const [editingId, setEditingId] = useState(null);
   const templatesQuery = useQuery({
@@ -64,6 +67,20 @@ export default function TemplatesPage() {
 
   const templates = useMemo(() => templatesQuery.data || [], [templatesQuery.data]);
 
+  if (!canViewTemplates) {
+    return (
+      <AppShell>
+        <Card>
+          <p className="text-sm uppercase tracking-[0.22em] text-accent">Communication</p>
+          <h1 className="mt-3 text-2xl font-semibold text-white">Access limited</h1>
+          <p className="mt-3 text-sm text-white/60">
+            Your account does not currently have access to templates.
+          </p>
+        </Card>
+      </AppShell>
+    );
+  }
+
   const toggleChannel = (channel) => {
     setForm((current) => ({
       ...current,
@@ -76,7 +93,16 @@ export default function TemplatesPage() {
   return (
     <AppShell>
       <div className="space-y-6">
-        <PageHeader title="Templates" action={<Button variant="secondary" onClick={() => setEditingId(null)}>+ New Template</Button>} />
+        <PageHeader
+          title="Templates"
+          action={
+            canCreateTemplates ? (
+              <Button variant="secondary" onClick={() => setEditingId(null)}>
+                + New Template
+              </Button>
+            ) : null
+          }
+        />
 
         <div className="grid gap-6 xl:grid-cols-[1.2fr_0.9fr]">
           <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
@@ -98,25 +124,27 @@ export default function TemplatesPage() {
                   ))}
                 </div>
                 <div className="flex flex-wrap gap-2">
-                  <Button
-                    variant="secondary"
-                    onClick={() => {
-                      setEditingId(template._id);
-                      setForm({
-                        name: template.name,
-                        category: template.category,
-                        channels: template.channels,
-                        subject: template.subject || '',
-                        body: template.body,
-                      });
-                    }}
-                  >
-                    Edit
-                  </Button>
+                  {canModifyTemplates ? (
+                    <Button
+                      variant="secondary"
+                      onClick={() => {
+                        setEditingId(template._id);
+                        setForm({
+                          name: template.name,
+                          category: template.category,
+                          channels: template.channels,
+                          subject: template.subject || '',
+                          body: template.body,
+                        });
+                      }}
+                    >
+                      Edit
+                    </Button>
+                  ) : null}
                   <Button variant="ghost" onClick={() => setForm({ ...form, subject: template.subject || '', body: template.body })}>
                     Use
                   </Button>
-                  {!template.isDefault ? (
+                  {!template.isDefault && canDeleteCommunication ? (
                     <Button variant="ghost" onClick={() => deleteMutation.mutate(template._id)}>
                       Delete
                     </Button>
@@ -189,7 +217,12 @@ export default function TemplatesPage() {
               <p className="mt-2 text-sm text-white/70">{previewQuery.data?.subject || form.subject}</p>
               <p className="mt-3 whitespace-pre-wrap text-sm text-white/60">{previewQuery.data?.body || form.body}</p>
             </div>
-            <Button variant="secondary" className="w-full" onClick={() => saveMutation.mutate(form)}>
+            <Button
+              variant="secondary"
+              className="w-full"
+              onClick={() => saveMutation.mutate(form)}
+              disabled={(!editingId && !canCreateTemplates) || (Boolean(editingId) && !canModifyTemplates)}
+            >
               Save Template
             </Button>
           </Card>

@@ -8,12 +8,14 @@ import {
   suspendTenant,
   updateTenant,
 } from '../../api/endpoints/tenants';
+import { getUsers, updateUser } from '../../api/endpoints/users';
 import SuperAdminShell from '../../components/layout/SuperAdminShell';
 import CapabilityMatrix from '../../components/access/CapabilityMatrix';
 import Button from '../../components/ui/Button';
 import Card from '../../components/ui/Card';
 import ConfirmModal from '../../components/ui/ConfirmModal';
 import Input from '../../components/ui/Input';
+import PinInput from '../../components/ui/PinInput';
 import PageHeader from '../../components/ui/PageHeader';
 import StatusBadge from '../../components/ui/StatusBadge';
 import { formatDate } from '../../utils/formatDate';
@@ -27,6 +29,7 @@ export default function TenantDetailPage() {
   const [reason, setReason] = useState('');
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
+  const [saveError, setSaveError] = useState('');
   const [form, setForm] = useState({
     churchName: '',
     email: '',
@@ -35,12 +38,27 @@ export default function TenantDetailPage() {
     logoUrl: '',
     subscriptionPlan: 'small',
     capabilities: [],
+    initialAdminPin: '',
+    confirmInitialAdminPin: '',
   });
 
   const tenantQuery = useQuery({
     queryKey: ['tenant-detail', tenantId],
     queryFn: () => getTenantById(tenantId),
   });
+
+  const usersQuery = useQuery({
+    queryKey: ['tenant-users', tenantId],
+    queryFn: () => getUsers({ tenantId }),
+    enabled: Boolean(tenantId),
+  });
+
+  const initialAdmin = [...(usersQuery.data || [])]
+    .sort((left, right) => new Date(left.createdAt || 0).getTime() - new Date(right.createdAt || 0).getTime())
+    .find((user) => user.role === 'head_pastor') ||
+    [...(usersQuery.data || [])]
+      .sort((left, right) => new Date(left.createdAt || 0).getTime() - new Date(right.createdAt || 0).getTime())[0] ||
+    null;
 
   const suspendMutation = useMutation({
     mutationFn: () => suspendTenant(tenantId, reason),
@@ -61,10 +79,35 @@ export default function TenantDetailPage() {
   });
 
   const updateMutation = useMutation({
-    mutationFn: (payload) => updateTenant(tenantId, payload),
+    mutationFn: async (payload) => {
+      const { initialAdminPin, confirmInitialAdminPin, ...tenantPayload } = payload;
+
+      if (initialAdminPin && initialAdminPin !== confirmInitialAdminPin) {
+        throw new Error('Initial admin PIN confirmation does not match.');
+      }
+
+      const updatedTenant = await updateTenant(tenantId, tenantPayload);
+
+      if (initialAdmin?._id && initialAdminPin) {
+        await updateUser(
+          initialAdmin._id,
+          { pin: initialAdminPin },
+          { tenantId },
+        );
+      }
+
+      return updatedTenant;
+    },
+    onError: (error) => {
+      setSaveError(
+        error?.response?.data?.message || error?.message || 'Unable to save tenant changes right now.',
+      );
+    },
     onSuccess: () => {
       setIsEditing(false);
+      setSaveError('');
       queryClient.invalidateQueries({ queryKey: ['tenant-detail', tenantId] });
+      queryClient.invalidateQueries({ queryKey: ['tenant-users', tenantId] });
       queryClient.invalidateQueries({ queryKey: ['admin-tenants'] });
     },
   });
@@ -91,7 +134,10 @@ export default function TenantDetailPage() {
       logoUrl: tenant.logoUrl || '',
       subscriptionPlan: tenant.subscriptionPlan || 'small',
       capabilities: tenant.capabilities || [],
+      initialAdminPin: '',
+      confirmInitialAdminPin: '',
     });
+    setSaveError('');
   }, [isEditing, tenant]);
 
   return (
@@ -129,6 +175,10 @@ export default function TenantDetailPage() {
               <Detail label="Phone" value={tenant?.phone} />
               <Detail label="Email" value={tenant?.email} />
               <Detail label="Created" value={tenant?.createdAt ? formatDate(tenant.createdAt) : '—'} />
+              <Detail
+                label="Initial Admin"
+                value={initialAdmin ? `${initialAdmin.fullName || initialAdmin.username} (${initialAdmin.username})` : '—'}
+              />
             </div>
 
             {isEditing ? (
@@ -152,6 +202,56 @@ export default function TenantDetailPage() {
                   </select>
                 </label>
                 </div>
+                <div className="rounded-3xl border border-white/10 bg-[#101827] p-4">
+                  <p className="text-xs uppercase tracking-[0.22em] text-accent">Initial Admin</p>
+                  <h3 className="mt-2 text-lg font-semibold text-white">Church first admin account</h3>
+                  <div className="mt-4 grid gap-4 md:grid-cols-2">
+                    <Input
+                      label="Full Name"
+                      value={initialAdmin?.fullName || ''}
+                      readOnly
+                    />
+                    <Input
+                      label="Username"
+                      value={initialAdmin?.username || ''}
+                      readOnly
+                    />
+                    <Input
+                      label="Role"
+                      value={initialAdmin?.role ? initialAdmin.role.replaceAll('_', ' ') : ''}
+                      readOnly
+                    />
+                    <Input
+                      label="Email"
+                      value={initialAdmin?.email || ''}
+                      readOnly
+                    />
+                    <div>
+                      <span className="mb-2 block text-sm font-medium text-white/80">New PIN</span>
+                      <PinInput
+                        value={form.initialAdminPin}
+                        onChange={(value) => setForm((current) => ({ ...current, initialAdminPin: value }))}
+                      />
+                    </div>
+                    <div>
+                      <span className="mb-2 block text-sm font-medium text-white/80">Confirm New PIN</span>
+                      <PinInput
+                        value={form.confirmInitialAdminPin}
+                        onChange={(value) =>
+                          setForm((current) => ({ ...current, confirmInitialAdminPin: value }))
+                        }
+                      />
+                    </div>
+                  </div>
+                  {!initialAdmin ? (
+                    <p className="mt-3 text-sm text-amber-300">
+                      No initial admin record was found for this church yet.
+                    </p>
+                  ) : null}
+                  <p className="mt-3 text-sm text-white/50">
+                    Leave the PIN fields empty if you only want to update church details.
+                  </p>
+                </div>
                 <CapabilityMatrix
                   title="Tenant Grants"
                   description="Add or remove the church-level menus and actions this tenant is allowed to use."
@@ -160,6 +260,7 @@ export default function TenantDetailPage() {
                   allowedCapabilities={allCapabilities}
                 />
                 <div>
+                  {saveError ? <p className="mb-3 text-sm text-red-400">{saveError}</p> : null}
                   <Button variant="secondary" onClick={() => updateMutation.mutate(form)} disabled={updateMutation.isPending}>
                     {updateMutation.isPending ? 'Saving...' : 'Save Tenant Changes'}
                   </Button>

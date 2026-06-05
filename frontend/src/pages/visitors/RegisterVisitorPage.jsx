@@ -20,10 +20,12 @@ import {
   HEAR_ABOUT_OPTIONS,
   INTEREST_SUGGESTIONS,
 } from '../../utils/visitors';
+import useVisitorsAccess from '../../hooks/useVisitorsAccess';
 
 const getToday = () => new Date().toISOString().slice(0, 10);
 
 export default function RegisterVisitorPage() {
+  const { canOpenRegister, canCreateVisitor, canRecordReturnVisit } = useVisitorsAccess();
   const [form, setForm] = useState({
     firstName: '',
     lastName: '',
@@ -199,6 +201,20 @@ export default function RegisterVisitorPage() {
     });
   };
 
+  if (!canOpenRegister) {
+    return (
+      <AppShell>
+        <Card>
+          <p className="text-sm uppercase tracking-[0.22em] text-accent">Visitors</p>
+          <h1 className="mt-3 text-2xl font-semibold text-white">Access limited</h1>
+          <p className="mt-3 text-sm text-white/60">
+            Your account does not currently have access to visitor registration.
+          </p>
+        </Card>
+      </AppShell>
+    );
+  }
+
   if (success?.visitor) {
     return (
       <AppShell>
@@ -280,13 +296,15 @@ export default function RegisterVisitorPage() {
                 <Link to={`/visitors/${duplicateVisitor.id}`}>
                   <Button variant="ghost">View Existing</Button>
                 </Link>
-                <Button
-                  variant="secondary"
-                  onClick={() => returnVisitMutation.mutate(duplicateVisitor.id)}
-                  disabled={returnVisitMutation.isPending}
-                >
-                  {returnVisitMutation.isPending ? 'Recording...' : 'Register as Return Visit'}
-                </Button>
+                {canRecordReturnVisit ? (
+                  <Button
+                    variant="secondary"
+                    onClick={() => returnVisitMutation.mutate(duplicateVisitor.id)}
+                    disabled={returnVisitMutation.isPending}
+                  >
+                    {returnVisitMutation.isPending ? 'Recording...' : 'Register as Return Visit'}
+                  </Button>
+                ) : null}
               </div>
             </div>
           </Card>
@@ -544,7 +562,7 @@ export default function RegisterVisitorPage() {
                     type="submit"
                     variant="secondary"
                     className="min-w-[220px] py-3 text-base"
-                    disabled={registerMutation.isPending}
+                    disabled={registerMutation.isPending || !canCreateVisitor}
                   >
                     {registerMutation.isPending ? 'Registering...' : 'Register Visitor'}
                   </Button>

@@ -26,12 +26,14 @@ import {
   getBranchAttendanceComparison,
   getMemberAttendanceReport,
 } from '../../api/endpoints/attendance';
+import useAttendanceAccess from '../../hooks/useAttendanceAccess';
 import { downloadCsv, reportPeriodOptions } from '../../utils/attendance';
 
 const tabs = ['summary', 'trends', 'heatmap', 'retention', 'branches', 'member'];
 
 export default function AttendanceReportsPage() {
   const printRef = useRef(null);
+  const { canViewReports } = useAttendanceAccess();
   const [activeTab, setActiveTab] = useState('summary');
   const [period, setPeriod] = useState('month');
   const [branch, setBranch] = useState('');
@@ -107,6 +109,20 @@ export default function AttendanceReportsPage() {
     popup.focus();
     popup.print();
   };
+
+  if (!canViewReports) {
+    return (
+      <AppShell>
+        <Card>
+          <p className="text-sm uppercase tracking-[0.22em] text-accent">Attendance</p>
+          <h1 className="mt-3 text-2xl font-semibold text-white">Access limited</h1>
+          <p className="mt-3 text-sm text-white/60">
+            Your account does not currently have access to attendance reports.
+          </p>
+        </Card>
+      </AppShell>
+    );
+  }
 
   return (
     <AppShell>

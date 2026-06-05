@@ -15,6 +15,7 @@ import {
   visitorCheckIn,
 } from '../../api/endpoints/attendance';
 import { searchMembers } from '../../api/endpoints/members';
+import useAttendanceAccess from '../../hooks/useAttendanceAccess';
 import useDebounce from '../../hooks/useDebounce';
 import {
   formatLongDate,
@@ -39,6 +40,7 @@ const createVisitorForm = () => ({
 export default function CheckInConsolePage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const { canViewServices, canCheckInServices, canModifyServices } = useAttendanceAccess();
   const { serviceId } = useParams();
   const scannerRef = useRef(null);
   const printRef = useRef(null);
@@ -244,6 +246,20 @@ export default function CheckInConsolePage() {
     [summary.children, summary.members, summary.online, summary.total, summary.visitors],
   );
 
+  if (!canViewServices || !canCheckInServices) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-[#081125] p-6 text-white">
+        <div className="w-full max-w-xl rounded-[28px] border border-white/10 bg-[#0b1120] p-8">
+          <p className="text-sm uppercase tracking-[0.22em] text-accent">Attendance</p>
+          <h1 className="mt-3 text-2xl font-semibold text-white">Access limited</h1>
+          <p className="mt-3 text-sm text-white/60">
+            Your account does not currently have permission to run service check-in.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="h-screen overflow-hidden bg-[#081125] text-white">
       {overlayState ? (
@@ -306,16 +322,18 @@ export default function CheckInConsolePage() {
                   Check-in OPEN
                 </p>
               </div>
-              <Button
-                variant="ghost"
-                onClick={() => {
-                  if (window.confirm('Close check-in for this service?')) {
-                    toggleMutation.mutate(false);
-                  }
-                }}
-              >
-                Close Check-in
-              </Button>
+              {canModifyServices ? (
+                <Button
+                  variant="ghost"
+                  onClick={() => {
+                    if (window.confirm('Close check-in for this service?')) {
+                      toggleMutation.mutate(false);
+                    }
+                  }}
+                >
+                  Close Check-in
+                </Button>
+              ) : null}
             </div>
           </div>
         </header>

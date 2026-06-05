@@ -11,6 +11,7 @@ import AudienceSelector from '../../components/communication/AudienceSelector';
 import ChannelIcons from '../../components/communication/ChannelIcons';
 import MessageComposer from '../../components/communication/MessageComposer';
 import { createBroadcast, getCommunicationDashboard } from '../../api/endpoints/communication';
+import { useCommunicationAccess } from '../../hooks/useCommunicationAccess';
 
 const channelOptions = [
   { value: 'sms', label: 'SMS' },
@@ -22,6 +23,7 @@ const channelOptions = [
 
 export default function CreateBroadcastPage() {
   const navigate = useNavigate();
+  const { canCreateBroadcasts } = useCommunicationAccess();
   const [searchParams] = useSearchParams();
   const [successState, setSuccessState] = useState(null);
   const initialForm = useMemo(() => {
@@ -134,7 +136,16 @@ export default function CreateBroadcastPage() {
         fallbackPath="/communication/broadcasts"
         size="xl"
       >
-        <div className="grid gap-6 xl:grid-cols-[1.35fr_0.9fr]">
+        {!canCreateBroadcasts ? (
+          <Card>
+            <p className="text-sm uppercase tracking-[0.22em] text-accent">Communication</p>
+            <h1 className="mt-3 text-2xl font-semibold text-white">Access limited</h1>
+            <p className="mt-3 text-sm text-white/60">
+              Your account does not currently have permission to create broadcasts.
+            </p>
+          </Card>
+        ) : null}
+        {canCreateBroadcasts ? <div className="grid gap-6 xl:grid-cols-[1.35fr_0.9fr]">
           <div className="space-y-6">
             <Card className="space-y-4">
               <p className="text-sm uppercase tracking-[0.22em] text-white/50">Step 1 - Compose</p>
@@ -330,7 +341,7 @@ export default function CreateBroadcastPage() {
               </div>
             </Card>
           </div>
-        </div>
+        </div> : null}
       </RouteModal>
     </AppShell>
   );

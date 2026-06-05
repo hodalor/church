@@ -3,7 +3,16 @@ import Card from '../ui/Card';
 import ServiceStatusBadge from './ServiceStatusBadge';
 import { formatDayDate, formatTimeRange } from '../../utils/attendance';
 
-export default function ServiceCard({ service, onOpenCheckIn, onView, onEdit, onDelete }) {
+export default function ServiceCard({
+  service,
+  onOpenCheckIn,
+  onView,
+  onEdit,
+  onDelete,
+  canOpenCheckIn = true,
+  canEdit = true,
+  canDelete = true,
+}) {
   const serviceId = service.serviceId || service._id;
   const dateBits = formatDayDate(service.date || service.serviceDate);
   const stats = service.stats || {};
@@ -58,15 +67,21 @@ export default function ServiceCard({ service, onOpenCheckIn, onView, onEdit, on
         <Button variant="subtle" onClick={() => onView?.(serviceId)}>
           View
         </Button>
-        <Button variant="secondary" onClick={() => onOpenCheckIn?.(serviceId)}>
-          Check-in
-        </Button>
-        <Button variant="ghost" onClick={() => onEdit?.(serviceId)}>
-          Edit
-        </Button>
-        <Button variant="ghost" onClick={() => onDelete?.(serviceId)}>
-          Delete
-        </Button>
+        {canOpenCheckIn ? (
+          <Button variant="secondary" onClick={() => onOpenCheckIn?.(serviceId)}>
+            Check-in
+          </Button>
+        ) : null}
+        {canEdit ? (
+          <Button variant="ghost" onClick={() => onEdit?.(serviceId)}>
+            Edit
+          </Button>
+        ) : null}
+        {canDelete ? (
+          <Button variant="ghost" onClick={() => onDelete?.(serviceId)}>
+            Delete
+          </Button>
+        ) : null}
       </div>
     </Card>
   );

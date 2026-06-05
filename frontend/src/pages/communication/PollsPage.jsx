@@ -7,10 +7,12 @@ import PageHeader from '../../components/ui/PageHeader';
 import Badge from '../../components/ui/Badge';
 import PollResultsBar from '../../components/communication/PollResultsBar';
 import { closePoll, getPolls, voteOnPoll } from '../../api/endpoints/communication';
+import { useCommunicationAccess } from '../../hooks/useCommunicationAccess';
 import { formatDate } from '../../utils/formatDate';
 
 export default function PollsPage() {
   const queryClient = useQueryClient();
+  const { canViewPolls, canCreatePolls, canModifyPolls } = useCommunicationAccess();
   const pollsQuery = useQuery({
     queryKey: ['communication-polls'],
     queryFn: () => getPolls(),
@@ -26,15 +28,31 @@ export default function PollsPage() {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['communication-polls'] }),
   });
 
+  if (!canViewPolls) {
+    return (
+      <AppShell>
+        <Card>
+          <p className="text-sm uppercase tracking-[0.22em] text-accent">Communication</p>
+          <h1 className="mt-3 text-2xl font-semibold text-white">Access limited</h1>
+          <p className="mt-3 text-sm text-white/60">
+            Your account does not currently have access to polls.
+          </p>
+        </Card>
+      </AppShell>
+    );
+  }
+
   return (
     <AppShell>
       <div className="space-y-6">
         <PageHeader
           title="Polls"
           action={
-            <Link to="/communication/polls/new">
-              <Button variant="secondary">+ New Poll</Button>
-            </Link>
+            canCreatePolls ? (
+              <Link to="/communication/polls/new">
+                <Button variant="secondary">+ New Poll</Button>
+              </Link>
+            ) : null
           }
         />
 
@@ -70,9 +88,11 @@ export default function PollsPage() {
                       Vote {option.text}
                     </Button>
                   ))}
-                  <Button variant="secondary" onClick={() => closeMutation.mutate(poll._id)}>
-                    Close Poll
-                  </Button>
+                  {canModifyPolls ? (
+                    <Button variant="secondary" onClick={() => closeMutation.mutate(poll._id)}>
+                      Close Poll
+                    </Button>
+                  ) : null}
                 </div>
               </Card>
             ))}

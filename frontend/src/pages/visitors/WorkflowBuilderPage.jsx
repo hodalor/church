@@ -10,6 +10,7 @@ import {
   saveVisitorWorkflow,
   testVisitorWorkflow,
 } from '../../api/endpoints/visitors';
+import useVisitorsAccess from '../../hooks/useVisitorsAccess';
 
 const createStep = (index) => ({
   id: `step-${Date.now()}-${index}`,
@@ -27,6 +28,7 @@ const createAction = () => ({
 });
 
 export default function WorkflowBuilderPage() {
+  const { canOpenWorkflow, canModifyWorkflow } = useVisitorsAccess();
   const [steps, setSteps] = useState([]);
   const [isActive, setIsActive] = useState(true);
 
@@ -50,6 +52,10 @@ export default function WorkflowBuilderPage() {
   }, [workflowQuery.data]);
 
   const onDragEnd = (result) => {
+    if (!canModifyWorkflow) {
+      return;
+    }
+
     if (!result.destination) {
       return;
     }
@@ -59,6 +65,20 @@ export default function WorkflowBuilderPage() {
     next.splice(result.destination.index, 0, removed);
     setSteps(next);
   };
+
+  if (!canOpenWorkflow) {
+    return (
+      <AppShell>
+        <Card>
+          <p className="text-sm uppercase tracking-[0.22em] text-accent">Visitors</p>
+          <h1 className="mt-3 text-2xl font-semibold text-white">Access limited</h1>
+          <p className="mt-3 text-sm text-white/60">
+            Your account does not currently have access to the visitor workflow builder.
+          </p>
+        </Card>
+      </AppShell>
+    );
+  }
 
   return (
     <AppShell>
@@ -73,7 +93,12 @@ export default function WorkflowBuilderPage() {
           </div>
           <label className="inline-flex items-center gap-3 rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm text-white/70">
             <span>Workflow Active</span>
-            <input type="checkbox" checked={isActive} onChange={(event) => setIsActive(event.target.checked)} />
+            <input
+              type="checkbox"
+              checked={isActive}
+              disabled={!canModifyWorkflow}
+              onChange={(event) => setIsActive(event.target.checked)}
+            />
           </label>
         </div>
 
@@ -115,6 +140,7 @@ export default function WorkflowBuilderPage() {
                               onRemoveStep={(stepId) =>
                                 setSteps((current) => current.filter((item) => item.id !== stepId))
                               }
+                              readOnly={!canModifyWorkflow}
                             />
                           </div>
                         )}
@@ -126,7 +152,11 @@ export default function WorkflowBuilderPage() {
               </Droppable>
             </DragDropContext>
 
-            <Button variant="subtle" onClick={() => setSteps((current) => [...current, createStep(current.length)])}>
+            <Button
+              variant="subtle"
+              onClick={() => setSteps((current) => [...current, createStep(current.length)])}
+              disabled={!canModifyWorkflow}
+            >
               + Add Step
             </Button>
           </div>
@@ -159,10 +189,18 @@ export default function WorkflowBuilderPage() {
         </div>
 
         <Card className="sticky bottom-4 flex flex-wrap items-center justify-end gap-3">
-          <Button variant="ghost" onClick={() => testMutation.mutate()} disabled={testMutation.isPending}>
+          <Button
+            variant="ghost"
+            onClick={() => testMutation.mutate()}
+            disabled={testMutation.isPending || !canModifyWorkflow}
+          >
             {testMutation.isPending ? 'Testing...' : 'Test Workflow'}
           </Button>
-          <Button variant="secondary" onClick={() => saveMutation.mutate()} disabled={saveMutation.isPending}>
+          <Button
+            variant="secondary"
+            onClick={() => saveMutation.mutate()}
+            disabled={saveMutation.isPending || !canModifyWorkflow}
+          >
             {saveMutation.isPending ? 'Saving...' : 'Save Workflow'}
           </Button>
         </Card>

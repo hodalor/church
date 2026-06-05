@@ -26,6 +26,8 @@ import {
   VISITOR_STAGE_ORDER,
   formatStageLabel,
 } from '../../utils/visitors';
+import { useCommunicationAccess } from '../../hooks/useCommunicationAccess';
+import useVisitorsAccess from '../../hooks/useVisitorsAccess';
 import { formatDate } from '../../utils/formatDate';
 
 const tabs = ['overview', 'visit_history', 'follow_ups', 'assimilation', 'survey'];
@@ -33,6 +35,17 @@ const tabs = ['overview', 'visit_history', 'follow_ups', 'assimilation', 'survey
 export default function VisitorDetailPage() {
   const { visitorId } = useParams();
   const queryClient = useQueryClient();
+  const {
+    canOpenList,
+    canAssignVisitors,
+    canRecordReturnVisit,
+    canModifyVisitors,
+    canCompleteFollowUps,
+    canRescheduleFollowUps,
+    canMoveVisitors,
+    canConvertVisitors,
+  } = useVisitorsAccess();
+  const { canCreateBroadcasts } = useCommunicationAccess();
   const [activeTab, setActiveTab] = useState('overview');
   const [showReturnVisitModal, setShowReturnVisitModal] = useState(false);
   const [showAddFollowUpModal, setShowAddFollowUpModal] = useState(false);
@@ -131,6 +144,21 @@ export default function VisitorDetailPage() {
   });
 
   const visitor = visitorQuery.data;
+
+  if (!canOpenList) {
+    return (
+      <AppShell>
+        <Card>
+          <p className="text-sm uppercase tracking-[0.22em] text-accent">Visitors</p>
+          <h1 className="mt-3 text-2xl font-semibold text-white">Access limited</h1>
+          <p className="mt-3 text-sm text-white/60">
+            Your account does not currently have access to this visitor profile.
+          </p>
+        </Card>
+      </AppShell>
+    );
+  }
+
   return (
     <AppShell>
       <div className="space-y-6">
@@ -140,15 +168,21 @@ export default function VisitorDetailPage() {
             <h1 className="mt-2 text-2xl font-semibold text-white">{visitor?.fullName || 'Visitor Detail'}</h1>
           </div>
           <div className="flex flex-wrap gap-3">
-            <Button variant="ghost" onClick={() => setShowReturnVisitModal(true)}>
-              Record Return Visit
-            </Button>
-            <Button variant="secondary" onClick={() => setShowConvertModal(true)}>
-              Convert to Member
-            </Button>
-            <Link to={`/communication/broadcasts/new?audience=visitors&ids=${visitor?.id || ''}`}>
-              <Button variant="ghost">Send Message</Button>
-            </Link>
+            {canRecordReturnVisit ? (
+              <Button variant="ghost" onClick={() => setShowReturnVisitModal(true)}>
+                Record Return Visit
+              </Button>
+            ) : null}
+            {canConvertVisitors ? (
+              <Button variant="secondary" onClick={() => setShowConvertModal(true)}>
+                Convert to Member
+              </Button>
+            ) : null}
+            {canCreateBroadcasts ? (
+              <Link to={`/communication/broadcasts/new?audience=visitors&ids=${visitor?.id || ''}`}>
+                <Button variant="ghost">Send Message</Button>
+              </Link>
+            ) : null}
           </div>
         </div>
 
@@ -198,27 +232,29 @@ export default function VisitorDetailPage() {
                 </div>
                 <FollowUpStatusIndicator followUps={visitor?.followUps} />
               </div>
-              <div className="flex gap-3">
-                <select
-                  value={reassignLeaderId}
-                  onChange={(event) => setReassignLeaderId(event.target.value)}
-                  className="w-full rounded-xl border border-white/10 bg-[#101827] px-4 py-3 text-sm text-white outline-none"
-                >
-                  <option value="">Select care leader</option>
-                  {(leadersQuery.data || []).map((leader) => (
-                    <option key={leader.id} value={leader.id}>
-                      {leader.name}
-                    </option>
-                  ))}
-                </select>
-                <Button
-                  variant="secondary"
-                  disabled={!reassignLeaderId || assignMutation.isPending}
-                  onClick={() => assignMutation.mutate(reassignLeaderId)}
-                >
-                  Reassign
-                </Button>
-              </div>
+              {canAssignVisitors ? (
+                <div className="flex gap-3">
+                  <select
+                    value={reassignLeaderId}
+                    onChange={(event) => setReassignLeaderId(event.target.value)}
+                    className="w-full rounded-xl border border-white/10 bg-[#101827] px-4 py-3 text-sm text-white outline-none"
+                  >
+                    <option value="">Select care leader</option>
+                    {(leadersQuery.data || []).map((leader) => (
+                      <option key={leader.id} value={leader.id}>
+                        {leader.name}
+                      </option>
+                    ))}
+                  </select>
+                  <Button
+                    variant="secondary"
+                    disabled={!reassignLeaderId || assignMutation.isPending}
+                    onClick={() => assignMutation.mutate(reassignLeaderId)}
+                  >
+                    Reassign
+                  </Button>
+                </div>
+              ) : null}
             </Card>
           </Card>
 
@@ -275,9 +311,11 @@ export default function VisitorDetailPage() {
               <Card className="space-y-4">
                 <div className="flex items-center justify-between">
                   <h3 className="text-lg font-semibold text-white">Visit History</h3>
-                  <Button variant="secondary" onClick={() => setShowReturnVisitModal(true)}>
-                    Record Return Visit
-                  </Button>
+                  {canRecordReturnVisit ? (
+                    <Button variant="secondary" onClick={() => setShowReturnVisitModal(true)}>
+                      Record Return Visit
+                    </Button>
+                  ) : null}
                 </div>
                 <div className="space-y-3">
                   {(visitor?.visits || []).map((visit) => (
@@ -304,9 +342,11 @@ export default function VisitorDetailPage() {
               <Card className="space-y-4">
                 <div className="flex items-center justify-between">
                   <h3 className="text-lg font-semibold text-white">Follow-up Timeline</h3>
-                  <Button variant="secondary" onClick={() => setShowAddFollowUpModal(true)}>
-                    Add Follow-up
-                  </Button>
+                  {canModifyVisitors ? (
+                    <Button variant="secondary" onClick={() => setShowAddFollowUpModal(true)}>
+                      Add Follow-up
+                    </Button>
+                  ) : null}
                 </div>
                 <div className="space-y-3">
                   {(visitor?.followUps || []).map((followUp) => (
@@ -320,7 +360,7 @@ export default function VisitorDetailPage() {
                           <span className={`rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] ${followUp.status === 'completed' ? 'bg-emerald-500/15 text-emerald-200' : 'bg-rose-500/15 text-rose-200'}`}>
                             {followUp.status}
                           </span>
-                          {followUp.status !== 'completed' ? (
+                          {followUp.status !== 'completed' && canCompleteFollowUps ? (
                             <Button
                               variant="ghost"
                               onClick={() => {
@@ -351,6 +391,7 @@ export default function VisitorDetailPage() {
                     <button
                       key={stage}
                       type="button"
+                      disabled={!canMoveVisitors}
                       onClick={() => stageMutation.mutate(stage)}
                       className={`rounded-2xl border px-4 py-4 text-left ${
                         visitor?.stage === stage ? 'border-accent/40 bg-accent/12' : 'border-white/10 bg-white/5'
@@ -411,7 +452,7 @@ export default function VisitorDetailPage() {
       </div>
 
       <Modal
-        isOpen={showReturnVisitModal}
+        isOpen={canRecordReturnVisit && showReturnVisitModal}
         onClose={() => setShowReturnVisitModal(false)}
         title="Record Return Visit"
         description="Capture the next service attendance for this visitor."
@@ -440,7 +481,7 @@ export default function VisitorDetailPage() {
       </Modal>
 
       <Modal
-        isOpen={showAddFollowUpModal}
+        isOpen={canModifyVisitors && showAddFollowUpModal}
         onClose={() => setShowAddFollowUpModal(false)}
         title="Add Follow-up"
         description="Create a new follow-up activity for this visitor."
@@ -487,7 +528,7 @@ export default function VisitorDetailPage() {
       </Modal>
 
       <Modal
-        isOpen={showCompleteModal}
+        isOpen={(canCompleteFollowUps || canRescheduleFollowUps) && showCompleteModal}
         onClose={() => setShowCompleteModal(false)}
         title="Complete Follow-up"
         description={`${visitor?.fullName || 'Visitor'} outcome recap`}
@@ -561,13 +602,15 @@ export default function VisitorDetailPage() {
         </div>
       </Modal>
 
-      <ConversionModal
-        isOpen={showConvertModal}
-        visitor={visitor}
-        onClose={() => setShowConvertModal(false)}
-        isLoading={convertMutation.isPending}
-        onConvert={(payload) => convertMutation.mutate(payload)}
-      />
+      {canConvertVisitors ? (
+        <ConversionModal
+          isOpen={showConvertModal}
+          visitor={visitor}
+          onClose={() => setShowConvertModal(false)}
+          isLoading={convertMutation.isPending}
+          onConvert={(payload) => convertMutation.mutate(payload)}
+        />
+      ) : null}
     </AppShell>
   );
 }

@@ -13,6 +13,7 @@ const urgencyTone = {
 export default function PrayerRequestCard({
   request,
   canModify = false,
+  canChangeStatus = false,
   onAssignToMe,
   onStatusChange,
   onPray,
@@ -47,7 +48,7 @@ export default function PrayerRequestCard({
             {request.assignedTo?.name ? 'Reassign' : 'Assign to Me'}
           </Button>
         ) : null}
-        {canModify ? (
+        {canChangeStatus ? (
           <select
             value={request.status || 'open'}
             onChange={(event) => onStatusChange?.(event.target.value)}

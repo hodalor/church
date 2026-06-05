@@ -8,10 +8,14 @@ import DataTable from '../../components/ui/DataTable';
 import PageHeader from '../../components/ui/PageHeader';
 import SearchInput from '../../components/ui/SearchInput';
 import { getAbsentees } from '../../api/endpoints/attendance';
+import useAttendanceAccess from '../../hooks/useAttendanceAccess';
+import { useCommunicationAccess } from '../../hooks/useCommunicationAccess';
 import { downloadCsv } from '../../utils/attendance';
 
 export default function AbsenteesPage() {
   const navigate = useNavigate();
+  const { canViewAbsentees, canFollowUpAbsentees } = useAttendanceAccess();
+  const { canCreateBroadcasts } = useCommunicationAccess();
   const [search, setSearch] = useState('');
   const [branch, setBranch] = useState('');
   const [department, setDepartment] = useState('');
@@ -91,13 +95,29 @@ export default function AbsenteesPage() {
           <Button variant="subtle" onClick={() => navigate(`/members/${row.memberId || row._id}`)}>
             View Profile
           </Button>
-          <Button variant="secondary" onClick={() => openFollowUp([row])}>
-            Send Message
-          </Button>
+          {canFollowUpAbsentees && canCreateBroadcasts ? (
+            <Button variant="secondary" onClick={() => openFollowUp([row])}>
+              Send Message
+            </Button>
+          ) : null}
         </div>
       ),
     },
   ];
+
+  if (!canViewAbsentees) {
+    return (
+      <AppShell>
+        <Card>
+          <p className="text-sm uppercase tracking-[0.22em] text-accent">Attendance</p>
+          <h1 className="mt-3 text-2xl font-semibold text-white">Access limited</h1>
+          <p className="mt-3 text-sm text-white/60">
+            Your account does not currently have access to the absentee workspace.
+          </p>
+        </Card>
+      </AppShell>
+    );
+  }
 
   return (
     <AppShell>
@@ -108,7 +128,11 @@ export default function AbsenteesPage() {
           action={
             <div className="flex flex-wrap gap-2">
               {selectedRows.length ? (
-                <Button variant="secondary" onClick={() => openFollowUp(selectedRows)}>
+                <Button
+                  variant="secondary"
+                  onClick={() => openFollowUp(selectedRows)}
+                  disabled={!canFollowUpAbsentees || !canCreateBroadcasts}
+                >
                   Send Bulk Follow-up Message
                 </Button>
               ) : null}
