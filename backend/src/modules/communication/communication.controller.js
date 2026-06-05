@@ -1,7 +1,7 @@
 import asyncHandler from '../../utils/asyncHandler.js';
 import { success } from '../../utils/apiResponse.js';
 import { createHttpError } from '../../utils/httpError.js';
-import { hasCapability } from '../access/capabilities.js';
+import { hasAnyCapability } from '../access/capabilities.js';
 import * as communicationService from './communication.service.js';
 import {
   ensureBranchAccess,
@@ -27,30 +27,22 @@ const resolveScopedTenantId = (req) => {
   return req.tenantId;
 };
 
-const ensureCapability = (req, capability) => {
+const ensureCapability = (req, capabilityOptions) => {
   if (req.user?.role === 'super_admin') {
     return;
   }
 
-  if (!hasCapability(req.user?.capabilities || [], capability)) {
+  const requiredCapabilities = Array.isArray(capabilityOptions)
+    ? capabilityOptions
+    : [capabilityOptions];
+
+  if (!hasAnyCapability(req.user?.capabilities || [], requiredCapabilities)) {
     throw createHttpError(403, 'You do not have permission for this communication action.');
   }
 };
 
-const ensureLeader = (req) => {
-  const role = String(req.user?.role || '');
-  if (
-    req.user?.role === 'super_admin' ||
-    ['head_pastor', 'associate_pastor', 'branch_pastor', 'care_leader'].includes(role)
-  ) {
-    return;
-  }
-
-  throw createHttpError(403, 'Leader access is required for this communication action.');
-};
-
 export const getDashboard = asyncHandler(async (req, res) => {
-  ensureCapability(req, 'communication.view');
+  ensureCapability(req, ['communication.view', 'communication.overview.view']);
   const data = await communicationService.getCommunicationDashboard(
     resolveScopedTenantId(req),
     scopeBranchQuery(req.query, req.user),
@@ -59,13 +51,13 @@ export const getDashboard = asyncHandler(async (req, res) => {
 });
 
 export const previewAudience = asyncHandler(async (req, res) => {
-  ensureCapability(req, 'communication.create');
+  ensureCapability(req, ['communication.create', 'communication.broadcasts.create']);
   const data = await communicationService.previewBroadcastAudience(resolveScopedTenantId(req), req.body);
   return success(res, data, 'Audience preview generated successfully.');
 });
 
 export const createBroadcast = asyncHandler(async (req, res) => {
-  ensureCapability(req, 'communication.create');
+  ensureCapability(req, ['communication.create', 'communication.broadcasts.create']);
   ensureBranchAccess(
     req.user,
     req.body.audience?.branch,
@@ -76,7 +68,7 @@ export const createBroadcast = asyncHandler(async (req, res) => {
 });
 
 export const updateBroadcast = asyncHandler(async (req, res) => {
-  ensureCapability(req, 'communication.modify');
+  ensureCapability(req, ['communication.modify', 'communication.broadcasts.send']);
   ensureBranchAccess(
     req.user,
     req.body.audience?.branch,
@@ -91,7 +83,7 @@ export const updateBroadcast = asyncHandler(async (req, res) => {
 });
 
 export const listBroadcasts = asyncHandler(async (req, res) => {
-  ensureCapability(req, 'communication.view');
+  ensureCapability(req, ['communication.view', 'communication.broadcasts.view']);
   const data = await communicationService.getBroadcasts(
     resolveScopedTenantId(req),
     scopeBranchQuery(req.query, req.user),
@@ -100,7 +92,7 @@ export const listBroadcasts = asyncHandler(async (req, res) => {
 });
 
 export const getBroadcast = asyncHandler(async (req, res) => {
-  ensureCapability(req, 'communication.view');
+  ensureCapability(req, ['communication.view', 'communication.broadcasts.view']);
   const data = await communicationService.getBroadcastById(
     resolveScopedTenantId(req),
     req.params.broadcastId,
@@ -114,7 +106,7 @@ export const getBroadcast = asyncHandler(async (req, res) => {
 });
 
 export const getBroadcastLogs = asyncHandler(async (req, res) => {
-  ensureCapability(req, 'communication.view');
+  ensureCapability(req, ['communication.view', 'communication.broadcasts.view']);
   const data = await communicationService.getBroadcastLogs(
     resolveScopedTenantId(req),
     req.params.broadcastId,
@@ -124,7 +116,7 @@ export const getBroadcastLogs = asyncHandler(async (req, res) => {
 });
 
 export const duplicateBroadcast = asyncHandler(async (req, res) => {
-  ensureCapability(req, 'communication.create');
+  ensureCapability(req, ['communication.create', 'communication.broadcasts.create']);
   const data = await communicationService.duplicateBroadcast(
     resolveScopedTenantId(req),
     req.params.broadcastId,
@@ -134,7 +126,7 @@ export const duplicateBroadcast = asyncHandler(async (req, res) => {
 });
 
 export const cancelBroadcast = asyncHandler(async (req, res) => {
-  ensureCapability(req, 'communication.modify');
+  ensureCapability(req, ['communication.modify', 'communication.broadcasts.send']);
   const data = await communicationService.cancelBroadcast(
     resolveScopedTenantId(req),
     req.params.broadcastId,
@@ -143,7 +135,7 @@ export const cancelBroadcast = asyncHandler(async (req, res) => {
 });
 
 export const resendFailedBroadcast = asyncHandler(async (req, res) => {
-  ensureCapability(req, 'communication.modify');
+  ensureCapability(req, ['communication.modify', 'communication.broadcasts.send']);
   const data = await communicationService.resendFailedBroadcast(
     resolveScopedTenantId(req),
     req.params.broadcastId,
@@ -161,19 +153,19 @@ export const deleteBroadcast = asyncHandler(async (req, res) => {
 });
 
 export const listTemplates = asyncHandler(async (req, res) => {
-  ensureCapability(req, 'communication.view');
+  ensureCapability(req, ['communication.view', 'communication.templates.view']);
   const data = await communicationService.getTemplates(resolveScopedTenantId(req));
   return success(res, data, 'Templates fetched successfully.');
 });
 
 export const createTemplate = asyncHandler(async (req, res) => {
-  ensureCapability(req, 'communication.create');
+  ensureCapability(req, ['communication.create', 'communication.templates.create']);
   const data = await communicationService.createTemplate(resolveScopedTenantId(req), req.body, req.user);
   return success(res, data, 'Template created successfully.', 201);
 });
 
 export const updateTemplate = asyncHandler(async (req, res) => {
-  ensureCapability(req, 'communication.modify');
+  ensureCapability(req, ['communication.modify', 'communication.templates.modify']);
   const data = await communicationService.updateTemplate(
     resolveScopedTenantId(req),
     req.params.templateId,
@@ -192,12 +184,13 @@ export const deleteTemplate = asyncHandler(async (req, res) => {
 });
 
 export const previewTemplate = asyncHandler(async (req, res) => {
-  ensureCapability(req, 'communication.view');
+  ensureCapability(req, ['communication.view', 'communication.templates.view']);
   const data = await communicationService.previewTemplate(req.body);
   return success(res, data, 'Template preview generated successfully.');
 });
 
 export const listPrayerRequests = asyncHandler(async (req, res) => {
+  ensureCapability(req, ['communication.view', 'communication.prayer_requests.view']);
   const data = await communicationService.getPrayerRequests(
     resolveScopedTenantId(req),
     req.query,
@@ -221,7 +214,7 @@ export const prayForRequest = asyncHandler(async (req, res) => {
 });
 
 export const updatePrayerRequest = asyncHandler(async (req, res) => {
-  ensureLeader(req);
+  ensureCapability(req, ['communication.modify', 'communication.prayer_requests.respond']);
   const data = await communicationService.updatePrayerRequestStatus(
     resolveScopedTenantId(req),
     req.params.requestId,
@@ -232,6 +225,7 @@ export const updatePrayerRequest = asyncHandler(async (req, res) => {
 });
 
 export const listPolls = asyncHandler(async (req, res) => {
+  ensureCapability(req, ['communication.view', 'communication.polls.view']);
   const data = await communicationService.getPolls(
     resolveScopedTenantId(req),
     req.user,
@@ -241,14 +235,14 @@ export const listPolls = asyncHandler(async (req, res) => {
 });
 
 export const createPoll = asyncHandler(async (req, res) => {
-  ensureCapability(req, 'communication.create');
+  ensureCapability(req, ['communication.create', 'communication.polls.create']);
   ensureBranchAccess(req.user, req.body.audience?.branch, 'You do not have access to create polls for this branch.');
   const data = await communicationService.createPoll(resolveScopedTenantId(req), req.body, req.user);
   return success(res, data, 'Poll created successfully.', 201);
 });
 
 export const closePoll = asyncHandler(async (req, res) => {
-  ensureCapability(req, 'communication.modify');
+  ensureCapability(req, ['communication.modify', 'communication.polls.modify']);
   const data = await communicationService.closePoll(resolveScopedTenantId(req), req.params.pollId);
   return success(res, data, 'Poll closed successfully.');
 });
@@ -264,11 +258,13 @@ export const voteOnPoll = asyncHandler(async (req, res) => {
 });
 
 export const listInbox = asyncHandler(async (req, res) => {
+  ensureCapability(req, ['notifications.view', 'communication.inbox.view']);
   const data = await communicationService.getInbox(resolveScopedTenantId(req), req.user.userId, req.query);
   return success(res, data, 'Inbox fetched successfully.');
 });
 
 export const getInboxMessage = asyncHandler(async (req, res) => {
+  ensureCapability(req, ['notifications.view', 'communication.inbox.view']);
   const data = await communicationService.getInboxMessageById(
     resolveScopedTenantId(req),
     req.user.userId,

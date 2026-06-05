@@ -10,6 +10,7 @@ import Input from '../../components/ui/Input';
 import AmountDisplay from '../../components/finance/AmountDisplay';
 import GivingProgressBar from '../../components/finance/GivingProgressBar';
 import TransactionTypeBadge from '../../components/finance/TransactionTypeBadge';
+import useCurrency from '../../hooks/useCurrency';
 import { useFinanceAccess } from '../../hooks/useFinanceAccess';
 import {
   getMemberGivingHistory,
@@ -24,6 +25,7 @@ export default function TransactionDetailPage() {
   const { id } = useParams();
   const queryClient = useQueryClient();
   const { canApproveFinance } = useFinanceAccess();
+  const { formatCurrency } = useCurrency();
   const [showReverseModal, setShowReverseModal] = useState(false);
   const [reason, setReason] = useState('');
 
@@ -62,7 +64,7 @@ export default function TransactionDetailPage() {
   const memberHistory = memberHistoryQuery.data;
 
   return (
-    <FinancePageLayout>
+    <FinancePageLayout requireCapability="finance.transactions.view">
       <div className="space-y-6">
         <PageHeader
           title="Transaction Detail"
@@ -187,7 +189,7 @@ export default function TransactionDetailPage() {
                   <div>
                     <p className="text-xs uppercase tracking-[0.22em] text-white/55">Giving History</p>
                     <p className="mt-2 text-lg font-semibold text-white">
-                      ${Number(memberHistory.summary?.totalGiven || 0).toLocaleString()}
+                      {formatCurrency(memberHistory.summary?.totalGiven || 0)}
                     </p>
                   </div>
                   <div className="text-right text-sm text-white/55">
@@ -222,7 +224,7 @@ export default function TransactionDetailPage() {
                     >
                       <span>{new Date(historyTransaction.serviceDate).toLocaleDateString()}</span>
                       <span>{historyTransaction.type.replaceAll('_', ' ')}</span>
-                      <span>${Number(historyTransaction.amount || 0).toLocaleString()}</span>
+                      <span>{formatCurrency(historyTransaction.amount || 0)}</span>
                     </Link>
                   ))}
                 </div>

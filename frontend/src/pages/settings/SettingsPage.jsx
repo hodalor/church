@@ -20,6 +20,7 @@ import { useCapabilities } from '../../hooks/useCapabilities';
 import { useTenant } from '../../hooks/useTenant';
 import { useBrandingStore } from '../../stores/brandingStore';
 import { getDescendantGroupingIds, getGroupingTreeRows } from '../../utils/groupings';
+import { normalizeEligibleCountries } from '../../utils/platformConfig';
 import { supabaseUpload } from '../../utils/supabaseUpload';
 
 const platformTabs = [
@@ -36,6 +37,13 @@ const emptyGroupingForm = {
   parentId: '',
   kind: 'group',
   description: '',
+};
+
+const emptyCountryDraft = {
+  name: '',
+  countryCode: '',
+  currencyCode: '',
+  currencySymbol: '',
 };
 
 function BrandPreview({ name, logoUrl, caption }) {
@@ -106,21 +114,105 @@ function ArrayEditor({ title, hint, values, onChange, placeholder }) {
   );
 }
 
+function CountryConfigEditor({ countries, draft, onDraftChange, onAdd, onRemove }) {
+  return (
+    <div className="space-y-4 rounded-3xl border border-white/10 bg-[#101827] p-4">
+      <div>
+        <h3 className="text-base font-semibold text-white">Eligible Countries</h3>
+        <p className="mt-1 text-sm text-white/50">
+          These are the countries available when registering a church tenant. Each one carries the default currency used across finance screens for that tenant.
+        </p>
+      </div>
+
+      <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+        <Input
+          label="Country"
+          value={draft.name}
+          onChange={(event) => onDraftChange('name', event.target.value)}
+          placeholder="Ghana"
+        />
+        <Input
+          label="Country Code"
+          value={draft.countryCode}
+          onChange={(event) => onDraftChange('countryCode', event.target.value.toUpperCase())}
+          placeholder="GH"
+        />
+        <Input
+          label="Currency Code"
+          value={draft.currencyCode}
+          onChange={(event) => onDraftChange('currencyCode', event.target.value.toUpperCase())}
+          placeholder="GHS"
+        />
+        <div className="flex gap-3">
+          <Input
+            label="Currency Symbol"
+            value={draft.currencySymbol}
+            onChange={(event) => onDraftChange('currencySymbol', event.target.value)}
+            placeholder="GHs"
+          />
+          <Button type="button" variant="secondary" className="self-end" onClick={onAdd}>
+            Add
+          </Button>
+        </div>
+      </div>
+
+      <div className="overflow-x-auto rounded-2xl border border-white/10">
+        <table className="min-w-full divide-y divide-white/10 text-left text-sm">
+          <thead className="bg-white/[0.02] text-[11px] uppercase tracking-[0.24em] text-white/40">
+            <tr>
+              <th className="px-4 py-3">Country</th>
+              <th className="px-4 py-3">Code</th>
+              <th className="px-4 py-3">Currency</th>
+              <th className="px-4 py-3">Symbol</th>
+              <th className="px-4 py-3">Action</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-white/[0.06]">
+            {countries.map((country) => (
+              <tr key={country.name}>
+                <td className="px-4 py-3 text-white">{country.name}</td>
+                <td className="px-4 py-3 text-white/70">{country.countryCode}</td>
+                <td className="px-4 py-3 text-white/70">{country.currencyCode}</td>
+                <td className="px-4 py-3 text-accent">{country.currencySymbol}</td>
+                <td className="px-4 py-3">
+                  <button
+                    type="button"
+                    onClick={() => onRemove(country.name)}
+                    className="text-sm font-semibold text-rose-300"
+                  >
+                    Remove
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
 export default function SettingsPage() {
-  const { role } = useAuth();
+  const { role, tenantId } = useAuth();
   const { hasCapability } = useCapabilities();
   const { churchName } = useTenant();
   const {
     globalBranding,
     tenantBranding,
+    platformConfig,
     updateGlobalBranding,
     setTenantBranding,
+    setPlatformConfig,
   } =
     useBrandingStore();
   const isSuperAdmin = role === 'super_admin';
   const tabs = isSuperAdmin ? [...platformTabs, ...workspaceTabs] : workspaceTabs;
   const [activeTab, setActiveTab] = useState(isSuperAdmin ? 'config' : 'branding');
   const [globalForm, setGlobalForm] = useState(globalBranding);
+  const [platformConfigForm, setPlatformConfigForm] = useState({
+    eligibleCountries: normalizeEligibleCountries(platformConfig.eligibleCountries),
+  });
+  const [countryDraft, setCountryDraft] = useState(emptyCountryDraft);
   const [brandingForm, setBrandingForm] = useState({
     appName: tenantBranding.appName || churchName || '',
     logoUrl: tenantBranding.logoUrl || '',
@@ -154,6 +246,11 @@ export default function SettingsPage() {
     queryFn: () => (isSuperAdmin ? getTenantById(targetTenantId) : getCurrentTenant()),
     enabled: canViewSettings && (!isSuperAdmin || Boolean(targetTenantId)),
   });
+  const platformConfigQuery = useQuery({
+    queryKey: ['platform-config', tenantId],
+    queryFn: () => getTenantById(tenantId),
+    enabled: isSuperAdmin && Boolean(tenantId),
+  });
 
   useEffect(() => {
     if (!tenantQuery.data) {
@@ -179,10 +276,54 @@ export default function SettingsPage() {
     setTenantBranding(nextBranding);
   }, [churchName, setTenantBranding, tenantQuery.data]);
 
+  useEffect(() => {
+    if (!isSuperAdmin) {
+      return;
+    }
+
+    const configSource = platformConfigQuery.data;
+    if (!configSource) {
+      return;
+    }
+
+    setGlobalForm({
+      appName: configSource.branding?.appName || globalBranding.appName,
+      logoUrl: configSource.branding?.logoUrl || globalBranding.logoUrl,
+      tagline: configSource.branding?.tagline || globalBranding.tagline,
+    });
+    setPlatformConfig({
+      eligibleCountries: normalizeEligibleCountries(
+        configSource.platformConfig?.eligibleCountries,
+      ),
+    });
+    setPlatformConfigForm({
+      eligibleCountries: normalizeEligibleCountries(
+        configSource.platformConfig?.eligibleCountries,
+      ),
+    });
+  }, [globalBranding.appName, globalBranding.logoUrl, globalBranding.tagline, isSuperAdmin, platformConfigQuery.data, setPlatformConfig]);
+
   const updateTenantMutation = useMutation({
     mutationFn: ({ tenantId, payload }) =>
       isSuperAdmin ? updateTenant(tenantId, payload) : updateCurrentTenant(payload),
     onSuccess: (data) => {
+      if (data?.platformConfig) {
+        setPlatformConfig({
+          eligibleCountries: normalizeEligibleCountries(data.platformConfig.eligibleCountries),
+        });
+        setPlatformConfigForm({
+          eligibleCountries: normalizeEligibleCountries(data.platformConfig.eligibleCountries),
+        });
+      }
+
+      if (isSuperAdmin && data?.branding) {
+        updateGlobalBranding({
+          appName: data.branding.appName || data.churchName || '',
+          logoUrl: data.branding.logoUrl || '',
+          tagline: data.branding.tagline || 'Church OS',
+        });
+      }
+
       if (data?.branding) {
         const nextBranding = {
           appName: data.branding.appName || data.churchName || '',
@@ -213,7 +354,45 @@ export default function SettingsPage() {
       return;
     }
 
+    if (isSuperAdmin) {
+      updateTenantMutation.mutate({
+        tenantId,
+        payload: {
+          branding: globalForm,
+          platformConfig: platformConfigForm,
+        },
+      });
+      return;
+    }
+
     updateGlobalBranding(globalForm);
+  };
+
+  const updateCountryDraft = (key, value) => {
+    setCountryDraft((current) => ({
+      ...current,
+      [key]: value,
+    }));
+  };
+
+  const addEligibleCountry = () => {
+    if (!countryDraft.name.trim()) {
+      return;
+    }
+
+    const nextCountries = normalizeEligibleCountries([
+      ...platformConfigForm.eligibleCountries,
+      countryDraft,
+    ]);
+
+    setPlatformConfigForm({ eligibleCountries: nextCountries });
+    setCountryDraft(emptyCountryDraft);
+  };
+
+  const removeEligibleCountry = (name) => {
+    setPlatformConfigForm((current) => ({
+      eligibleCountries: current.eligibleCountries.filter((item) => item.name !== name),
+    }));
   };
 
   const handleSaveTenant = () => {
@@ -376,6 +555,14 @@ export default function SettingsPage() {
                     Save config
                   </Button>
                 </div>
+
+                <CountryConfigEditor
+                  countries={platformConfigForm.eligibleCountries}
+                  draft={countryDraft}
+                  onDraftChange={updateCountryDraft}
+                  onAdd={addEligibleCountry}
+                  onRemove={removeEligibleCountry}
+                />
               </div>
             </Card>
 

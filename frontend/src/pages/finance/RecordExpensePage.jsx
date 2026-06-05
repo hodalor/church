@@ -5,16 +5,18 @@ import FinancePageLayout from '../../components/finance/FinancePageLayout';
 import Card from '../../components/ui/Card';
 import Button from '../../components/ui/Button';
 import RouteModal from '../../components/ui/RouteModal';
+import useCurrency from '../../hooks/useCurrency';
 import { recordExpense } from '../../api/endpoints/finance';
 import { supabaseUpload } from '../../utils/supabaseUpload';
 
 export default function RecordExpensePage() {
   const navigate = useNavigate();
+  const { currencyCode, currencyOptions } = useCurrency();
   const [form, setForm] = useState({
     category: 'utilities',
     description: '',
     amount: '',
-    currency: 'USD',
+    currency: currencyCode,
     expenseDate: new Date().toISOString().slice(0, 10),
     paymentMethod: 'cash',
     paymentReference: '',
@@ -81,6 +83,14 @@ export default function RecordExpensePage() {
               <label className="space-y-2">
                 <span className="text-sm text-white/80">Amount</span>
                 <input type="number" value={form.amount} onChange={(event) => updateField('amount', event.target.value)} className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white" />
+              </label>
+              <label className="space-y-2">
+                <span className="text-sm text-white/80">Currency</span>
+                <select value={form.currency} onChange={(event) => updateField('currency', event.target.value)} className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white">
+                  {currencyOptions.map((option) => (
+                    <option key={option.code} value={option.code}>{option.code} ({option.symbol})</option>
+                  ))}
+                </select>
               </label>
               <label className="space-y-2">
                 <span className="text-sm text-white/80">Expense Date</span>

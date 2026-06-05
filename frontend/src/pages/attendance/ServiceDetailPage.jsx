@@ -38,7 +38,7 @@ const statCards = [
 export default function ServiceDetailPage() {
   const queryClient = useQueryClient();
   const { serviceId } = useParams();
-  const { hasCapability } = useCapabilities();
+  const { hasAnyCapability } = useCapabilities();
   const [searchParams, setSearchParams] = useSearchParams();
   const [offlineForm, setOfflineForm] = useState({
     adults: '',
@@ -160,7 +160,7 @@ export default function ServiceDetailPage() {
       key: 'actions',
       header: 'Actions',
       render: (row) =>
-        hasCapability('attendance.delete') ? (
+        hasAnyCapability(['attendance.delete', 'attendance.services.delete']) ? (
           <Button variant="ghost" onClick={() => removeMutation.mutate(row.checkInId || row._id)}>
             Remove
           </Button>

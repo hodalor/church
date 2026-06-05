@@ -39,6 +39,18 @@ const tenantSettingsValidation = [
     .optional()
     .isArray()
     .withMessage('Groupings must be an array.'),
+  body('financial.currencyCode')
+    .optional({ values: 'falsy' })
+    .isLength({ min: 3, max: 5 })
+    .withMessage('Currency code must be 3 to 5 characters long.'),
+  body('financial.currencySymbol')
+    .optional({ values: 'falsy' })
+    .isLength({ min: 1, max: 6 })
+    .withMessage('Currency symbol must be 1 to 6 characters long.'),
+  body('platformConfig.eligibleCountries')
+    .optional()
+    .isArray()
+    .withMessage('Eligible countries must be an array.'),
 ];
 
 tenantRouter.use(auth, tenantScope);

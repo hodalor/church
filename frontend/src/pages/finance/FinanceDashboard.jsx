@@ -21,6 +21,7 @@ import FinanceStatCard from '../../components/finance/FinanceStatCard';
 import SmartInsightBanner from '../../components/finance/SmartInsightBanner';
 import AmountDisplay from '../../components/finance/AmountDisplay';
 import TransactionTypeBadge from '../../components/finance/TransactionTypeBadge';
+import useCurrency from '../../hooks/useCurrency';
 import { useFinanceAccess } from '../../hooks/useFinanceAccess';
 import {
   approveExpense,
@@ -41,12 +42,16 @@ const periods = [
 ];
 
 const pieColors = ['#C9A84C', '#1E2A4A', '#8B5CF6', '#10B981', '#F97316', '#06B6D4'];
-const currencyTooltipFormatter = (value) => `$${Number(value || 0).toLocaleString()}`;
 
 export default function FinanceDashboard() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const { canApproveFinance, canRecordFinance, canSeeSmartInsights } = useFinanceAccess();
+  const {
+    canApproveFinance,
+    canRecordFinance,
+    canSeeSmartInsights,
+  } = useFinanceAccess();
+  const { formatCurrency } = useCurrency();
   const [period, setPeriod] = useState('month');
   const [from, setFrom] = useState('');
   const [to, setTo] = useState('');
@@ -128,7 +133,7 @@ export default function FinanceDashboard() {
   }));
 
   return (
-    <FinancePageLayout>
+    <FinancePageLayout requireCapability="finance.overview.view">
       <div className="space-y-6">
         <PageHeader
           title="Finance Dashboard"
@@ -270,7 +275,7 @@ export default function FinanceDashboard() {
                 <BarChart data={monthlyChartData}>
                   <XAxis dataKey="label" stroke="#94a3b8" />
                   <YAxis stroke="#94a3b8" />
-                  <Tooltip formatter={currencyTooltipFormatter} />
+                  <Tooltip formatter={(value) => formatCurrency(value)} />
                   <Legend />
                   <Bar dataKey="income" fill="#C9A84C" radius={[8, 8, 0, 0]} />
                   <Bar dataKey="expenses" fill="#1E2A4A" radius={[8, 8, 0, 0]} />
@@ -293,7 +298,7 @@ export default function FinanceDashboard() {
                       formatter={(value) => {
                         const total = incomeTypeData.reduce((sum, item) => sum + Number(item.value || 0), 0);
                         const percentage = total ? ((Number(value || 0) / total) * 100).toFixed(1) : '0.0';
-                        return [`$${Number(value || 0).toLocaleString()} (${percentage}%)`, 'Amount'];
+                        return [`${formatCurrency(value)} (${percentage}%)`, 'Amount'];
                       }}
                     />
                   </PieChart>

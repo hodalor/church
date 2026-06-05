@@ -11,6 +11,7 @@ import Modal from '../../components/ui/Modal';
 import RouteModal from '../../components/ui/RouteModal';
 import MemberSearchInput from '../../components/finance/MemberSearchInput';
 import { useAuth } from '../../hooks/useAuth';
+import useCurrency from '../../hooks/useCurrency';
 import { getReceipt, recordTransaction } from '../../api/endpoints/finance';
 
 const schema = z.object({
@@ -60,10 +61,11 @@ const paymentMethods = [
 export default function RecordTransactionPage() {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { currencyCode, currencySymbol, currencyOptions } = useCurrency();
   const [searchParams] = useSearchParams();
   const [successData, setSuccessData] = useState(null);
   const [selectedMember, setSelectedMember] = useState(null);
-  const defaultCurrency = user?.currency || 'USD';
+  const defaultCurrency = user?.currency || currencyCode || 'USD';
   const defaultBranch = user?.branch || '';
   const queryPrefill = useMemo(
     () => ({
@@ -195,7 +197,7 @@ export default function RecordTransactionPage() {
             <label className="space-y-2">
               <span className="text-sm text-white/80">Amount</span>
               <div className="flex items-center gap-3 rounded-xl border border-white/10 bg-white/5 px-4 py-3">
-                <span className="text-lg font-semibold text-accent">$</span>
+                <span className="text-lg font-semibold text-accent">{currencySymbol}</span>
                 <input
                   type="number"
                   step="0.01"
@@ -216,9 +218,9 @@ export default function RecordTransactionPage() {
                   {...form.register('currency')}
                   className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white"
                 >
-                  {['USD', 'GHS', 'NGN', 'KES', 'GBP'].map((option) => (
-                    <option key={option} value={option}>
-                      {option}
+                  {currencyOptions.map((option) => (
+                    <option key={option.code} value={option.code}>
+                      {option.code} ({option.symbol})
                     </option>
                   ))}
                 </select>

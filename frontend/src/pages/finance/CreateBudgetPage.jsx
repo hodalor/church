@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import FinancePageLayout from '../../components/finance/FinancePageLayout';
 import Button from '../../components/ui/Button';
 import RouteModal from '../../components/ui/RouteModal';
+import useCurrency from '../../hooks/useCurrency';
 import { activateBudget, createBudget } from '../../api/endpoints/finance';
 
 const createLine = () => ({
@@ -14,6 +15,7 @@ const createLine = () => ({
 
 export default function CreateBudgetPage() {
   const navigate = useNavigate();
+  const { formatCurrency } = useCurrency();
   const [form, setForm] = useState({
     title: '',
     year: new Date().getFullYear(),
@@ -113,7 +115,7 @@ export default function CreateBudgetPage() {
             </Button>
             <div className="text-right">
               <p className="text-sm text-white/55">Running total</p>
-              <p className="text-2xl font-semibold text-white">${totalAllocated.toLocaleString()}</p>
+              <p className="text-2xl font-semibold text-white">{formatCurrency(totalAllocated)}</p>
             </div>
           </div>
 

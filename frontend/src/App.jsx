@@ -19,6 +19,7 @@ import PollsPage from './pages/communication/PollsPage';
 import PrayerRequestsPage from './pages/communication/PrayerRequestsPage';
 import TemplatesPage from './pages/communication/TemplatesPage';
 import CreateMemberPage from './pages/members/CreateMemberPage';
+import ManualPage from './pages/manual/ManualPage';
 import MemberDetailPage from './pages/members/MemberDetailPage';
 import MembersListPage from './pages/members/MembersListPage';
 import NotificationsPage from './pages/notifications/NotificationsPage';
@@ -110,6 +111,14 @@ export default function App() {
             <AppShell>
               <DashboardPage />
             </AppShell>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/manual"
+        element={
+          <ProtectedRoute>
+            <ManualPage />
           </ProtectedRoute>
         }
       />
@@ -454,6 +463,14 @@ export default function App() {
         element={
           <ProtectedRoute allowedRoles={['super_admin']}>
             <SuperAdminDashboard />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/superadmin/manual"
+        element={
+          <ProtectedRoute allowedRoles={['super_admin']}>
+            <ManualPage />
           </ProtectedRoute>
         }
       />

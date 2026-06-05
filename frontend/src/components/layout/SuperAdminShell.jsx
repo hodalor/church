@@ -2,17 +2,15 @@ import { useEffect, useState } from 'react';
 import {
   BarChart3,
   Bell,
+  BookOpen,
   Building2,
-  ChevronLeft,
   ChevronDown,
-  FileText,
-  HandHelping,
+  ChevronLeft,
   HandCoins,
+  HandHelping,
   HeartHandshake,
   LayoutDashboard,
   Menu,
-  Plus,
-  Radio,
   Search,
   Settings,
   Shield,
@@ -53,6 +51,16 @@ const attendanceSubItems = [
   { label: 'Absentees', to: '/attendance/absentees' },
 ];
 
+const visitorSubItems = [
+  { label: 'Platform', to: '/superadmin/visitors' },
+  { label: 'Register', to: '/visitors/register' },
+  { label: 'List', to: '/visitors' },
+  { label: 'Pipeline', to: '/visitors/pipeline' },
+  { label: 'Follow-ups', to: '/visitors/follow-ups' },
+  { label: 'Workflow', to: '/visitors/workflow' },
+  { label: 'Reports', to: '/visitors/reports' },
+];
+
 const pastoralSubItems = [
   { label: 'Overview', to: '/pastoral' },
   { label: 'Cases', to: '/pastoral/cases' },
@@ -66,20 +74,16 @@ const navigation = [
     title: 'Workspace',
     items: [
       { label: 'Overview', to: '/superadmin/dashboard', icon: LayoutDashboard },
-      { label: 'All Churches', to: '/superadmin/tenants', icon: Building2 },
+      { label: 'All Churches', to: '/superadmin/tenants', icon: Building2, badge: 'tenants' },
       { label: 'Members', to: '/superadmin/members', icon: Users },
       { label: 'Users', to: '/superadmin/users', icon: Shield },
+      { label: 'Manual', to: '/superadmin/manual', icon: BookOpen },
     ],
   },
   {
     title: 'Operations',
     items: [
-      {
-        label: 'Finance',
-        icon: HandCoins,
-        children: financeSubItems,
-        matchPrefixes: ['/finance'],
-      },
+      { label: 'Finance', icon: HandCoins, children: financeSubItems, matchPrefixes: ['/finance'] },
       { label: 'Notifications', to: '/superadmin/notifications', icon: Bell },
       {
         label: 'Communication',
@@ -93,7 +97,12 @@ const navigation = [
         children: attendanceSubItems,
         matchPrefixes: ['/superadmin/attendance', '/attendance'],
       },
-      { label: 'Visitors', to: '/superadmin/visitors', icon: UserRoundPlus },
+      {
+        label: 'Visitors',
+        icon: UserRoundPlus,
+        children: visitorSubItems,
+        matchPrefixes: ['/superadmin/visitors', '/visitors'],
+      },
     ],
   },
   {
@@ -109,11 +118,7 @@ const navigation = [
   },
   {
     title: 'System',
-    items: [
-      { label: 'Settings', to: '/superadmin/settings', icon: Settings },
-      { label: 'Branding', to: '/superadmin/settings', icon: FileText },
-      { label: 'Communication Center', to: '/superadmin/communication', icon: Radio },
-    ],
+    items: [{ label: 'Settings', to: '/superadmin/settings', icon: Settings }],
   },
 ];
 
@@ -121,17 +126,21 @@ export default function SuperAdminShell({ children }) {
   const [isOpen, setIsOpen] = useState(false);
   const { logout } = useAuth();
   const location = useLocation();
-  const [financeOpen, setFinanceOpen] = useState(location.pathname.startsWith('/finance'));
-  const [communicationOpen, setCommunicationOpen] = useState(
-    location.pathname.startsWith('/superadmin/communication') ||
+  const [expanded, setExpanded] = useState({
+    Finance: location.pathname.startsWith('/finance'),
+    Communication:
+      location.pathname.startsWith('/superadmin/communication') ||
       location.pathname.startsWith('/communication'),
-  );
-  const [attendanceOpen, setAttendanceOpen] = useState(
-    location.pathname.startsWith('/superadmin/attendance') || location.pathname.startsWith('/attendance'),
-  );
-  const [pastoralOpen, setPastoralOpen] = useState(
-    location.pathname.startsWith('/superadmin/pastoral') || location.pathname.startsWith('/pastoral'),
-  );
+    Attendance:
+      location.pathname.startsWith('/superadmin/attendance') ||
+      location.pathname.startsWith('/attendance'),
+    Visitors:
+      location.pathname.startsWith('/superadmin/visitors') ||
+      location.pathname.startsWith('/visitors'),
+    'Pastoral Care':
+      location.pathname.startsWith('/superadmin/pastoral') ||
+      location.pathname.startsWith('/pastoral'),
+  });
   const globalBranding = useBrandingStore((state) => state.globalBranding);
   const tenantsQuery = useQuery({
     queryKey: ['shell-tenants-count'],
@@ -139,32 +148,118 @@ export default function SuperAdminShell({ children }) {
   });
 
   useEffect(() => {
-    if (location.pathname.startsWith('/finance')) {
-      setFinanceOpen(true);
-    }
-
-    if (
-      location.pathname.startsWith('/superadmin/communication') ||
-      location.pathname.startsWith('/communication')
-    ) {
-      setCommunicationOpen(true);
-    }
-    if (
-      location.pathname.startsWith('/superadmin/attendance') ||
-      location.pathname.startsWith('/attendance')
-    ) {
-      setAttendanceOpen(true);
-    }
-    if (
-      location.pathname.startsWith('/superadmin/pastoral') ||
-      location.pathname.startsWith('/pastoral')
-    ) {
-      setPastoralOpen(true);
-    }
+    setExpanded((current) => ({
+      ...current,
+      Finance: current.Finance || location.pathname.startsWith('/finance'),
+      Communication:
+        current.Communication ||
+        location.pathname.startsWith('/superadmin/communication') ||
+        location.pathname.startsWith('/communication'),
+      Attendance:
+        current.Attendance ||
+        location.pathname.startsWith('/superadmin/attendance') ||
+        location.pathname.startsWith('/attendance'),
+      Visitors:
+        current.Visitors ||
+        location.pathname.startsWith('/superadmin/visitors') ||
+        location.pathname.startsWith('/visitors'),
+      'Pastoral Care':
+        current['Pastoral Care'] ||
+        location.pathname.startsWith('/superadmin/pastoral') ||
+        location.pathname.startsWith('/pastoral'),
+    }));
   }, [location.pathname]);
 
-  const isExpandableActive = (prefixes = []) =>
-    prefixes.some((prefix) => location.pathname === prefix || location.pathname.startsWith(`${prefix}/`));
+  const renderSubMenu = (items) => (
+    <div className="ml-7 mt-1 space-y-1 border-l border-white/8 pl-4">
+      {items.map((subItem) => (
+        <NavLink
+          key={subItem.to}
+          to={subItem.to}
+          className={({ isActive }) =>
+            `block rounded-xl px-3 py-2 text-[12px] uppercase tracking-[0.2em] ${
+              isActive ? 'bg-white/[0.06] text-accent' : 'text-white/40 hover:text-white/70'
+            }`
+          }
+          onClick={() => {
+            if (window.innerWidth < 1024) {
+              setIsOpen(false);
+            }
+          }}
+        >
+          {subItem.label}
+        </NavLink>
+      ))}
+    </div>
+  );
+
+  const renderNavItem = (item) => {
+    const { label, to, icon: Icon, children: subItems, matchPrefixes = [], badge } = item;
+
+    if (subItems?.length) {
+      const isActive = matchPrefixes.some(
+        (prefix) => location.pathname === prefix || location.pathname.startsWith(`${prefix}/`),
+      );
+      const isExpanded = expanded[label];
+
+      return (
+        <div className="space-y-1">
+          <button
+            type="button"
+            onClick={() =>
+              setExpanded((current) => ({
+                ...current,
+                [label]: !current[label],
+              }))
+            }
+            className={`flex w-full items-center justify-between rounded-2xl px-3 py-2.5 text-[14px] font-medium ${
+              isActive || isExpanded
+                ? 'bg-[linear-gradient(90deg,rgba(201,168,76,0.18),rgba(201,168,76,0.08))] text-[#f5deb0]'
+                : 'text-white/68 hover:bg-white/[0.05] hover:text-white'
+            }`}
+            aria-label={isExpanded ? `Collapse ${label} menu` : `Expand ${label} menu`}
+          >
+            <span className="flex items-center gap-3">
+              <Icon className="h-4 w-4" />
+              {label}
+            </span>
+            <ChevronDown
+              className={`h-4 w-4 transition-transform ${isExpanded ? 'rotate-180 text-accent' : ''}`}
+            />
+          </button>
+          {isExpanded ? renderSubMenu(subItems) : null}
+        </div>
+      );
+    }
+
+    return (
+      <NavLink
+        to={to}
+        className={({ isActive }) =>
+          `flex items-center justify-between rounded-2xl px-3 py-2.5 text-[14px] font-medium ${
+            isActive
+              ? 'bg-[linear-gradient(90deg,rgba(201,168,76,0.18),rgba(201,168,76,0.08))] text-[#f5deb0]'
+              : 'text-white/68 hover:bg-white/[0.05] hover:text-white'
+          }`
+        }
+        onClick={() => {
+          if (window.innerWidth < 1024) {
+            setIsOpen(false);
+          }
+        }}
+      >
+        <span className="flex items-center gap-3">
+          <Icon className="h-4 w-4" />
+          {label}
+        </span>
+        {badge === 'tenants' ? (
+          <span className="rounded-full bg-accent px-2 py-0.5 text-xs font-semibold text-primary">
+            {tenantsQuery.data?.total || 0}
+          </span>
+        ) : null}
+      </NavLink>
+    );
+  };
 
   return (
     <div className="h-screen overflow-hidden bg-[#060b14] text-white">
@@ -197,219 +292,9 @@ export default function SuperAdminShell({ children }) {
             {navigation.map((group) => (
               <div key={group.title} className="space-y-1.5">
                 <p className="px-2 text-[10px] uppercase tracking-[0.26em] text-white/32">{group.title}</p>
-                {group.items.map(({ label, to, icon: Icon, disabled }) => (
-                  <div key={label} className="space-y-1">
-                    {label === 'Finance' ? (
-                      <div className="space-y-1">
-                        <button
-                          type="button"
-                          onClick={() => setFinanceOpen((current) => !current)}
-                          className={`flex w-full items-center justify-between rounded-2xl px-3 py-2.5 text-[14px] font-medium ${
-                            isExpandableActive(['/finance']) || financeOpen
-                              ? 'bg-[linear-gradient(90deg,rgba(201,168,76,0.18),rgba(201,168,76,0.08))] text-[#f5deb0]'
-                              : 'text-white/68 hover:bg-white/[0.05] hover:text-white'
-                          }`}
-                          aria-label={financeOpen ? 'Collapse finance menu' : 'Expand finance menu'}
-                        >
-                          <span className="flex items-center gap-3">
-                            <Icon className="h-4 w-4" />
-                            {label}
-                          </span>
-                          <ChevronDown
-                            className={`h-4 w-4 transition-transform ${financeOpen ? 'rotate-180 text-accent' : ''}`}
-                          />
-                        </button>
-                        {financeOpen ? (
-                          <div className="ml-7 mt-1 space-y-1 border-l border-white/8 pl-4">
-                            {financeSubItems.map((subItem) => (
-                              <NavLink
-                                key={subItem.to}
-                                to={subItem.to}
-                                className={({ isActive }) =>
-                                  `block rounded-xl px-3 py-2 text-[12px] uppercase tracking-[0.2em] ${
-                                    isActive ? 'bg-white/[0.06] text-accent' : 'text-white/40 hover:text-white/70'
-                                  }`
-                                }
-                                onClick={() => {
-                                  if (window.innerWidth < 1024) {
-                                    setIsOpen(false);
-                                  }
-                                }}
-                              >
-                                {subItem.label}
-                              </NavLink>
-                            ))}
-                          </div>
-                        ) : null}
-                      </div>
-                    ) : label === 'Communication' ? (
-                      <div className="space-y-1">
-                        <button
-                          type="button"
-                          onClick={() => setCommunicationOpen((current) => !current)}
-                          className={`flex w-full items-center justify-between rounded-2xl px-3 py-2.5 text-[14px] font-medium ${
-                            isExpandableActive(['/superadmin/communication', '/communication']) || communicationOpen
-                              ? 'bg-[linear-gradient(90deg,rgba(201,168,76,0.18),rgba(201,168,76,0.08))] text-[#f5deb0]'
-                              : 'text-white/68 hover:bg-white/[0.05] hover:text-white'
-                          }`}
-                          aria-label={communicationOpen ? 'Collapse communication menu' : 'Expand communication menu'}
-                        >
-                          <span className="flex items-center gap-3">
-                            <Icon className="h-4 w-4" />
-                            {label}
-                          </span>
-                          <ChevronDown
-                            className={`h-4 w-4 transition-transform ${communicationOpen ? 'rotate-180 text-accent' : ''}`}
-                          />
-                        </button>
-                        {communicationOpen ? (
-                          <div className="ml-7 mt-1 space-y-1 border-l border-white/8 pl-4">
-                            {communicationSubItems.map((subItem) => (
-                              <NavLink
-                                key={subItem.to}
-                                to={subItem.to}
-                                className={({ isActive }) =>
-                                  `block rounded-xl px-3 py-2 text-[12px] uppercase tracking-[0.2em] ${
-                                    isActive ? 'bg-white/[0.06] text-accent' : 'text-white/40 hover:text-white/70'
-                                  }`
-                                }
-                                onClick={() => {
-                                  if (window.innerWidth < 1024) {
-                                    setIsOpen(false);
-                                  }
-                                }}
-                              >
-                                {subItem.label}
-                              </NavLink>
-                            ))}
-                          </div>
-                        ) : null}
-                      </div>
-                    ) : label === 'Attendance' ? (
-                      <div className="space-y-1">
-                        <button
-                          type="button"
-                          onClick={() => setAttendanceOpen((current) => !current)}
-                          className={`flex w-full items-center justify-between rounded-2xl px-3 py-2.5 text-[14px] font-medium ${
-                            isExpandableActive(['/superadmin/attendance', '/attendance']) || attendanceOpen
-                              ? 'bg-[linear-gradient(90deg,rgba(201,168,76,0.18),rgba(201,168,76,0.08))] text-[#f5deb0]'
-                              : 'text-white/68 hover:bg-white/[0.05] hover:text-white'
-                          }`}
-                          aria-label={attendanceOpen ? 'Collapse attendance menu' : 'Expand attendance menu'}
-                        >
-                          <span className="flex items-center gap-3">
-                            <Icon className="h-4 w-4" />
-                            {label}
-                          </span>
-                          <ChevronDown
-                            className={`h-4 w-4 transition-transform ${attendanceOpen ? 'rotate-180 text-accent' : ''}`}
-                          />
-                        </button>
-                        {attendanceOpen ? (
-                          <div className="ml-7 mt-1 space-y-1 border-l border-white/8 pl-4">
-                            {attendanceSubItems.map((subItem) => (
-                              <NavLink
-                                key={subItem.to}
-                                to={subItem.to}
-                                className={({ isActive }) =>
-                                  `block rounded-xl px-3 py-2 text-[12px] uppercase tracking-[0.2em] ${
-                                    isActive ? 'bg-white/[0.06] text-accent' : 'text-white/40 hover:text-white/70'
-                                  }`
-                                }
-                                onClick={() => {
-                                  if (window.innerWidth < 1024) {
-                                    setIsOpen(false);
-                                  }
-                                }}
-                              >
-                                {subItem.label}
-                              </NavLink>
-                            ))}
-                          </div>
-                        ) : null}
-                      </div>
-                    ) : (
-                      <>
-                        {disabled ? (
-                          <div className="flex items-center justify-between rounded-2xl px-3 py-2.5 text-[14px] font-medium text-white/28">
-                            <span className="flex items-center gap-3">
-                              <Icon className="h-4 w-4" />
-                              {label}
-                            </span>
-                          </div>
-                    ) : label === 'Pastoral Care' ? (
-                      <div className="space-y-1">
-                        <button
-                          type="button"
-                          onClick={() => setPastoralOpen((current) => !current)}
-                          className={`flex w-full items-center justify-between rounded-2xl px-3 py-2.5 text-[14px] font-medium ${
-                            isExpandableActive(['/superadmin/pastoral', '/pastoral']) || pastoralOpen
-                              ? 'bg-[linear-gradient(90deg,rgba(201,168,76,0.18),rgba(201,168,76,0.08))] text-[#f5deb0]'
-                              : 'text-white/68 hover:bg-white/[0.05] hover:text-white'
-                          }`}
-                          aria-label={pastoralOpen ? 'Collapse pastoral menu' : 'Expand pastoral menu'}
-                        >
-                          <span className="flex items-center gap-3">
-                            <Icon className="h-4 w-4" />
-                            {label}
-                          </span>
-                          <ChevronDown
-                            className={`h-4 w-4 transition-transform ${pastoralOpen ? 'rotate-180 text-accent' : ''}`}
-                          />
-                        </button>
-                        {pastoralOpen ? (
-                          <div className="ml-7 mt-1 space-y-1 border-l border-white/8 pl-4">
-                            {pastoralSubItems.map((subItem) => (
-                              <NavLink
-                                key={subItem.to}
-                                to={subItem.to}
-                                className={({ isActive }) =>
-                                  `block rounded-xl px-3 py-2 text-[12px] uppercase tracking-[0.2em] ${
-                                    isActive ? 'bg-white/[0.06] text-accent' : 'text-white/40 hover:text-white/70'
-                                  }`
-                                }
-                                onClick={() => {
-                                  if (window.innerWidth < 1024) {
-                                    setIsOpen(false);
-                                  }
-                                }}
-                              >
-                                {subItem.label}
-                              </NavLink>
-                            ))}
-                          </div>
-                        ) : null}
-                      </div>
-                    ) : (
-                          <NavLink
-                            to={to}
-                            className={({ isActive }) =>
-                              `flex items-center justify-between rounded-2xl px-3 py-2.5 text-[14px] font-medium ${
-                                isActive
-                                  ? 'bg-[linear-gradient(90deg,rgba(201,168,76,0.18),rgba(201,168,76,0.08))] text-[#f5deb0]'
-                                  : 'text-white/68 hover:bg-white/[0.05] hover:text-white'
-                              }`
-                            }
-                            onClick={() => {
-                              if (window.innerWidth < 1024) {
-                                setIsOpen(false);
-                              }
-                            }}
-                          >
-                            <span className="flex items-center gap-3">
-                              <Icon className="h-4 w-4" />
-                              {label}
-                            </span>
-                            {label === 'All Churches' ? (
-                              <span className="rounded-full bg-accent px-2 py-0.5 text-xs font-semibold text-primary">
-                                {tenantsQuery.data?.total || 0}
-                              </span>
-                            ) : null}
-                          </NavLink>
-                        )}
-                        {disabled ? <p className="pl-12 text-[11px] text-white/24">Coming soon</p> : null}
-                      </>
-                    )}
+                {group.items.map((item) => (
+                  <div key={item.label} className="space-y-1">
+                    {renderNavItem(item)}
                   </div>
                 ))}
               </div>
@@ -446,10 +331,11 @@ export default function SuperAdminShell({ children }) {
                 />
               </label>
               <NotificationBell inboxPath="/communication/inbox" />
-              <Button variant="subtle" className="hidden h-11 w-11 px-0 lg:inline-flex">
-                <Plus className="h-4 w-4" />
-              </Button>
-              <Button variant="subtle" onClick={() => logout()} className="h-11 w-11 px-0 sm:h-auto sm:w-auto sm:px-4 sm:py-2.5">
+              <Button
+                variant="subtle"
+                onClick={() => logout()}
+                className="h-11 w-11 px-0 sm:h-auto sm:w-auto sm:px-4 sm:py-2.5"
+              >
                 <span className="hidden sm:inline">Logout</span>
                 <span className="sm:hidden">↗</span>
               </Button>

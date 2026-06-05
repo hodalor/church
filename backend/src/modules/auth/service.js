@@ -100,8 +100,12 @@ export const loginService = async ({ tenantId, username, pin }) => {
     accessToken,
     refreshToken,
     churchName: tenant.churchName,
+    country: tenant.country || null,
+    countryCode: tenant.countryCode || null,
     tenantBranding: tenant.branding || null,
     tenantContent: tenant.content || null,
+    tenantFinancial: tenant.financial || null,
+    platformConfig: user.role === 'super_admin' ? tenant.platformConfig || null : null,
     user: {
       userId: user._id,
       tenantId: user.tenantId,
@@ -209,6 +213,8 @@ export const getMeService = async ({ userId }) => {
       ? {
           ...tenant.toObject(),
           capabilities: tenantCapabilities,
+          financial: tenant.financial || null,
+          platformConfig: tenant.platformConfig || null,
         }
       : null,
   };

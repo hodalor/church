@@ -10,6 +10,7 @@ import Pagination from '../../components/ui/Pagination';
 import SearchInput from '../../components/ui/SearchInput';
 import AmountDisplay from '../../components/finance/AmountDisplay';
 import TransactionTypeBadge from '../../components/finance/TransactionTypeBadge';
+import useCurrency from '../../hooks/useCurrency';
 import { useFinanceAccess } from '../../hooks/useFinanceAccess';
 import { getAllTransactions, reverseTransaction, verifyTransaction } from '../../api/endpoints/finance';
 
@@ -56,7 +57,9 @@ export default function TransactionsPage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [searchParams, setSearchParams] = useSearchParams();
-  const { canApproveFinance, canRecordFinance } = useFinanceAccess();
+  const { canApproveFinance, canExportReports, canRecordFinance } =
+    useFinanceAccess();
+  const { formatCurrency } = useCurrency();
   const [selectedRows, setSelectedRows] = useState([]);
 
   const page = Number(searchParams.get('page') || 1);
@@ -126,7 +129,7 @@ export default function TransactionsPage() {
   };
 
   return (
-    <FinancePageLayout>
+    <FinancePageLayout requireCapability="finance.transactions.view">
       <div className="space-y-6">
         <PageHeader
           title="Transactions"
@@ -231,9 +234,9 @@ export default function TransactionsPage() {
           </div>
 
           <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white/65">
-            Total: <strong className="text-white">{summary.total.toLocaleString()}</strong> | Count:{' '}
+            Total: <strong className="text-white">{formatCurrency(summary.total)}</strong> | Count:{' '}
             <strong className="text-white">{summary.count}</strong> | Avg per transaction:{' '}
-            <strong className="text-white">{summary.average.toLocaleString()}</strong> | Unverified:{' '}
+            <strong className="text-white">{formatCurrency(summary.average)}</strong> | Unverified:{' '}
             <strong className="text-white">{summary.unverifiedCount}</strong>
           </div>
 
@@ -252,7 +255,7 @@ export default function TransactionsPage() {
             ) : null}
             <Button
               variant="ghost"
-              disabled={!selectedRows.length}
+              disabled={!selectedRows.length || !canExportReports}
               onClick={() => downloadCsv(selectedTransactionObjects)}
             >
               Export Selected to CSV
@@ -347,7 +350,7 @@ export default function TransactionsPage() {
           <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
             <p className="text-sm text-white/55">
               Showing {(page - 1) * 12 + 1}-{Math.min(page * 12, transactionsQuery.data?.total || 0)} of{' '}
-              {transactionsQuery.data?.total || 0} transactions, Total: {summary.total.toLocaleString()}
+              {transactionsQuery.data?.total || 0} transactions, Total: {formatCurrency(summary.total)}
             </p>
             <Pagination
               currentPage={transactionsQuery.data?.page || page}

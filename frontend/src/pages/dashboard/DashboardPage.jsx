@@ -22,20 +22,16 @@ import { getFinancialSummary } from '../../api/endpoints/finance';
 import { getMemberStats } from '../../api/endpoints/members';
 import { useTenant } from '../../hooks/useTenant';
 import { useBrandingStore } from '../../stores/brandingStore';
+import { formatAmount } from '../../utils/currency';
 
 const chartColors = ['#C9A84C', '#60a5fa', '#34d399', '#f97316', '#a78bfa', '#f43f5e'];
 
-const formatCurrency = (value) =>
-  new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-    maximumFractionDigits: 0,
-  }).format(Number(value || 0));
-
 export default function DashboardPage() {
-  const { churchName } = useTenant();
+  const { churchName, currencyCode, currencySymbol } = useTenant();
   const tenantBranding = useBrandingStore((state) => state.tenantBranding);
   const workspaceName = tenantBranding.appName || churchName || 'Your Church';
+  const formatCurrency = (value) =>
+    formatAmount(value, { currencyCode, currencySymbol, maximumFractionDigits: 0 });
 
   const membersQuery = useQuery({
     queryKey: ['dashboard-member-stats'],

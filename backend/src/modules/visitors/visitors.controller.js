@@ -1,7 +1,7 @@
 import asyncHandler from '../../utils/asyncHandler.js';
 import { success } from '../../utils/apiResponse.js';
 import { createHttpError } from '../../utils/httpError.js';
-import { hasCapability } from '../access/capabilities.js';
+import { hasAnyCapability } from '../access/capabilities.js';
 import {
   ensureBranchAccess,
   ensureDocumentBranchAccess,
@@ -27,12 +27,16 @@ const resolveScopedTenantId = (req) => {
   return req.tenantId;
 };
 
-const ensureVisitorsCapability = (req, capability) => {
+const ensureVisitorsCapability = (req, capabilityOptions) => {
   if (req.user?.role === 'super_admin') {
     return;
   }
 
-  if (!hasCapability(req.user?.capabilities || [], capability)) {
+  const requiredCapabilities = Array.isArray(capabilityOptions)
+    ? capabilityOptions
+    : [capabilityOptions];
+
+  if (!hasAnyCapability(req.user?.capabilities || [], requiredCapabilities)) {
     throw createHttpError(403, 'You do not have permission for this visitor action.');
   }
 };
@@ -55,13 +59,13 @@ const ensureVisitorBranchAccess = async (req, visitorId) => {
 };
 
 export const getVisitorAssignableLeaders = asyncHandler(async (req, res) => {
-  ensureVisitorsCapability(req, 'visitors.view');
+  ensureVisitorsCapability(req, ['visitors.view', 'visitors.list.view', 'visitors.list.assign']);
   const data = await visitorsService.getVisitorAssignableLeaders(resolveScopedTenantId(req));
   return success(res, data, 'Visitor care leaders fetched successfully.');
 });
 
 export const searchVisitors = asyncHandler(async (req, res) => {
-  ensureVisitorsCapability(req, 'visitors.view');
+  ensureVisitorsCapability(req, ['visitors.view', 'visitors.list.view']);
   const data = await visitorsService.searchVisitors(
     resolveScopedTenantId(req),
     scopeBranchQuery(req.query, req.user),
@@ -70,7 +74,7 @@ export const searchVisitors = asyncHandler(async (req, res) => {
 });
 
 export const checkVisitorDuplicateByPhone = asyncHandler(async (req, res) => {
-  ensureVisitorsCapability(req, 'visitors.view');
+  ensureVisitorsCapability(req, ['visitors.view', 'visitors.register.view', 'visitors.list.view']);
   const data = await visitorsService.checkVisitorDuplicateByPhone(
     resolveScopedTenantId(req),
     req.query.phone,
@@ -79,7 +83,7 @@ export const checkVisitorDuplicateByPhone = asyncHandler(async (req, res) => {
 });
 
 export const registerVisitor = asyncHandler(async (req, res) => {
-  ensureVisitorsCapability(req, 'visitors.create');
+  ensureVisitorsCapability(req, ['visitors.create', 'visitors.register.create']);
   ensureBranchAccess(req.user, req.body.branch, 'You do not have access to register visitors for this branch.');
   const data = await visitorsService.registerVisitor(resolveScopedTenantId(req), req.body, visitorActor(req));
   return success(res, data, 'Visitor registered successfully.', 201);
@@ -91,7 +95,7 @@ export const registerVisitorFromKiosk = asyncHandler(async (req, res) => {
 });
 
 export const getVisitors = asyncHandler(async (req, res) => {
-  ensureVisitorsCapability(req, 'visitors.view');
+  ensureVisitorsCapability(req, ['visitors.view', 'visitors.list.view']);
   const data = await visitorsService.getVisitors(
     resolveScopedTenantId(req),
     scopeBranchQuery(req.query, req.user),
@@ -100,14 +104,14 @@ export const getVisitors = asyncHandler(async (req, res) => {
 });
 
 export const getVisitorById = asyncHandler(async (req, res) => {
-  ensureVisitorsCapability(req, 'visitors.view');
+  ensureVisitorsCapability(req, ['visitors.view', 'visitors.list.view']);
   const visitor = await visitorsService.getVisitorById(resolveScopedTenantId(req), req.params.visitorId);
   ensureDocumentBranchAccess(req.user, visitor.branch, 'You do not have access to this visitor branch.');
   return success(res, visitor, 'Visitor fetched successfully.');
 });
 
 export const updateVisitorStage = asyncHandler(async (req, res) => {
-  ensureVisitorsCapability(req, 'visitors.modify');
+  ensureVisitorsCapability(req, ['visitors.modify', 'visitors.pipeline.move']);
   await ensureVisitorBranchAccess(req, req.params.visitorId);
   const visitor = await visitorsService.updateVisitorStage(
     resolveScopedTenantId(req),
@@ -120,7 +124,7 @@ export const updateVisitorStage = asyncHandler(async (req, res) => {
 });
 
 export const assignVisitorsToCareLeader = asyncHandler(async (req, res) => {
-  ensureVisitorsCapability(req, 'visitors.modify');
+  ensureVisitorsCapability(req, ['visitors.modify', 'visitors.list.assign']);
   const data = await visitorsService.assignVisitorsToCareLeader(
     resolveScopedTenantId(req),
     req.body.visitorIds,
@@ -131,7 +135,7 @@ export const assignVisitorsToCareLeader = asyncHandler(async (req, res) => {
 });
 
 export const recordVisitorReturnVisit = asyncHandler(async (req, res) => {
-  ensureVisitorsCapability(req, 'visitors.modify');
+  ensureVisitorsCapability(req, ['visitors.modify', 'visitors.list.view']);
   await ensureVisitorBranchAccess(req, req.params.visitorId);
   const visitor = await visitorsService.recordVisitorReturnVisit(
     resolveScopedTenantId(req),
@@ -155,7 +159,7 @@ export const createVisitorFollowUp = asyncHandler(async (req, res) => {
 });
 
 export const completeVisitorFollowUp = asyncHandler(async (req, res) => {
-  ensureVisitorsCapability(req, 'visitors.modify');
+  ensureVisitorsCapability(req, ['visitors.modify', 'visitors.followups.complete']);
   await ensureVisitorBranchAccess(req, req.params.visitorId);
   const visitor = await visitorsService.completeVisitorFollowUp(
     resolveScopedTenantId(req),
@@ -168,7 +172,7 @@ export const completeVisitorFollowUp = asyncHandler(async (req, res) => {
 });
 
 export const rescheduleVisitorFollowUp = asyncHandler(async (req, res) => {
-  ensureVisitorsCapability(req, 'visitors.modify');
+  ensureVisitorsCapability(req, ['visitors.modify', 'visitors.followups.reschedule']);
   await ensureVisitorBranchAccess(req, req.params.visitorId);
   const visitor = await visitorsService.rescheduleVisitorFollowUp(
     resolveScopedTenantId(req),
@@ -181,7 +185,11 @@ export const rescheduleVisitorFollowUp = asyncHandler(async (req, res) => {
 });
 
 export const convertVisitorToMember = asyncHandler(async (req, res) => {
-  ensureVisitorsCapability(req, 'visitors.modify');
+  ensureVisitorsCapability(req, [
+    'visitors.modify',
+    'visitors.list.convert',
+    'visitors.pipeline.convert',
+  ]);
   await ensureVisitorBranchAccess(req, req.params.visitorId);
   const visitor = await visitorsService.convertVisitorToMember(
     resolveScopedTenantId(req),
@@ -193,7 +201,7 @@ export const convertVisitorToMember = asyncHandler(async (req, res) => {
 });
 
 export const getVisitorPipeline = asyncHandler(async (req, res) => {
-  ensureVisitorsCapability(req, 'visitors.view');
+  ensureVisitorsCapability(req, ['visitors.view', 'visitors.pipeline.view']);
   const data = await visitorsService.getVisitorPipeline(
     resolveScopedTenantId(req),
     scopeBranchQuery(req.query, req.user),
@@ -202,7 +210,7 @@ export const getVisitorPipeline = asyncHandler(async (req, res) => {
 });
 
 export const getVisitorFollowUps = asyncHandler(async (req, res) => {
-  ensureVisitorsCapability(req, 'visitors.view');
+  ensureVisitorsCapability(req, ['visitors.view', 'visitors.followups.view']);
   const data = await visitorsService.getVisitorFollowUps(
     resolveScopedTenantId(req),
     scopeBranchQuery(req.query, req.user),
@@ -211,13 +219,13 @@ export const getVisitorFollowUps = asyncHandler(async (req, res) => {
 });
 
 export const getVisitorWorkflow = asyncHandler(async (req, res) => {
-  ensureVisitorsCapability(req, 'visitors.view');
+  ensureVisitorsCapability(req, ['visitors.view', 'visitors.workflow.view']);
   const data = await visitorsService.getVisitorWorkflow(resolveScopedTenantId(req));
   return success(res, data, 'Visitor workflow fetched successfully.');
 });
 
 export const saveVisitorWorkflow = asyncHandler(async (req, res) => {
-  ensureVisitorsCapability(req, 'visitors.modify');
+  ensureVisitorsCapability(req, ['visitors.modify', 'visitors.workflow.modify']);
   const data = await visitorsService.saveVisitorWorkflow(
     resolveScopedTenantId(req),
     req.body,
@@ -227,13 +235,13 @@ export const saveVisitorWorkflow = asyncHandler(async (req, res) => {
 });
 
 export const testVisitorWorkflow = asyncHandler(async (req, res) => {
-  ensureVisitorsCapability(req, 'visitors.view');
+  ensureVisitorsCapability(req, ['visitors.view', 'visitors.workflow.view']);
   const data = await visitorsService.testVisitorWorkflow(resolveScopedTenantId(req), req.body);
   return success(res, data, 'Visitor workflow dry run completed successfully.');
 });
 
 export const getVisitorReports = asyncHandler(async (req, res) => {
-  ensureVisitorsCapability(req, 'visitors.view');
+  ensureVisitorsCapability(req, ['visitors.view', 'visitors.reports.view']);
   const data = await visitorsService.getVisitorReports(resolveScopedTenantId(req));
   return success(res, data, 'Visitor reports fetched successfully.');
 });

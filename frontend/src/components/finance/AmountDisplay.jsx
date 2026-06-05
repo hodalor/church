@@ -1,11 +1,5 @@
-const currencySymbols = {
-  USD: '$',
-  GHS: 'GHs',
-  NGN: 'NGN',
-  KES: 'KES',
-  GBP: 'GBP',
-  EUR: 'EUR',
-};
+import { useTenant } from '../../hooks/useTenant';
+import { formatAmount, getCurrencySymbol } from '../../utils/currency';
 
 const sizeClasses = {
   sm: 'text-sm',
@@ -16,14 +10,23 @@ const sizeClasses = {
 
 export default function AmountDisplay({
   amount = 0,
-  currency = 'USD',
+  currency,
   size = 'md',
   color = 'text-white',
 }) {
-  const symbol = currencySymbols[currency] || currency;
+  const tenant = useTenant();
+  const resolvedCurrency = currency || tenant.currencyCode || 'USD';
+  const symbol = tenant.currencyCode === resolvedCurrency
+    ? tenant.currencySymbol || getCurrencySymbol(resolvedCurrency)
+    : getCurrencySymbol(resolvedCurrency);
+
   return (
     <span className={`font-semibold ${sizeClasses[size] || sizeClasses.md} ${color}`}>
-      {symbol} {Number(amount || 0).toLocaleString()}
+      {formatAmount(amount, {
+        currencyCode: resolvedCurrency,
+        currencySymbol: symbol,
+        maximumFractionDigits: 0,
+      })}
     </span>
   );
 }

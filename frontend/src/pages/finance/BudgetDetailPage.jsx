@@ -7,6 +7,7 @@ import Card from '../../components/ui/Card';
 import Button from '../../components/ui/Button';
 import AmountDisplay from '../../components/finance/AmountDisplay';
 import GivingProgressBar from '../../components/finance/GivingProgressBar';
+import useCurrency from '../../hooks/useCurrency';
 import { useFinanceAccess } from '../../hooks/useFinanceAccess';
 import { activateBudget, getBudgetById, updateBudget } from '../../api/endpoints/finance';
 
@@ -37,6 +38,7 @@ export default function BudgetDetailPage() {
   const { budgetId } = useParams();
   const queryClient = useQueryClient();
   const { canModifyBudgets } = useFinanceAccess();
+  const { formatCurrency } = useCurrency();
   const [isEditing, setIsEditing] = useState(false);
   const [form, setForm] = useState({
     title: '',
@@ -236,9 +238,7 @@ export default function BudgetDetailPage() {
                         placeholder="Allocated"
                       />
                       <div className="flex items-center justify-between gap-3">
-                        <span className="text-xs text-white/45">
-                          Spent: {Number(line.spent || 0).toLocaleString()}
-                        </span>
+                        <span className="text-xs text-white/45">Spent: {formatCurrency(line.spent || 0)}</span>
                         <Button
                           variant="ghost"
                           onClick={() =>
@@ -269,7 +269,7 @@ export default function BudgetDetailPage() {
                   </Button>
                   <div className="text-right">
                     <p className="text-sm text-white/55">Running total</p>
-                    <p className="text-2xl font-semibold text-white">${totalAllocated.toLocaleString()}</p>
+                    <p className="text-2xl font-semibold text-white">{formatCurrency(totalAllocated)}</p>
                   </div>
                 </div>
 

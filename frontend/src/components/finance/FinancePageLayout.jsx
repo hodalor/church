@@ -8,17 +8,20 @@ export default function FinancePageLayout({
   children,
   requireRecord = false,
   requireApprove = false,
+  requireCapability = null,
   fallbackTitle = 'Finance access limited',
   fallbackMessage = 'Your account does not currently have access to this finance workspace.',
 }) {
   const { role } = useAuth();
-  const { canViewFinance, canRecordFinance, canApproveFinance } = useFinanceAccess();
+  const { canViewFinance, canRecordFinance, canApproveFinance, hasFinanceCapability } =
+    useFinanceAccess();
   const Shell = role === 'super_admin' ? SuperAdminShell : AppShell;
 
   const blocked =
     !canViewFinance ||
     (requireRecord && !canRecordFinance) ||
-    (requireApprove && !canApproveFinance);
+    (requireApprove && !canApproveFinance) ||
+    (requireCapability && !hasFinanceCapability(requireCapability));
 
   if (blocked) {
     return (

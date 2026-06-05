@@ -8,11 +8,12 @@ import Card from '../../components/ui/Card';
 import DataTable from '../../components/ui/DataTable';
 import AmountDisplay from '../../components/finance/AmountDisplay';
 import GivingProgressBar from '../../components/finance/GivingProgressBar';
+import useCurrency from '../../hooks/useCurrency';
 import { useFinanceAccess } from '../../hooks/useFinanceAccess';
 import { getAllPledges } from '../../api/endpoints/finance';
 
 export default function PledgesPage() {
-  const { canRecordFinance } = useFinanceAccess();
+  const { canRecordPledges } = useFinanceAccess();
   const [status, setStatus] = useState('');
   const [pledgeType, setPledgeType] = useState('');
 
@@ -72,13 +73,13 @@ export default function PledgesPage() {
   ];
 
   return (
-    <FinancePageLayout>
+    <FinancePageLayout requireCapability="finance.pledges.view">
       <div className="space-y-6">
         <PageHeader
           title="Pledges"
           subtitle="Track church pledges, progress, and payment completion."
           action={
-            canRecordFinance ? (
+            canRecordPledges ? (
               <Link to="/finance/pledges/new">
                 <Button variant="secondary">Create Pledge</Button>
               </Link>
@@ -123,11 +124,13 @@ export default function PledgesPage() {
 }
 
 function StatCard({ label, value, color = 'text-white', raw = false }) {
+  const { formatCurrency } = useCurrency();
+
   return (
     <Card className="min-h-[104px] p-4">
       <p className="text-[11px] uppercase tracking-[0.22em] text-white/55">{label}</p>
       <div className={`mt-3 font-serif text-4xl font-semibold leading-none ${color}`}>
-        {raw ? value : `$${Number(value || 0).toLocaleString()}`}
+        {raw ? value : formatCurrency(value || 0)}
       </div>
     </Card>
   );

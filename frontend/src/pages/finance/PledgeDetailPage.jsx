@@ -9,6 +9,7 @@ import Modal from '../../components/ui/Modal';
 import AmountDisplay from '../../components/finance/AmountDisplay';
 import GivingProgressBar from '../../components/finance/GivingProgressBar';
 import TransactionTypeBadge from '../../components/finance/TransactionTypeBadge';
+import useCurrency from '../../hooks/useCurrency';
 import { useFinanceAccess } from '../../hooks/useFinanceAccess';
 import { useAuth } from '../../hooks/useAuth';
 import { getPledgeById, recordPledgePayment } from '../../api/endpoints/finance';
@@ -16,7 +17,8 @@ import { getPledgeById, recordPledgePayment } from '../../api/endpoints/finance'
 export default function PledgeDetailPage() {
   const { pledgeId } = useParams();
   const queryClient = useQueryClient();
-  const { canRecordFinance } = useFinanceAccess();
+  const { canRecordPledgePayments } = useFinanceAccess();
+  const { formatCurrency } = useCurrency();
   const { user } = useAuth();
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [paymentForm, setPaymentForm] = useState({
@@ -60,7 +62,7 @@ export default function PledgeDetailPage() {
   const ringOffset = ringCircumference - (progressPercentage / 100) * ringCircumference;
 
   return (
-    <FinancePageLayout>
+    <FinancePageLayout requireCapability="finance.pledges.view">
       <div className="space-y-6">
         <PageHeader
           title="Pledge Detail"
@@ -123,8 +125,7 @@ export default function PledgeDetailPage() {
             <div className="rounded-3xl border border-white/10 bg-white/5 p-4">
               <p className="text-sm text-white/55">Progress</p>
               <p className="mt-2 text-2xl font-semibold text-white">
-                ${(Number(pledge?.amountPaid || 0)).toLocaleString()} of $
-                {(Number(pledge?.totalAmount || 0)).toLocaleString()}
+                {formatCurrency(pledge?.amountPaid || 0)} of {formatCurrency(pledge?.totalAmount || 0)}
               </p>
             </div>
 
@@ -135,7 +136,7 @@ export default function PledgeDetailPage() {
               <Detail label="Expected End Date" value={pledge?.expectedEndDate ? new Date(pledge.expectedEndDate).toLocaleDateString() : '—'} />
             </div>
 
-            {canRecordFinance ? (
+            {canRecordPledgePayments ? (
               <div className="flex flex-wrap gap-3">
                 <Button variant="secondary" onClick={() => setShowPaymentModal(true)}>
                   Record Payment

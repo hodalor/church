@@ -22,6 +22,7 @@ import Card from '../../components/ui/Card';
 import Button from '../../components/ui/Button';
 import MemberSearchInput from '../../components/finance/MemberSearchInput';
 import AmountDisplay from '../../components/finance/AmountDisplay';
+import useCurrency from '../../hooks/useCurrency';
 import { useFinanceAccess } from '../../hooks/useFinanceAccess';
 import {
   getFinancialSummary,
@@ -38,7 +39,8 @@ const tabs = ['summary', 'trends', 'givers', 'statement'];
 const chartColors = ['#C9A84C', '#1E2A4A', '#10B981', '#8B5CF6', '#F97316'];
 
 export default function ReportsPage() {
-  const { canApproveFinance } = useFinanceAccess();
+  const { canApproveFinance, canExportReports, canManageGivingGoals } = useFinanceAccess();
+  const { currencyCode, currencyOptions } = useCurrency();
   const [tab, setTab] = useState('summary');
   const [year, setYear] = useState(new Date().getFullYear());
   const [topGiverPeriod, setTopGiverPeriod] = useState('year');
@@ -49,7 +51,7 @@ export default function ReportsPage() {
     year: new Date().getFullYear(),
     month: '',
     targetAmount: '',
-    currency: 'USD',
+    currency: currencyCode,
     notes: '',
   });
 
@@ -116,20 +118,20 @@ export default function ReportsPage() {
         year: new Date().getFullYear(),
         month: '',
         targetAmount: '',
-        currency: 'USD',
+        currency: currencyCode,
         notes: '',
       });
     },
   });
 
   return (
-    <FinancePageLayout>
+    <FinancePageLayout requireCapability="finance.reports.view">
       <div className="space-y-6">
         <PageHeader
           title="Reports"
           subtitle="Explore financial summaries, giving patterns, top givers, and printable statements."
           action={
-            <Button variant="ghost" onClick={() => window.print()}>
+            <Button variant="ghost" onClick={() => window.print()} disabled={!canExportReports}>
               Export PDF
             </Button>
           }
@@ -245,7 +247,7 @@ export default function ReportsPage() {
               </Card>
               <Card className="space-y-4">
                 <h2 className="text-xl font-semibold text-white">Set Goal</h2>
-                {canApproveFinance ? (
+                {canApproveFinance && canManageGivingGoals ? (
                   <div className="grid gap-4">
                     <div className="grid gap-4 md:grid-cols-2">
                       <label className="space-y-2">
@@ -295,9 +297,9 @@ export default function ReportsPage() {
                           }
                           className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white"
                         >
-                          {['USD', 'GHS', 'NGN', 'KES', 'GBP'].map((option) => (
-                            <option key={option} value={option}>
-                              {option}
+                          {currencyOptions.map((option) => (
+                            <option key={option.code} value={option.code}>
+                              {option.code} ({option.symbol})
                             </option>
                           ))}
                         </select>

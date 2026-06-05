@@ -14,105 +14,190 @@ const capabilitySections = [
   {
     module: 'finance',
     actions: ['view', 'create', 'modify', 'delete'],
+    groups: [
+      { key: 'overview', actions: ['view'] },
+      { key: 'transactions', actions: ['view', 'create', 'verify', 'reverse', 'export'] },
+      { key: 'pledges', actions: ['view', 'create', 'record_payment'] },
+      { key: 'expenses', actions: ['view', 'create', 'approve', 'reject'] },
+      { key: 'budgets', actions: ['view', 'create', 'modify', 'activate'] },
+      { key: 'reports', actions: ['view', 'export', 'manage_goals'] },
+      { key: 'audit', actions: ['view'] },
+    ],
   },
   {
     module: 'communication',
     actions: ['view', 'create', 'modify', 'delete'],
+    groups: [
+      { key: 'overview', actions: ['view'] },
+      { key: 'broadcasts', actions: ['view', 'create', 'send'] },
+      { key: 'templates', actions: ['view', 'create', 'modify'] },
+      { key: 'prayer_requests', actions: ['view', 'respond'] },
+      { key: 'polls', actions: ['view', 'create', 'modify'] },
+      { key: 'inbox', actions: ['view'] },
+    ],
   },
   {
     module: 'attendance',
     actions: ['view', 'create', 'modify', 'delete'],
+    groups: [
+      { key: 'services', actions: ['view', 'create', 'modify', 'delete', 'check_in'] },
+      { key: 'reports', actions: ['view'] },
+      { key: 'absentees', actions: ['view', 'follow_up'] },
+    ],
   },
   {
     module: 'visitors',
     actions: ['view', 'create', 'modify', 'delete'],
+    groups: [
+      { key: 'overview', actions: ['view'] },
+      { key: 'register', actions: ['view', 'create'] },
+      { key: 'list', actions: ['view', 'assign', 'export', 'convert'] },
+      { key: 'pipeline', actions: ['view', 'move', 'convert'] },
+      { key: 'followups', actions: ['view', 'complete', 'reschedule'] },
+      { key: 'workflow', actions: ['view', 'modify'] },
+      { key: 'reports', actions: ['view', 'export'] },
+    ],
   },
   {
     module: 'pastoral',
     actions: ['view', 'create', 'modify', 'delete'],
+    groups: [
+      { key: 'overview', actions: ['view'] },
+      { key: 'cases', actions: ['view', 'create', 'modify', 'assign'] },
+      { key: 'appointments', actions: ['view', 'create', 'modify'] },
+      { key: 'discipleship', actions: ['view', 'create', 'modify'] },
+      { key: 'reports', actions: ['view'] },
+    ],
   },
   {
     module: 'settings',
     actions: ['view', 'modify'],
+    groups: [
+      { key: 'branding', actions: ['view', 'modify'] },
+      { key: 'content', actions: ['view', 'modify'] },
+      { key: 'config', actions: ['view', 'modify'] },
+    ],
   },
   {
     module: 'notifications',
     actions: ['view', 'modify'],
   },
+  {
+    module: 'manual',
+    actions: ['view'],
+  },
 ];
 
-export const supportedCapabilities = capabilitySections.flatMap(({ module, actions }) =>
-  actions.map((action) => `${module}.${action}`),
-);
+const getSectionCapabilities = (section) => [
+  ...(section.actions || []).map((action) => `${section.module}.${action}`),
+  ...((section.groups || []).flatMap((group) =>
+    (group.actions || []).map((action) => `${section.module}.${group.key}.${action}`),
+  )),
+];
 
-const memberCapabilities = ['dashboard.view'];
+const getCapabilitiesForSection = (module, actionKeys = []) => {
+  const section = capabilitySections.find((item) => item.module === module);
+  if (!section) {
+    return [];
+  }
+
+  const matchesAction = (key) => actionKeys.length === 0 || actionKeys.includes(key);
+
+  return [
+    ...(section.actions || [])
+      .filter((key) => matchesAction(key))
+      .map((key) => `${section.module}.${key}`),
+    ...((section.groups || []).flatMap((group) =>
+      (group.actions || [])
+        .filter((key) => matchesAction(key))
+        .map((key) => `${section.module}.${group.key}.${key}`),
+    )),
+  ];
+};
+
+export const supportedCapabilities = capabilitySections.flatMap((section) => getSectionCapabilities(section));
+
+const memberCapabilities = ['dashboard.view', 'manual.view'];
 const leadershipCapabilities = [
   'dashboard.view',
-  'members.view',
-  'members.create',
-  'members.modify',
-  'communication.view',
-  'communication.create',
-  'communication.modify',
-  'attendance.view',
-  'attendance.create',
-  'attendance.modify',
-  'visitors.view',
-  'visitors.create',
-  'visitors.modify',
-  'pastoral.view',
-  'pastoral.create',
-  'pastoral.modify',
+  ...getCapabilitiesForSection('members', ['view', 'create', 'modify']),
+  ...getCapabilitiesForSection('communication', ['view', 'create', 'modify', 'send', 'respond']),
+  ...getCapabilitiesForSection('attendance', ['view', 'create', 'modify', 'check_in', 'follow_up']),
+  ...getCapabilitiesForSection('visitors', ['view', 'create', 'modify', 'assign', 'move', 'complete', 'reschedule', 'convert']),
+  ...getCapabilitiesForSection('pastoral', ['view', 'create', 'modify', 'assign']),
   'notifications.view',
+  'manual.view',
 ];
 const pastoralLeadershipCapabilities = [
-  'pastoral.view',
-  'pastoral.create',
-  'pastoral.modify',
-  'pastoral.delete',
+  ...getCapabilitiesForSection('pastoral', ['view', 'create', 'modify', 'delete', 'assign']),
 ];
 const financeFullCapabilities = [
   'dashboard.view',
-  'finance.view',
-  'finance.create',
-  'finance.modify',
+  ...getCapabilitiesForSection('finance', [
+    'view',
+    'create',
+    'modify',
+    'approve',
+    'reject',
+    'verify',
+    'reverse',
+    'activate',
+    'record_payment',
+    'export',
+    'manage_goals',
+  ]),
   'notifications.view',
+  'manual.view',
 ];
 const financeRecordOnlyCapabilities = [
   'dashboard.view',
-  'finance.view',
-  'finance.create',
+  ...getCapabilitiesForSection('finance', ['view', 'create', 'record_payment']),
   'notifications.view',
+  'manual.view',
 ];
-const financeReportCapabilities = ['dashboard.view', 'finance.view', 'notifications.view'];
+const financeReportCapabilities = [
+  'dashboard.view',
+  ...getCapabilitiesForSection('finance', ['view', 'export']),
+  'notifications.view',
+  'manual.view',
+];
 const mediaCapabilities = [
   'dashboard.view',
-  'communication.view',
-  'communication.create',
-  'communication.modify',
+  ...getCapabilitiesForSection('communication', ['view', 'create', 'modify', 'send']),
   'notifications.view',
+  'manual.view',
 ];
-const adminCapabilities = [
-  ...supportedCapabilities.filter((capability) => !capability.startsWith('finance.')),
-  'finance.view',
-];
-
 export const defaultCapabilitiesByRole = {
   super_admin: [...supportedCapabilities],
   head_pastor: [...supportedCapabilities],
-  branch_pastor: [...financeReportCapabilities, 'members.view', 'visitors.view', ...pastoralLeadershipCapabilities],
+  branch_pastor: [
+    ...financeReportCapabilities,
+    ...getCapabilitiesForSection('members', ['view']),
+    ...getCapabilitiesForSection('communication', ['view']),
+    ...getCapabilitiesForSection('attendance', ['view']),
+    ...getCapabilitiesForSection('visitors', ['view', 'assign', 'complete', 'reschedule', 'convert']),
+    ...getCapabilitiesForSection('pastoral', ['view', 'create', 'modify', 'assign']),
+  ],
   associate_pastor: [
     ...leadershipCapabilities,
-    'members.delete',
-    'visitors.delete',
-    'settings.view',
-    'finance.view',
-    ...pastoralLeadershipCapabilities,
+    ...getCapabilitiesForSection('members', ['delete']),
+    ...getCapabilitiesForSection('visitors', ['delete']),
+    ...getCapabilitiesForSection('settings', ['view']),
+    ...getCapabilitiesForSection('finance', ['view', 'export']),
+    ...getCapabilitiesForSection('pastoral', ['delete']),
   ],
-  treasurer: [...financeFullCapabilities, 'settings.view', 'members.view'],
+  treasurer: [
+    ...financeFullCapabilities,
+    ...getCapabilitiesForSection('settings', ['view']),
+    ...getCapabilitiesForSection('members', ['view']),
+  ],
   finance_officer: [...financeRecordOnlyCapabilities],
   media_team: [...mediaCapabilities],
-  care_leader: [...leadershipCapabilities, 'visitors.delete', ...pastoralLeadershipCapabilities],
+  care_leader: [
+    ...leadershipCapabilities,
+    ...getCapabilitiesForSection('visitors', ['delete']),
+    ...pastoralLeadershipCapabilities,
+  ],
   volunteer_leader: [...leadershipCapabilities],
   member: [...memberCapabilities],
 };
@@ -166,4 +251,9 @@ export const hasCapability = (capabilities = [], capability) => {
   }
 
   return normalizeCapabilities(capabilities).includes(capability);
+};
+
+export const hasAnyCapability = (capabilities = [], capabilityOptions = []) => {
+  const normalizedCapabilities = new Set(normalizeCapabilities(capabilities));
+  return capabilityOptions.some((capability) => normalizedCapabilities.has(capability));
 };

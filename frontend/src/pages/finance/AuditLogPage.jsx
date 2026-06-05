@@ -31,7 +31,7 @@ export default function AuditLogPage() {
   ];
 
   return (
-    <FinancePageLayout requireApprove>
+    <FinancePageLayout requireCapability="finance.audit.view">
       <div className="space-y-6">
         <PageHeader
           title="Audit Log"

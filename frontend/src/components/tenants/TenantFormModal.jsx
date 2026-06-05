@@ -11,9 +11,9 @@ import {
   getRoleDefaultCapabilities,
   normalizeCapabilities,
 } from '../../constants/capabilities';
+import { useBrandingStore } from '../../stores/brandingStore';
+import { getCountryOptionByName, normalizeEligibleCountries } from '../../utils/platformConfig';
 import { supabaseUpload } from '../../utils/supabaseUpload';
-
-const countries = ['Ghana', 'Nigeria', 'Kenya', 'South Africa', 'United Kingdom', 'United States'];
 
 const plans = [
   { id: 'small', title: 'Small', description: 'For growing churches managing core operations.' },
@@ -21,37 +21,46 @@ const plans = [
   { id: 'mega', title: 'Mega', description: 'For enterprise-scale churches and large ministry networks.' },
 ];
 
-const initialState = {
-  tenantId: '',
-  churchName: '',
-  email: '',
-  phone: '',
-  country: countries[0],
-  subscriptionPlan: 'small',
-  logoUrl: '',
-  initialFullName: '',
-  initialUsername: '',
-  initialPin: '',
-  confirmPin: '',
-  capabilities: [...allCapabilities],
-  initialUserCapabilities: normalizeCapabilities(
-    getRoleDefaultCapabilities('head_pastor'),
-    allCapabilities,
-  ),
+const buildInitialState = (eligibleCountries) => {
+  const countryOption = getCountryOptionByName(eligibleCountries);
+
+  return {
+    tenantId: '',
+    churchName: '',
+    email: '',
+    phone: '',
+    country: countryOption?.name || '',
+    subscriptionPlan: 'small',
+    logoUrl: '',
+    initialFullName: '',
+    initialUsername: '',
+    initialPin: '',
+    confirmPin: '',
+    capabilities: [...allCapabilities],
+    initialUserCapabilities: normalizeCapabilities(
+      getRoleDefaultCapabilities('head_pastor'),
+      allCapabilities,
+    ),
+  };
 };
 
 export default function TenantFormModal({ isOpen, onClose, onCreated }) {
-  const [form, setForm] = useState(initialState);
+  const platformConfig = useBrandingStore((state) => state.platformConfig);
+  const eligibleCountries = useMemo(
+    () => normalizeEligibleCountries(platformConfig.eligibleCountries),
+    [platformConfig.eligibleCountries],
+  );
+  const [form, setForm] = useState(buildInitialState(eligibleCountries));
   const [filePreview, setFilePreview] = useState('');
   const [error, setError] = useState('');
 
   useEffect(() => {
     if (!isOpen) {
-      setForm(initialState);
+      setForm(buildInitialState(eligibleCountries));
       setFilePreview('');
       setError('');
     }
-  }, [isOpen]);
+  }, [eligibleCountries, isOpen]);
 
   useEffect(() => {
     setForm((current) => ({
@@ -137,12 +146,17 @@ export default function TenantFormModal({ isOpen, onClose, onCreated }) {
       return;
     }
 
+    const selectedCountry = getCountryOptionByName(eligibleCountries, form.country);
     const payload = {
       tenantId: form.tenantId,
       churchName: form.churchName,
       email: form.email,
       phone: form.phone,
       country: form.country,
+      financial: {
+        currencyCode: selectedCountry?.currencyCode || 'USD',
+        currencySymbol: selectedCountry?.currencySymbol || '$',
+      },
       subscriptionPlan: form.subscriptionPlan,
       initialFullName: form.initialFullName,
       initialUsername: form.initialUsername,
@@ -214,9 +228,9 @@ export default function TenantFormModal({ isOpen, onClose, onCreated }) {
                   onChange={(event) => updateField('country', event.target.value)}
                   className="w-full rounded-2xl border border-white/10 bg-[#101827] px-4 py-3 text-sm text-white outline-none focus:border-accent"
                 >
-                  {countries.map((country) => (
-                    <option key={country} value={country}>
-                      {country}
+                  {eligibleCountries.map((country) => (
+                    <option key={country.name} value={country.name}>
+                      {country.name} ({country.currencyCode})
                     </option>
                   ))}
                 </select>

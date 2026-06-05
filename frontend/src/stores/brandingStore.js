@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { createSafeStorage } from './createSafeStorage';
+import { DEFAULT_ELIGIBLE_COUNTRIES } from '../utils/platformConfig';
 
 const defaultGlobalBranding = {
   appName: 'Ecclesia',
@@ -14,11 +15,16 @@ const defaultTenantBranding = {
   tagline: 'Tenant workspace',
 };
 
+const defaultPlatformConfig = {
+  eligibleCountries: DEFAULT_ELIGIBLE_COUNTRIES,
+};
+
 export const useBrandingStore = create(
   persist(
     (set) => ({
       globalBranding: defaultGlobalBranding,
       tenantBranding: defaultTenantBranding,
+      platformConfig: defaultPlatformConfig,
       updateGlobalBranding: (payload) =>
         set((state) => ({
           globalBranding: {
@@ -40,7 +46,22 @@ export const useBrandingStore = create(
             ...payload,
           },
         }),
+      updatePlatformConfig: (payload) =>
+        set((state) => ({
+          platformConfig: {
+            ...state.platformConfig,
+            ...payload,
+          },
+        })),
+      setPlatformConfig: (payload) =>
+        set({
+          platformConfig: {
+            ...defaultPlatformConfig,
+            ...payload,
+          },
+        }),
       resetTenantBranding: () => set({ tenantBranding: defaultTenantBranding }),
+      resetPlatformConfig: () => set({ platformConfig: defaultPlatformConfig }),
     }),
     {
       name: 'prynova-branding',

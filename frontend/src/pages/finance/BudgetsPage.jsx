@@ -21,7 +21,7 @@ export default function BudgetsPage() {
   const activeBudget = budgets.find((budget) => budget.status === 'active');
 
   return (
-    <FinancePageLayout>
+    <FinancePageLayout requireCapability="finance.budgets.view">
       <div className="space-y-6">
         <PageHeader
           title="Budgets"

@@ -20,6 +20,21 @@ const seedSuperAdmin = async () => {
       tenantId: env.SUPER_ADMIN_TENANT_ID,
       churchName: 'Prynova Master',
       email: `admin@${env.SUPER_ADMIN_TENANT_ID}.local`,
+      country: 'United States',
+      financial: {
+        currencyCode: 'USD',
+        currencySymbol: '$',
+      },
+      platformConfig: {
+        eligibleCountries: [
+          { name: 'Ghana', countryCode: 'GH', currencyCode: 'GHS', currencySymbol: 'GHs' },
+          { name: 'Nigeria', countryCode: 'NG', currencyCode: 'NGN', currencySymbol: 'NGN' },
+          { name: 'Kenya', countryCode: 'KE', currencyCode: 'KES', currencySymbol: 'KES' },
+          { name: 'South Africa', countryCode: 'ZA', currencyCode: 'ZAR', currencySymbol: 'R' },
+          { name: 'United Kingdom', countryCode: 'GB', currencyCode: 'GBP', currencySymbol: 'GBP' },
+          { name: 'United States', countryCode: 'US', currencyCode: 'USD', currencySymbol: '$' },
+        ],
+      },
       isActive: true,
       isSuspended: false,
       subscriptionPlan: 'mega',

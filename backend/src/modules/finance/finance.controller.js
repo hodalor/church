@@ -2,7 +2,7 @@ import asyncHandler from '../../utils/asyncHandler.js';
 import { success } from '../../utils/apiResponse.js';
 import { createHttpError } from '../../utils/httpError.js';
 import * as financeService from './finance.service.js';
-import { hasCapability } from '../access/capabilities.js';
+import { hasAnyCapability } from '../access/capabilities.js';
 import { ensureBranchAccess, scopeBranchQuery } from '../../utils/branchScope.js';
 
 const resolveScopedTenantId = (req) => {
@@ -23,19 +23,17 @@ const resolveScopedTenantId = (req) => {
   return req.tenantId;
 };
 
-const ensureFinanceCapability = (req, capability) => {
+const ensureFinanceCapability = (req, capabilityOptions) => {
   if (req.user?.role === 'super_admin') {
     return;
   }
 
-  if (!hasCapability(req.user?.capabilities || [], capability)) {
-    throw createHttpError(403, 'You do not have permission for this finance action.');
-  }
-};
+  const requiredCapabilities = Array.isArray(capabilityOptions)
+    ? capabilityOptions
+    : [capabilityOptions];
 
-const ensureApprover = (req) => {
-  if (!financeService.financeRoleAccess.canApprove(req.user?.role)) {
-    throw createHttpError(403, 'Treasurer, head pastor, or super admin access is required.');
+  if (!hasAnyCapability(req.user?.capabilities || [], requiredCapabilities)) {
+    throw createHttpError(403, 'You do not have permission for this finance action.');
   }
 };
 
@@ -45,7 +43,7 @@ const financeActor = (req) => ({
 });
 
 export const recordTransaction = asyncHandler(async (req, res) => {
-  ensureFinanceCapability(req, 'finance.create');
+  ensureFinanceCapability(req, ['finance.create', 'finance.transactions.create']);
   ensureBranchAccess(req.user, req.body.branch, 'You do not have access to record transactions in this branch.');
   const transaction = await financeService.recordTransaction(
     resolveScopedTenantId(req),
@@ -57,7 +55,7 @@ export const recordTransaction = asyncHandler(async (req, res) => {
 });
 
 export const getAllTransactions = asyncHandler(async (req, res) => {
-  ensureFinanceCapability(req, 'finance.view');
+  ensureFinanceCapability(req, ['finance.view', 'finance.transactions.view']);
   const data = await financeService.getAllTransactions(
     resolveScopedTenantId(req),
     scopeBranchQuery(req.query, req.user),
@@ -66,7 +64,7 @@ export const getAllTransactions = asyncHandler(async (req, res) => {
 });
 
 export const getTransactionSummary = asyncHandler(async (req, res) => {
-  ensureFinanceCapability(req, 'finance.view');
+  ensureFinanceCapability(req, ['finance.view', 'finance.overview.view', 'finance.transactions.view']);
   const data = await financeService.getTransactionSummary(
     resolveScopedTenantId(req),
     scopeBranchQuery(req.query, req.user),
@@ -75,7 +73,7 @@ export const getTransactionSummary = asyncHandler(async (req, res) => {
 });
 
 export const getMemberGivingHistory = asyncHandler(async (req, res) => {
-  ensureFinanceCapability(req, 'finance.view');
+  ensureFinanceCapability(req, ['finance.view', 'finance.transactions.view', 'finance.reports.view']);
   const data = await financeService.getMemberGivingHistory(
     resolveScopedTenantId(req),
     req.params.memberId,
@@ -85,7 +83,7 @@ export const getMemberGivingHistory = asyncHandler(async (req, res) => {
 });
 
 export const getTransactionById = asyncHandler(async (req, res) => {
-  ensureFinanceCapability(req, 'finance.view');
+  ensureFinanceCapability(req, ['finance.view', 'finance.transactions.view']);
   const data = await financeService.getTransactionById(
     resolveScopedTenantId(req),
     req.params.id,
@@ -95,8 +93,7 @@ export const getTransactionById = asyncHandler(async (req, res) => {
 });
 
 export const verifyTransaction = asyncHandler(async (req, res) => {
-  ensureFinanceCapability(req, 'finance.modify');
-  ensureApprover(req);
+  ensureFinanceCapability(req, ['finance.modify', 'finance.transactions.verify']);
   const data = await financeService.verifyTransaction(
     resolveScopedTenantId(req),
     req.params.id,
@@ -107,8 +104,7 @@ export const verifyTransaction = asyncHandler(async (req, res) => {
 });
 
 export const reverseTransaction = asyncHandler(async (req, res) => {
-  ensureFinanceCapability(req, 'finance.modify');
-  ensureApprover(req);
+  ensureFinanceCapability(req, ['finance.modify', 'finance.transactions.reverse']);
   const data = await financeService.reverseTransaction(
     resolveScopedTenantId(req),
     req.params.id,
@@ -120,31 +116,31 @@ export const reverseTransaction = asyncHandler(async (req, res) => {
 });
 
 export const getReceipt = asyncHandler(async (req, res) => {
-  ensureFinanceCapability(req, 'finance.view');
+  ensureFinanceCapability(req, ['finance.view', 'finance.transactions.view']);
   const receiptUrl = await financeService.getReceipt(resolveScopedTenantId(req), req.params.id);
   return res.redirect(receiptUrl);
 });
 
 export const createPledge = asyncHandler(async (req, res) => {
-  ensureFinanceCapability(req, 'finance.create');
+  ensureFinanceCapability(req, ['finance.create', 'finance.pledges.create']);
   const data = await financeService.createPledge(resolveScopedTenantId(req), req.body, financeActor(req));
   return success(res, data, 'Pledge created successfully.', 201);
 });
 
 export const getAllPledges = asyncHandler(async (req, res) => {
-  ensureFinanceCapability(req, 'finance.view');
+  ensureFinanceCapability(req, ['finance.view', 'finance.pledges.view']);
   const data = await financeService.getAllPledges(resolveScopedTenantId(req), req.query);
   return success(res, data, 'Pledges fetched successfully.');
 });
 
 export const getPledgeById = asyncHandler(async (req, res) => {
-  ensureFinanceCapability(req, 'finance.view');
+  ensureFinanceCapability(req, ['finance.view', 'finance.pledges.view']);
   const data = await financeService.getPledgeById(resolveScopedTenantId(req), req.params.pledgeId);
   return success(res, data, 'Pledge fetched successfully.');
 });
 
 export const updatePledge = asyncHandler(async (req, res) => {
-  ensureFinanceCapability(req, 'finance.modify');
+  ensureFinanceCapability(req, ['finance.modify', 'finance.pledges.create']);
   const data = await financeService.updatePledge(
     resolveScopedTenantId(req),
     req.params.pledgeId,
@@ -156,7 +152,7 @@ export const updatePledge = asyncHandler(async (req, res) => {
 });
 
 export const recordPledgePayment = asyncHandler(async (req, res) => {
-  ensureFinanceCapability(req, 'finance.create');
+  ensureFinanceCapability(req, ['finance.create', 'finance.pledges.record_payment']);
   const data = await financeService.recordPledgePayment(
     resolveScopedTenantId(req),
     req.params.pledgeId,
@@ -168,7 +164,7 @@ export const recordPledgePayment = asyncHandler(async (req, res) => {
 });
 
 export const recordExpense = asyncHandler(async (req, res) => {
-  ensureFinanceCapability(req, 'finance.create');
+  ensureFinanceCapability(req, ['finance.create', 'finance.expenses.create']);
   ensureBranchAccess(req.user, req.body.branch, 'You do not have access to record expenses in this branch.');
   const data = await financeService.recordExpense(
     resolveScopedTenantId(req),
@@ -180,7 +176,7 @@ export const recordExpense = asyncHandler(async (req, res) => {
 });
 
 export const getAllExpenses = asyncHandler(async (req, res) => {
-  ensureFinanceCapability(req, 'finance.view');
+  ensureFinanceCapability(req, ['finance.view', 'finance.expenses.view']);
   const data = await financeService.getAllExpenses(
     resolveScopedTenantId(req),
     scopeBranchQuery(req.query, req.user),
@@ -189,7 +185,7 @@ export const getAllExpenses = asyncHandler(async (req, res) => {
 });
 
 export const getExpenseById = asyncHandler(async (req, res) => {
-  ensureFinanceCapability(req, 'finance.view');
+  ensureFinanceCapability(req, ['finance.view', 'finance.expenses.view']);
   const data = await financeService.getExpenseById(
     resolveScopedTenantId(req),
     req.params.expenseId,
@@ -199,7 +195,7 @@ export const getExpenseById = asyncHandler(async (req, res) => {
 });
 
 export const updateExpense = asyncHandler(async (req, res) => {
-  ensureFinanceCapability(req, 'finance.modify');
+  ensureFinanceCapability(req, ['finance.modify', 'finance.expenses.create']);
   const data = await financeService.updateExpense(
     resolveScopedTenantId(req),
     req.params.expenseId,
@@ -209,8 +205,7 @@ export const updateExpense = asyncHandler(async (req, res) => {
 });
 
 export const approveExpense = asyncHandler(async (req, res) => {
-  ensureFinanceCapability(req, 'finance.modify');
-  ensureApprover(req);
+  ensureFinanceCapability(req, ['finance.modify', 'finance.expenses.approve']);
   const data = await financeService.approveExpense(
     resolveScopedTenantId(req),
     req.params.expenseId,
@@ -221,8 +216,7 @@ export const approveExpense = asyncHandler(async (req, res) => {
 });
 
 export const rejectExpense = asyncHandler(async (req, res) => {
-  ensureFinanceCapability(req, 'finance.modify');
-  ensureApprover(req);
+  ensureFinanceCapability(req, ['finance.modify', 'finance.expenses.reject']);
   const data = await financeService.rejectExpense(
     resolveScopedTenantId(req),
     req.params.expenseId,
@@ -234,25 +228,25 @@ export const rejectExpense = asyncHandler(async (req, res) => {
 });
 
 export const createBudget = asyncHandler(async (req, res) => {
-  ensureFinanceCapability(req, 'finance.modify');
+  ensureFinanceCapability(req, ['finance.modify', 'finance.budgets.create']);
   const data = await financeService.createBudget(resolveScopedTenantId(req), req.body, financeActor(req));
   return success(res, data, 'Budget created successfully.', 201);
 });
 
 export const getAllBudgets = asyncHandler(async (req, res) => {
-  ensureFinanceCapability(req, 'finance.view');
+  ensureFinanceCapability(req, ['finance.view', 'finance.budgets.view']);
   const data = await financeService.getAllBudgets(resolveScopedTenantId(req), req.query);
   return success(res, data, 'Budgets fetched successfully.');
 });
 
 export const getBudgetById = asyncHandler(async (req, res) => {
-  ensureFinanceCapability(req, 'finance.view');
+  ensureFinanceCapability(req, ['finance.view', 'finance.budgets.view']);
   const data = await financeService.getBudgetById(resolveScopedTenantId(req), req.params.budgetId);
   return success(res, data, 'Budget fetched successfully.');
 });
 
 export const updateBudget = asyncHandler(async (req, res) => {
-  ensureFinanceCapability(req, 'finance.modify');
+  ensureFinanceCapability(req, ['finance.modify', 'finance.budgets.modify']);
   const data = await financeService.updateBudget(
     resolveScopedTenantId(req),
     req.params.budgetId,
@@ -262,13 +256,13 @@ export const updateBudget = asyncHandler(async (req, res) => {
 });
 
 export const activateBudget = asyncHandler(async (req, res) => {
-  ensureFinanceCapability(req, 'finance.modify');
+  ensureFinanceCapability(req, ['finance.modify', 'finance.budgets.activate']);
   const data = await financeService.activateBudget(resolveScopedTenantId(req), req.params.budgetId);
   return success(res, data, 'Budget activated successfully.');
 });
 
 export const getFinancialSummary = asyncHandler(async (req, res) => {
-  ensureFinanceCapability(req, 'finance.view');
+  ensureFinanceCapability(req, ['finance.view', 'finance.overview.view', 'finance.reports.view']);
   const data = await financeService.getFinancialSummary(
     resolveScopedTenantId(req),
     req.query.year,
@@ -278,31 +272,31 @@ export const getFinancialSummary = asyncHandler(async (req, res) => {
 });
 
 export const getMonthlyReport = asyncHandler(async (req, res) => {
-  ensureFinanceCapability(req, 'finance.view');
+  ensureFinanceCapability(req, ['finance.view', 'finance.reports.view']);
   const data = await financeService.getMonthlyReport(resolveScopedTenantId(req), req.query);
   return success(res, data, 'Monthly report fetched successfully.');
 });
 
 export const getAnnualReport = asyncHandler(async (req, res) => {
-  ensureFinanceCapability(req, 'finance.view');
+  ensureFinanceCapability(req, ['finance.view', 'finance.reports.view']);
   const data = await financeService.getAnnualReport(resolveScopedTenantId(req), req.query);
   return success(res, data, 'Annual report fetched successfully.');
 });
 
 export const getGivingTrends = asyncHandler(async (req, res) => {
-  ensureFinanceCapability(req, 'finance.view');
+  ensureFinanceCapability(req, ['finance.view', 'finance.reports.view']);
   const data = await financeService.getGivingTrends(resolveScopedTenantId(req), req.query);
   return success(res, data, 'Giving trends fetched successfully.');
 });
 
 export const getTopGivers = asyncHandler(async (req, res) => {
-  ensureFinanceCapability(req, 'finance.view');
+  ensureFinanceCapability(req, ['finance.view', 'finance.reports.view']);
   const data = await financeService.getTopGivers(resolveScopedTenantId(req), req.query);
   return success(res, data, 'Top givers fetched successfully.');
 });
 
 export const getMemberAnnualStatement = asyncHandler(async (req, res) => {
-  ensureFinanceCapability(req, 'finance.view');
+  ensureFinanceCapability(req, ['finance.view', 'finance.reports.view']);
   const data = await financeService.getMemberAnnualStatement(
     resolveScopedTenantId(req),
     req.params.memberId,
@@ -312,26 +306,25 @@ export const getMemberAnnualStatement = asyncHandler(async (req, res) => {
 });
 
 export const getSmartGivingIntelligence = asyncHandler(async (req, res) => {
-  ensureFinanceCapability(req, 'finance.view');
+  ensureFinanceCapability(req, ['finance.view', 'finance.reports.view']);
   const data = await financeService.getSmartGivingIntelligence(resolveScopedTenantId(req));
   return success(res, data, 'Smart giving intelligence fetched successfully.');
 });
 
 export const setGivingGoal = asyncHandler(async (req, res) => {
-  ensureFinanceCapability(req, 'finance.modify');
+  ensureFinanceCapability(req, ['finance.modify', 'finance.reports.manage_goals']);
   const data = await financeService.setGivingGoal(resolveScopedTenantId(req), req.body, financeActor(req));
   return success(res, data, 'Giving goal saved successfully.', 201);
 });
 
 export const getGivingGoals = asyncHandler(async (req, res) => {
-  ensureFinanceCapability(req, 'finance.view');
+  ensureFinanceCapability(req, ['finance.view', 'finance.reports.view']);
   const data = await financeService.getGivingGoals(resolveScopedTenantId(req), req.query);
   return success(res, data, 'Giving goals fetched successfully.');
 });
 
 export const getAuditLog = asyncHandler(async (req, res) => {
-  ensureFinanceCapability(req, 'finance.modify');
-  ensureApprover(req);
+  ensureFinanceCapability(req, ['finance.modify', 'finance.audit.view']);
   const data = await financeService.getAuditLog(resolveScopedTenantId(req), req.query);
   return success(res, data, 'Finance audit log fetched successfully.');
 });

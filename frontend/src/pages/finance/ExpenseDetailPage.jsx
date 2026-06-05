@@ -8,6 +8,7 @@ import Button from '../../components/ui/Button';
 import ConfirmModal from '../../components/ui/ConfirmModal';
 import Input from '../../components/ui/Input';
 import AmountDisplay from '../../components/finance/AmountDisplay';
+import useCurrency from '../../hooks/useCurrency';
 import { useFinanceAccess } from '../../hooks/useFinanceAccess';
 import {
   approveExpense,
@@ -38,12 +39,13 @@ const paymentMethods = ['cash', 'mobile_money', 'bank_transfer', 'card', 'cheque
 export default function ExpenseDetailPage() {
   const { expenseId } = useParams();
   const queryClient = useQueryClient();
+  const { currencyCode, currencyOptions } = useCurrency();
   const { canApproveFinance } = useFinanceAccess();
   const [form, setForm] = useState({
     category: 'utilities',
     description: '',
     amount: '',
-    currency: 'USD',
+    currency: currencyCode,
     expenseDate: '',
     paymentMethod: 'cash',
     paymentReference: '',
@@ -73,7 +75,7 @@ export default function ExpenseDetailPage() {
       category: expense.category || 'utilities',
       description: expense.description || '',
       amount: expense.amount || '',
-      currency: expense.currency || 'USD',
+      currency: expense.currency || currencyCode,
       expenseDate: expense.expenseDate ? new Date(expense.expenseDate).toISOString().slice(0, 10) : '',
       paymentMethod: expense.paymentMethod || 'cash',
       paymentReference: expense.paymentReference || '',
@@ -84,7 +86,7 @@ export default function ExpenseDetailPage() {
       budgetId: expense.budgetId || '',
       notes: expense.notes || '',
     });
-  }, [expenseQuery.data]);
+  }, [currencyCode, expenseQuery.data]);
 
   const refreshExpense = () => {
     queryClient.invalidateQueries({ queryKey: ['finance-expense-detail', expenseId] });
@@ -139,7 +141,7 @@ export default function ExpenseDetailPage() {
   const expense = expenseQuery.data;
 
   return (
-    <FinancePageLayout>
+    <FinancePageLayout requireCapability="finance.expenses.view">
       <div className="space-y-6">
         <PageHeader
           title="Expense Detail"
@@ -203,6 +205,20 @@ export default function ExpenseDetailPage() {
                     onChange={(event) => setForm((current) => ({ ...current, amount: event.target.value }))}
                     className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white"
                   />
+                </label>
+                <label className="space-y-2">
+                  <span className="text-sm text-white/75">Currency</span>
+                  <select
+                    value={form.currency}
+                    onChange={(event) => setForm((current) => ({ ...current, currency: event.target.value }))}
+                    className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white"
+                  >
+                    {currencyOptions.map((option) => (
+                      <option key={option.code} value={option.code}>
+                        {option.code} ({option.symbol})
+                      </option>
+                    ))}
+                  </select>
                 </label>
                 <label className="space-y-2 md:col-span-2">
                   <span className="text-sm text-white/75">Description</span>

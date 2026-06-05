@@ -1,33 +1,22 @@
-import { useAuth } from './useAuth';
 import { useCapabilities } from './useCapabilities';
 
-const createRoles = new Set([
-  'super_admin',
-  'head_pastor',
-  'associate_pastor',
-  'media_team',
-  'care_leader',
-  'branch_pastor',
-]);
-
-const viewRoles = new Set([
-  'super_admin',
-  'head_pastor',
-  'associate_pastor',
-  'media_team',
-  'care_leader',
-  'branch_pastor',
-  'volunteer_leader',
-]);
-
 export const useCommunicationAccess = () => {
-  const { role } = useAuth();
-  const { hasCapability } = useCapabilities();
+  const { hasAnyCapability } = useCapabilities();
 
-  const canViewCommunication = viewRoles.has(role) && hasCapability('communication.view');
-  const canCreateCommunication = createRoles.has(role) && hasCapability('communication.create');
-  const canModifyCommunication = createRoles.has(role) && hasCapability('communication.modify');
-  const canDeleteCommunication = createRoles.has(role) && hasCapability('communication.delete');
+  const canViewCommunication = hasAnyCapability(['communication.view', 'communication.overview.view']);
+  const canCreateCommunication = hasAnyCapability([
+    'communication.create',
+    'communication.broadcasts.create',
+    'communication.polls.create',
+  ]);
+  const canModifyCommunication = hasAnyCapability([
+    'communication.modify',
+    'communication.broadcasts.send',
+    'communication.templates.modify',
+    'communication.polls.modify',
+    'communication.prayer_requests.respond',
+  ]);
+  const canDeleteCommunication = hasAnyCapability(['communication.delete']);
 
   return {
     canViewCommunication,

@@ -39,12 +39,19 @@ export const useAuthStore = create(
           useTenantStore.getState().setTenant({
             tenantId,
             churchName: data.churchName || tenantId,
+            country: data.user?.role === 'super_admin' ? null : data.tenant?.country || data.country || null,
+            countryCode: data.tenant?.countryCode || data.countryCode || null,
+            currencyCode: data.tenantFinancial?.currencyCode || 'USD',
+            currencySymbol: data.tenantFinancial?.currencySymbol || '$',
           });
           useBrandingStore.getState().setTenantBranding({
             appName: data.tenantBranding?.appName || data.churchName || '',
             logoUrl: data.tenantBranding?.logoUrl || '',
             tagline: data.tenantBranding?.tagline || 'Tenant workspace',
           });
+          if (role === 'super_admin') {
+            useBrandingStore.getState().setPlatformConfig(data.platformConfig || {});
+          }
 
           return role;
         } catch (error) {
@@ -86,6 +93,7 @@ export const useAuthStore = create(
           });
           useTenantStore.getState().resetTenant();
           useBrandingStore.getState().resetTenantBranding();
+          useBrandingStore.getState().resetPlatformConfig();
 
           if (redirect && typeof window !== 'undefined' && window.location.pathname !== '/login') {
             window.location.replace('/login');

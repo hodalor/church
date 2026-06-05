@@ -1,6 +1,11 @@
 import { useMemo } from 'react';
 import { useAuth } from './useAuth';
-import { getRoleDefaultCapabilities, hasCapability as checkCapability, normalizeCapabilities } from '../constants/capabilities';
+import {
+  getRoleDefaultCapabilities,
+  hasAnyCapability as checkAnyCapability,
+  hasCapability as checkCapability,
+  normalizeCapabilities,
+} from '../constants/capabilities';
 
 export const useCapabilities = () => {
   const { role, user } = useAuth();
@@ -16,5 +21,6 @@ export const useCapabilities = () => {
   return {
     capabilities,
     hasCapability: (capability) => checkCapability(capabilities, capability),
+    hasAnyCapability: (capabilityOptions) => checkAnyCapability(capabilities, capabilityOptions),
   };
 };

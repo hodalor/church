@@ -97,7 +97,7 @@ export default function ExpensesPage() {
   ];
 
   return (
-    <FinancePageLayout>
+    <FinancePageLayout requireCapability="finance.expenses.view">
       <div className="space-y-6">
         <PageHeader
           title="Expenses"

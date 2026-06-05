@@ -19,6 +19,31 @@ const tenantBrandingSchema = new mongoose.Schema(
   { _id: false },
 );
 
+const eligibleCountrySchema = new mongoose.Schema(
+  {
+    name: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+    countryCode: {
+      type: String,
+      trim: true,
+      uppercase: true,
+    },
+    currencyCode: {
+      type: String,
+      trim: true,
+      uppercase: true,
+    },
+    currencySymbol: {
+      type: String,
+      trim: true,
+    },
+  },
+  { _id: false },
+);
+
 const groupingNodeSchema = new mongoose.Schema(
   {
     id: {
@@ -65,6 +90,33 @@ const tenantContentSchema = new mongoose.Schema(
     },
     groupings: {
       type: [groupingNodeSchema],
+      default: () => [],
+    },
+  },
+  { _id: false },
+);
+
+const tenantFinancialSchema = new mongoose.Schema(
+  {
+    currencyCode: {
+      type: String,
+      trim: true,
+      uppercase: true,
+      default: 'USD',
+    },
+    currencySymbol: {
+      type: String,
+      trim: true,
+      default: '$',
+    },
+  },
+  { _id: false },
+);
+
+const platformConfigSchema = new mongoose.Schema(
+  {
+    eligibleCountries: {
+      type: [eligibleCountrySchema],
       default: () => [],
     },
   },
@@ -120,6 +172,14 @@ const tenantSchema = new mongoose.Schema(
     },
     content: {
       type: tenantContentSchema,
+      default: () => ({}),
+    },
+    financial: {
+      type: tenantFinancialSchema,
+      default: () => ({}),
+    },
+    platformConfig: {
+      type: platformConfigSchema,
       default: () => ({}),
     },
     kioskPasscode: {

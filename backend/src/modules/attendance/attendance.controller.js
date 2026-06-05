@@ -1,7 +1,7 @@
 import asyncHandler from '../../utils/asyncHandler.js';
 import { success } from '../../utils/apiResponse.js';
 import { createHttpError } from '../../utils/httpError.js';
-import { hasCapability } from '../access/capabilities.js';
+import { hasAnyCapability } from '../access/capabilities.js';
 import * as attendanceService from './attendance.service.js';
 import {
   ensureBranchAccess,
@@ -38,18 +38,10 @@ const ensureAttendanceCapability = (req, capability, options = {}) => {
     return;
   }
 
-  if (!hasCapability(req.user?.capabilities || [], capability)) {
+  const requiredCapabilities = Array.isArray(capability) ? capability : [capability];
+
+  if (!hasAnyCapability(req.user?.capabilities || [], requiredCapabilities)) {
     throw createHttpError(403, 'You do not have permission for this attendance action.');
-  }
-};
-
-const ensureLeaderScannerAccess = (req) => {
-  if (req.user?.role === 'super_admin') {
-    return;
-  }
-
-  if (!attendanceService.attendanceRoleAccess.canLeadCheckIn(req.user?.role)) {
-    throw createHttpError(403, 'Leader attendance access is required for this action.');
   }
 };
 
@@ -71,7 +63,9 @@ const ensureServiceBranchAccess = async (req, serviceId) => {
 };
 
 export const listServices = asyncHandler(async (req, res) => {
-  ensureAttendanceCapability(req, 'attendance.view', { allowMember: true });
+  ensureAttendanceCapability(req, ['attendance.view', 'attendance.services.view'], {
+    allowMember: true,
+  });
   const data = await attendanceService.listServices(
     resolveScopedTenantId(req),
     scopeBranchQuery(req.query, req.user),
@@ -80,23 +74,23 @@ export const listServices = asyncHandler(async (req, res) => {
 });
 
 export const getServiceById = asyncHandler(async (req, res) => {
-  ensureAttendanceCapability(req, 'attendance.view', { allowMember: true });
+  ensureAttendanceCapability(req, ['attendance.view', 'attendance.services.view'], {
+    allowMember: true,
+  });
   const data = await attendanceService.getServiceById(resolveScopedTenantId(req), req.params.serviceId);
   ensureDocumentBranchAccess(req.user, data.branch, 'You do not have access to this service branch.');
   return success(res, data, 'Attendance service fetched successfully.');
 });
 
 export const createService = asyncHandler(async (req, res) => {
-  ensureAttendanceCapability(req, 'attendance.create');
-  ensureLeaderScannerAccess(req);
+  ensureAttendanceCapability(req, ['attendance.create', 'attendance.services.create']);
   ensureBranchAccess(req.user, req.body.branch, 'You do not have access to create services in this branch.');
   const data = await attendanceService.createService(resolveScopedTenantId(req), req.body, attendanceActor(req));
   return success(res, data, 'Attendance service created successfully.', 201);
 });
 
 export const updateService = asyncHandler(async (req, res) => {
-  ensureAttendanceCapability(req, 'attendance.modify');
-  ensureLeaderScannerAccess(req);
+  ensureAttendanceCapability(req, ['attendance.modify', 'attendance.services.modify']);
   await ensureServiceBranchAccess(req, req.params.serviceId);
   ensureBranchAccess(req.user, req.body.branch, 'You do not have access to update services in this branch.');
   const data = await attendanceService.updateService(
@@ -109,15 +103,14 @@ export const updateService = asyncHandler(async (req, res) => {
 });
 
 export const deleteService = asyncHandler(async (req, res) => {
-  ensureAttendanceCapability(req, 'attendance.delete');
+  ensureAttendanceCapability(req, ['attendance.delete', 'attendance.services.delete']);
   await ensureServiceBranchAccess(req, req.params.serviceId);
   const data = await attendanceService.deleteService(resolveScopedTenantId(req), req.params.serviceId);
   return success(res, data, 'Attendance service deleted successfully.');
 });
 
 export const toggleServiceCheckIn = asyncHandler(async (req, res) => {
-  ensureAttendanceCapability(req, 'attendance.modify');
-  ensureLeaderScannerAccess(req);
+  ensureAttendanceCapability(req, ['attendance.modify', 'attendance.services.check_in']);
   await ensureServiceBranchAccess(req, req.params.serviceId);
   const data = await attendanceService.toggleServiceCheckIn(
     resolveScopedTenantId(req),
@@ -129,16 +122,22 @@ export const toggleServiceCheckIn = asyncHandler(async (req, res) => {
 });
 
 export const computeServiceStats = asyncHandler(async (req, res) => {
-  ensureAttendanceCapability(req, 'attendance.modify');
-  ensureLeaderScannerAccess(req);
+  ensureAttendanceCapability(req, [
+    'attendance.modify',
+    'attendance.services.modify',
+    'attendance.services.check_in',
+  ]);
   await ensureServiceBranchAccess(req, req.params.serviceId);
   const data = await attendanceService.computeServiceStats(resolveScopedTenantId(req), req.params.serviceId);
   return success(res, data, 'Attendance statistics computed successfully.');
 });
 
 export const updateOfflineCount = asyncHandler(async (req, res) => {
-  ensureAttendanceCapability(req, 'attendance.modify');
-  ensureLeaderScannerAccess(req);
+  ensureAttendanceCapability(req, [
+    'attendance.modify',
+    'attendance.services.modify',
+    'attendance.services.check_in',
+  ]);
   await ensureServiceBranchAccess(req, req.params.serviceId);
   const data = await attendanceService.updateOfflineCount(
     resolveScopedTenantId(req),
@@ -150,8 +149,7 @@ export const updateOfflineCount = asyncHandler(async (req, res) => {
 });
 
 export const getServiceAttendance = asyncHandler(async (req, res) => {
-  ensureAttendanceCapability(req, 'attendance.view');
-  ensureLeaderScannerAccess(req);
+  ensureAttendanceCapability(req, ['attendance.view', 'attendance.services.view']);
   await ensureServiceBranchAccess(req, req.params.serviceId);
   const data = await attendanceService.getServiceAttendance(
     resolveScopedTenantId(req),
@@ -162,7 +160,7 @@ export const getServiceAttendance = asyncHandler(async (req, res) => {
 });
 
 export const removeCheckIn = asyncHandler(async (req, res) => {
-  ensureAttendanceCapability(req, 'attendance.delete');
+  ensureAttendanceCapability(req, ['attendance.delete', 'attendance.services.delete']);
   await ensureServiceBranchAccess(req, req.params.serviceId);
   const data = await attendanceService.removeCheckIn(
     resolveScopedTenantId(req),
@@ -174,14 +172,15 @@ export const removeCheckIn = asyncHandler(async (req, res) => {
 });
 
 export const searchCheckInMembers = asyncHandler(async (req, res) => {
-  ensureAttendanceCapability(req, 'attendance.view');
-  ensureLeaderScannerAccess(req);
+  ensureAttendanceCapability(req, ['attendance.view', 'attendance.services.view']);
   const data = await attendanceService.searchCheckInMembers(resolveScopedTenantId(req), req.query);
   return success(res, data, 'Attendance member search completed successfully.');
 });
 
 export const onlineCheckIn = asyncHandler(async (req, res) => {
-  ensureAttendanceCapability(req, 'attendance.create', { allowMember: true });
+  ensureAttendanceCapability(req, ['attendance.create', 'attendance.services.check_in'], {
+    allowMember: true,
+  });
   await ensureServiceBranchAccess(req, req.params.serviceId);
   const data = await attendanceService.onlineCheckIn(
     resolveScopedTenantId(req),
@@ -192,8 +191,7 @@ export const onlineCheckIn = asyncHandler(async (req, res) => {
 });
 
 export const qrCheckIn = asyncHandler(async (req, res) => {
-  ensureAttendanceCapability(req, 'attendance.create');
-  ensureLeaderScannerAccess(req);
+  ensureAttendanceCapability(req, ['attendance.create', 'attendance.services.check_in']);
   await ensureServiceBranchAccess(req, req.params.serviceId);
   const data = await attendanceService.qrCheckIn(
     resolveScopedTenantId(req),
@@ -205,8 +203,7 @@ export const qrCheckIn = asyncHandler(async (req, res) => {
 });
 
 export const manualCheckIn = asyncHandler(async (req, res) => {
-  ensureAttendanceCapability(req, 'attendance.create');
-  ensureLeaderScannerAccess(req);
+  ensureAttendanceCapability(req, ['attendance.create', 'attendance.services.check_in']);
   await ensureServiceBranchAccess(req, req.params.serviceId);
   const data = await attendanceService.manualCheckIn(
     resolveScopedTenantId(req),
@@ -218,8 +215,7 @@ export const manualCheckIn = asyncHandler(async (req, res) => {
 });
 
 export const visitorCheckIn = asyncHandler(async (req, res) => {
-  ensureAttendanceCapability(req, 'attendance.create');
-  ensureLeaderScannerAccess(req);
+  ensureAttendanceCapability(req, ['attendance.create', 'attendance.services.check_in']);
   await ensureServiceBranchAccess(req, req.params.serviceId);
   const data = await attendanceService.visitorCheckIn(
     resolveScopedTenantId(req),
@@ -231,8 +227,7 @@ export const visitorCheckIn = asyncHandler(async (req, res) => {
 });
 
 export const childCheckIn = asyncHandler(async (req, res) => {
-  ensureAttendanceCapability(req, 'attendance.create');
-  ensureLeaderScannerAccess(req);
+  ensureAttendanceCapability(req, ['attendance.create', 'attendance.services.check_in']);
   await ensureServiceBranchAccess(req, req.params.serviceId);
   const data = await attendanceService.childCheckIn(
     resolveScopedTenantId(req),
@@ -244,8 +239,7 @@ export const childCheckIn = asyncHandler(async (req, res) => {
 });
 
 export const getLiveCheckIns = asyncHandler(async (req, res) => {
-  ensureAttendanceCapability(req, 'attendance.view');
-  ensureLeaderScannerAccess(req);
+  ensureAttendanceCapability(req, ['attendance.view', 'attendance.services.view']);
   await ensureServiceBranchAccess(req, req.params.serviceId);
   const data = await attendanceService.getLiveCheckIns(
     resolveScopedTenantId(req),
@@ -256,13 +250,15 @@ export const getLiveCheckIns = asyncHandler(async (req, res) => {
 });
 
 export const getMyAttendanceHistory = asyncHandler(async (req, res) => {
-  ensureAttendanceCapability(req, 'attendance.view', { allowMember: true });
+  ensureAttendanceCapability(req, ['attendance.view', 'attendance.reports.view'], {
+    allowMember: true,
+  });
   const data = await attendanceService.getMyAttendanceHistory(resolveScopedTenantId(req), attendanceActor(req));
   return success(res, data, 'Attendance history fetched successfully.');
 });
 
 export const getAttendanceSummary = asyncHandler(async (req, res) => {
-  ensureAttendanceCapability(req, 'attendance.view');
+  ensureAttendanceCapability(req, ['attendance.view', 'attendance.reports.view']);
   const data = await attendanceService.getAttendanceSummary(
     resolveScopedTenantId(req),
     scopeBranchQuery(req.query, req.user),
@@ -271,7 +267,7 @@ export const getAttendanceSummary = asyncHandler(async (req, res) => {
 });
 
 export const getAttendanceTrends = asyncHandler(async (req, res) => {
-  ensureAttendanceCapability(req, 'attendance.view');
+  ensureAttendanceCapability(req, ['attendance.view', 'attendance.reports.view']);
   const data = await attendanceService.getAttendanceTrends(
     resolveScopedTenantId(req),
     scopeBranchQuery(req.query, req.user),
@@ -280,7 +276,7 @@ export const getAttendanceTrends = asyncHandler(async (req, res) => {
 });
 
 export const getAttendanceHeatmap = asyncHandler(async (req, res) => {
-  ensureAttendanceCapability(req, 'attendance.view');
+  ensureAttendanceCapability(req, ['attendance.view', 'attendance.reports.view']);
   const data = await attendanceService.getAttendanceHeatmap(
     resolveScopedTenantId(req),
     scopeBranchQuery(req.query, req.user),
@@ -289,7 +285,7 @@ export const getAttendanceHeatmap = asyncHandler(async (req, res) => {
 });
 
 export const getAttendanceRetention = asyncHandler(async (req, res) => {
-  ensureAttendanceCapability(req, 'attendance.view');
+  ensureAttendanceCapability(req, ['attendance.view', 'attendance.reports.view']);
   const data = await attendanceService.getAttendanceRetention(
     resolveScopedTenantId(req),
     scopeBranchQuery(req.query, req.user),
@@ -298,7 +294,7 @@ export const getAttendanceRetention = asyncHandler(async (req, res) => {
 });
 
 export const getBranchAttendanceComparison = asyncHandler(async (req, res) => {
-  ensureAttendanceCapability(req, 'attendance.view');
+  ensureAttendanceCapability(req, ['attendance.view', 'attendance.reports.view']);
   const data = await attendanceService.getBranchAttendanceComparison(
     resolveScopedTenantId(req),
     req.query,
@@ -307,7 +303,9 @@ export const getBranchAttendanceComparison = asyncHandler(async (req, res) => {
 });
 
 export const getMemberAttendanceReport = asyncHandler(async (req, res) => {
-  ensureAttendanceCapability(req, 'attendance.view', { allowMember: req.user?.memberId === req.params.memberId });
+  ensureAttendanceCapability(req, ['attendance.view', 'attendance.reports.view'], {
+    allowMember: req.user?.memberId === req.params.memberId,
+  });
   const data = await attendanceService.getMemberAttendanceReport(
     resolveScopedTenantId(req),
     req.params.memberId,
@@ -317,7 +315,7 @@ export const getMemberAttendanceReport = asyncHandler(async (req, res) => {
 });
 
 export const getAbsentees = asyncHandler(async (req, res) => {
-  ensureAttendanceCapability(req, 'attendance.view');
+  ensureAttendanceCapability(req, ['attendance.view', 'attendance.absentees.view']);
   const data = await attendanceService.getAbsentees(
     resolveScopedTenantId(req),
     scopeBranchQuery(req.query, req.user),

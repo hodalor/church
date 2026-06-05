@@ -6,10 +6,12 @@ import Button from '../../components/ui/Button';
 import Card from '../../components/ui/Card';
 import RouteModal from '../../components/ui/RouteModal';
 import MemberSearchInput from '../../components/finance/MemberSearchInput';
+import useCurrency from '../../hooks/useCurrency';
 import { createPledge } from '../../api/endpoints/finance';
 
 export default function CreatePledgePage() {
   const navigate = useNavigate();
+  const { currencyCode, currencyOptions } = useCurrency();
   const [selectedMember, setSelectedMember] = useState(null);
   const [form, setForm] = useState({
     memberId: '',
@@ -17,7 +19,7 @@ export default function CreatePledgePage() {
     pledgeType: 'building_fund',
     description: '',
     totalAmount: '',
-    currency: 'USD',
+    currency: currencyCode,
     startDate: '',
     expectedEndDate: '',
     installmentFrequency: '',
@@ -102,8 +104,8 @@ export default function CreatePledgePage() {
               <label className="space-y-2">
                 <span className="text-sm text-white/80">Currency</span>
                 <select value={form.currency} onChange={(event) => updateField('currency', event.target.value)} className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white">
-                  {['USD', 'GHS', 'NGN', 'KES', 'GBP'].map((option) => (
-                    <option key={option} value={option}>{option}</option>
+                  {currencyOptions.map((option) => (
+                    <option key={option.code} value={option.code}>{option.code} ({option.symbol})</option>
                   ))}
                 </select>
               </label>

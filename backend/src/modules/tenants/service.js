@@ -12,6 +12,14 @@ import {
 import { createHttpError } from '../../utils/httpError.js';
 
 const tenantSlugRegex = /^[a-z0-9-]{3,20}$/;
+const defaultEligibleCountries = [
+  { name: 'Ghana', countryCode: 'GH', currencyCode: 'GHS', currencySymbol: 'GHs' },
+  { name: 'Nigeria', countryCode: 'NG', currencyCode: 'NGN', currencySymbol: 'NGN' },
+  { name: 'Kenya', countryCode: 'KE', currencyCode: 'KES', currencySymbol: 'KES' },
+  { name: 'South Africa', countryCode: 'ZA', currencyCode: 'ZAR', currencySymbol: 'R' },
+  { name: 'United Kingdom', countryCode: 'GB', currencyCode: 'GBP', currencySymbol: 'GBP' },
+  { name: 'United States', countryCode: 'US', currencyCode: 'USD', currencySymbol: '$' },
+];
 
 const normalizeString = (value, { lowercase = false } = {}) => {
   if (typeof value !== 'string') {
@@ -65,6 +73,37 @@ const normalizeGroupingNodes = (value) => {
     .filter(Boolean);
 };
 
+const normalizeEligibleCountries = (value) => {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+
+  const seen = new Set();
+
+  return value
+    .map((item) => {
+      const name = normalizeString(item?.name);
+      if (!name) {
+        return null;
+      }
+
+      const key = name.toLowerCase();
+      if (seen.has(key)) {
+        return null;
+      }
+
+      seen.add(key);
+
+      return {
+        name,
+        countryCode: normalizeString(item?.countryCode, { lowercase: false })?.toUpperCase() || '',
+        currencyCode: normalizeString(item?.currencyCode, { lowercase: false })?.toUpperCase() || 'USD',
+        currencySymbol: normalizeString(item?.currencySymbol) || '$',
+      };
+    })
+    .filter(Boolean);
+};
+
 const buildTenantBranding = (tenantOrPayload = {}) => ({
   appName:
     normalizeString(tenantOrPayload.branding?.appName) ||
@@ -90,10 +129,30 @@ const buildTenantContent = (tenantOrPayload = {}) => ({
   groupings: normalizeGroupingNodes(tenantOrPayload.content?.groupings || tenantOrPayload.groupings),
 });
 
+const buildTenantFinancial = (tenantOrPayload = {}) => ({
+  currencyCode:
+    normalizeString(tenantOrPayload.financial?.currencyCode, { lowercase: false })?.toUpperCase() ||
+    normalizeString(tenantOrPayload.currencyCode, { lowercase: false })?.toUpperCase() ||
+    'USD',
+  currencySymbol:
+    normalizeString(tenantOrPayload.financial?.currencySymbol) ||
+    normalizeString(tenantOrPayload.currencySymbol) ||
+    '$',
+});
+
+const buildPlatformConfig = (tenantOrPayload = {}) => ({
+  eligibleCountries:
+    normalizeEligibleCountries(
+      tenantOrPayload.platformConfig?.eligibleCountries || tenantOrPayload.eligibleCountries,
+    ) || [],
+});
+
 const serializeTenant = (tenantDocument) => {
   const tenant = tenantDocument?.toObject ? tenantDocument.toObject() : tenantDocument;
   const branding = buildTenantBranding(tenant);
   const content = buildTenantContent(tenant);
+  const financial = buildTenantFinancial(tenant);
+  const platformConfig = buildPlatformConfig(tenant);
   const { kioskPasscode, ...safeTenant } = tenant || {};
 
   return {
@@ -101,6 +160,13 @@ const serializeTenant = (tenantDocument) => {
     capabilities: resolveTenantCapabilities(tenant),
     branding,
     content,
+    financial,
+    platformConfig: {
+      eligibleCountries:
+        platformConfig.eligibleCountries.length > 0
+          ? platformConfig.eligibleCountries
+          : defaultEligibleCountries,
+    },
   };
 };
 
@@ -122,6 +188,7 @@ export const createTenant = async (payload) => {
   });
   const branding = buildTenantBranding(payload);
   const content = buildTenantContent(payload);
+  const financial = buildTenantFinancial(payload);
 
   const [existingTenant, existingEmail] = await Promise.all([
     Tenant.findOne({ tenantId: normalizedTenantId }),
@@ -147,6 +214,7 @@ export const createTenant = async (payload) => {
     capabilities: tenantCapabilities,
     branding,
     content,
+    financial,
   });
 
   const user = await createUser({
@@ -242,6 +310,12 @@ export const updateTenant = async (tenantId, payload) => {
   const content = payload.content || payload.branches || payload.departments || payload.ministries || payload.groupings
     ? buildTenantContent(payload)
     : null;
+  const financial =
+    payload.financial || payload.currencyCode || payload.currencySymbol
+      ? buildTenantFinancial(payload)
+      : null;
+  const platformConfig =
+    payload.platformConfig || payload.eligibleCountries ? buildPlatformConfig(payload) : null;
 
   const tenant = await Tenant.findOneAndUpdate(
     { tenantId: tenantId.trim().toLowerCase() },
@@ -256,6 +330,8 @@ export const updateTenant = async (tenantId, payload) => {
       ...(normalizedCapabilities ? { capabilities: normalizedCapabilities } : {}),
       ...(branding ? { branding } : {}),
       ...(content ? { content } : {}),
+      ...(financial ? { financial } : {}),
+      ...(platformConfig ? { platformConfig } : {}),
     },
     { new: true, runValidators: true },
   );
