@@ -2,8 +2,11 @@ import { useEffect, useState } from 'react';
 import {
   BarChart3,
   Bell,
+  Bot,
+  BrainCircuit,
   BookOpen,
   Building,
+  CalendarDays,
   ChevronDown,
   ChevronLeft,
   HandCoins,
@@ -64,6 +67,32 @@ const pastoralSubItems = [
   { label: 'Reports', to: '/pastoral/reports', capabilityOptions: ['pastoral.view', 'pastoral.reports.view'] },
 ];
 
+const volunteerSubItems = [
+  { label: 'Overview', to: '/volunteers', capabilityOptions: ['volunteers.view', 'volunteers.overview.view'] },
+  { label: 'Registry', to: '/volunteers/list', capabilityOptions: ['volunteers.view', 'volunteers.overview.view'] },
+  { label: 'Rosters', to: '/volunteers/rosters', capabilityOptions: ['volunteers.view', 'volunteers.rosters.view'] },
+];
+
+const eventSubItems = [
+  { label: 'Overview', to: '/events', capabilityOptions: ['events.view', 'events.overview.view'] },
+  { label: 'My Registrations', to: '/events?tab=my-registrations', capabilityOptions: ['events.registrations.view', 'events.view'] },
+];
+
+const headquartersSubItems = [
+  { label: 'HQ Overview', to: '/hq', capabilityOptions: ['hq.view', 'hq.overview.view'] },
+  {
+    label: 'Branches',
+    to: '/hq/branches',
+    capabilityOptions: ['branches.view', 'branches.metrics.view'],
+  },
+  {
+    label: 'Intelligence',
+    to: '/hq/intelligence',
+    capabilityOptions: ['hq.comparison.view', 'hq.growth.view', 'hq.finance.view', 'hq.members.view', 'hq.operations.view'],
+  },
+  { label: 'Reports', to: '/hq/reports', capabilityOptions: ['hq.reports.view'] },
+];
+
 const navigation = [
   {
     title: 'Overview',
@@ -73,10 +102,34 @@ const navigation = [
     ],
   },
   {
+    title: 'Intelligence',
+    items: [
+      {
+        label: 'Headquarters',
+        icon: BrainCircuit,
+        capabilityOptions: ['hq.view', 'branches.view', 'hq.reports.view'],
+        children: headquartersSubItems,
+      },
+      {
+        label: 'Insights',
+        to: '/insights',
+        icon: BarChart3,
+        capabilityOptions: ['insights.view'],
+      },
+      {
+        label: 'AI Assistant',
+        to: '/ai',
+        icon: Bot,
+        capabilityOptions: ['ai.view', 'ai.create'],
+      },
+    ],
+  },
+  {
     title: 'Ministry',
     items: [
       { label: 'Members', to: '/members', icon: Users, capabilityOptions: ['members.view'] },
       { label: 'Visitors', icon: UserRoundPlus, capabilityOptions: ['visitors.view', 'visitors.overview.view'], children: visitorSubItems },
+      { label: 'Volunteers', icon: HandHelping, capabilityOptions: ['volunteers.view', 'volunteers.overview.view'], children: volunteerSubItems },
       { label: 'Users', to: '/users', icon: Shield, capabilityOptions: ['users.view'] },
       { label: 'Inbox', to: '/communication/inbox', icon: Bell, capabilityOptions: ['notifications.view', 'communication.inbox.view'] },
       { label: 'Pastoral Care', icon: HeartHandshake, capabilityOptions: ['pastoral.view', 'pastoral.overview.view'], children: pastoralSubItems },
@@ -87,6 +140,7 @@ const navigation = [
     items: [
       { label: 'Finance', icon: HandCoins, capabilityOptions: ['finance.view', 'finance.overview.view'], children: financeSubItems },
       { label: 'Attendance', icon: BarChart3, capabilityOptions: ['attendance.view', 'attendance.services.view'], children: attendanceSubItems },
+      { label: 'Events', icon: CalendarDays, capabilityOptions: ['events.view', 'events.overview.view'], children: eventSubItems },
       { label: 'Communication', icon: HandHelping, capabilityOptions: ['communication.view', 'communication.overview.view'], children: communicationSubItems },
       { label: 'Broadcasts', to: '/communication/broadcasts', icon: Radio, capabilityOptions: ['communication.view', 'communication.broadcasts.view'] },
     ],
@@ -107,8 +161,11 @@ export default function Sidebar({ isOpen, onToggle }) {
     Finance: location.pathname.startsWith('/finance'),
     Attendance: location.pathname.startsWith('/attendance'),
     Communication: location.pathname.startsWith('/communication'),
+    Headquarters: location.pathname.startsWith('/hq'),
     Visitors: location.pathname.startsWith('/visitors'),
     'Pastoral Care': location.pathname.startsWith('/pastoral'),
+    Volunteers: location.pathname.startsWith('/volunteers'),
+    Events: location.pathname.startsWith('/events'),
   });
   const productName = globalBranding.appName || 'Ecclesia';
   const productTagline = globalBranding.tagline || 'Church OS';
@@ -119,8 +176,11 @@ export default function Sidebar({ isOpen, onToggle }) {
       Finance: current.Finance || location.pathname.startsWith('/finance'),
       Attendance: current.Attendance || location.pathname.startsWith('/attendance'),
       Communication: current.Communication || location.pathname.startsWith('/communication'),
+      Headquarters: current.Headquarters || location.pathname.startsWith('/hq'),
       Visitors: current.Visitors || location.pathname.startsWith('/visitors'),
       'Pastoral Care': current['Pastoral Care'] || location.pathname.startsWith('/pastoral'),
+      Volunteers: current.Volunteers || location.pathname.startsWith('/volunteers'),
+      Events: current.Events || location.pathname.startsWith('/events'),
     }));
   }, [location.pathname]);
 
@@ -145,8 +205,10 @@ export default function Sidebar({ isOpen, onToggle }) {
           key={subItem.to}
           to={subItem.to}
           className={({ isActive }) =>
-            `block rounded-xl px-3 py-2 text-[12px] uppercase tracking-[0.2em] ${
-              isActive ? 'bg-white/[0.06] text-accent' : 'text-white/40 hover:text-white/70'
+            `block rounded-xl border-l-2 px-3 py-2 text-[12px] uppercase tracking-[0.2em] transition ${
+              isActive
+                ? 'border-accent bg-accent/10 text-accent'
+                : 'border-transparent text-white/40 hover:bg-[#122033] hover:text-white/70'
             }`
           }
           onClick={() => {
@@ -182,8 +244,8 @@ export default function Sidebar({ isOpen, onToggle }) {
             }
             className={`flex w-full items-center justify-between rounded-2xl px-3 py-2.5 text-[14px] font-medium transition ${
               isActive || isOpenSection
-                ? 'bg-[linear-gradient(90deg,rgba(201,168,76,0.18),rgba(201,168,76,0.08))] text-[#f5deb0]'
-                : 'text-white/68 hover:bg-white/[0.05] hover:text-white'
+                ? 'border-l-2 border-accent bg-[linear-gradient(90deg,rgba(201,168,76,0.18),rgba(201,168,76,0.08))] text-[#f5deb0]'
+                : 'border-l-2 border-transparent text-white/68 hover:bg-[#122033] hover:text-white'
             }`}
             aria-label={isOpenSection ? `Collapse ${label} menu` : `Expand ${label} menu`}
           >
@@ -204,12 +266,12 @@ export default function Sidebar({ isOpen, onToggle }) {
       <NavLink
         to={disabled ? '#' : to}
         className={({ isActive }) =>
-          `flex items-center gap-3 rounded-2xl px-3 py-2.5 text-[14px] font-medium transition ${
+          `flex items-center gap-3 rounded-2xl border-l-2 px-3 py-2.5 text-[14px] font-medium transition ${
             disabled
-              ? 'cursor-not-allowed text-white/28'
+              ? 'cursor-not-allowed border-transparent text-white/28'
               : isActive
-                ? 'bg-[linear-gradient(90deg,rgba(201,168,76,0.18),rgba(201,168,76,0.08))] text-[#f5deb0]'
-                : 'text-white/68 hover:bg-white/[0.05] hover:text-white'
+                ? 'border-accent bg-[linear-gradient(90deg,rgba(201,168,76,0.18),rgba(201,168,76,0.08))] text-[#f5deb0]'
+                : 'border-transparent text-white/68 hover:bg-[#122033] hover:text-white'
           }`
         }
         onClick={(event) => {

@@ -4,12 +4,14 @@ import {
   Bell,
   BookOpen,
   Building2,
+  CalendarDays,
   ChevronDown,
   ChevronLeft,
   HandCoins,
   HandHelping,
   HeartHandshake,
   LayoutDashboard,
+  LineChart,
   Menu,
   Search,
   Settings,
@@ -24,6 +26,8 @@ import { useAuth } from '../../hooks/useAuth';
 import Button from '../ui/Button';
 import { useBrandingStore } from '../../stores/brandingStore';
 import NotificationBell from './NotificationBell';
+import ErrorBoundary from '../ui/ErrorBoundary';
+import PageTransition from '../ui/PageTransition';
 
 const financeSubItems = [
   { label: 'Overview', to: '/finance' },
@@ -69,12 +73,35 @@ const pastoralSubItems = [
   { label: 'Reports', to: '/pastoral/reports' },
 ];
 
+const volunteerSubItems = [
+  { label: 'Platform', to: '/superadmin/volunteers' },
+  { label: 'Overview', to: '/volunteers' },
+  { label: 'Registry', to: '/volunteers/list' },
+  { label: 'Rosters', to: '/volunteers/rosters' },
+];
+
+const eventSubItems = [
+  { label: 'Platform', to: '/superadmin/events' },
+  { label: 'Overview', to: '/events' },
+];
+
+const platformBiSubItems = [
+  { label: 'Overview', to: '/superadmin/platform' },
+  { label: 'Tenant Comparison', to: '/superadmin/platform/tenants' },
+];
+
 const navigation = [
   {
     title: 'Workspace',
     items: [
       { label: 'Overview', to: '/superadmin/dashboard', icon: LayoutDashboard },
       { label: 'All Churches', to: '/superadmin/tenants', icon: Building2, badge: 'tenants' },
+      {
+        label: 'Platform BI',
+        icon: LineChart,
+        children: platformBiSubItems,
+        matchPrefixes: ['/superadmin/platform'],
+      },
       { label: 'Members', to: '/superadmin/members', icon: Users },
       { label: 'Users', to: '/superadmin/users', icon: Shield },
       { label: 'Manual', to: '/superadmin/manual', icon: BookOpen },
@@ -103,6 +130,18 @@ const navigation = [
         children: visitorSubItems,
         matchPrefixes: ['/superadmin/visitors', '/visitors'],
       },
+      {
+        label: 'Volunteers',
+        icon: HandHelping,
+        children: volunteerSubItems,
+        matchPrefixes: ['/superadmin/volunteers', '/volunteers'],
+      },
+      {
+        label: 'Events',
+        icon: CalendarDays,
+        children: eventSubItems,
+        matchPrefixes: ['/superadmin/events', '/events'],
+      },
     ],
   },
   {
@@ -127,6 +166,7 @@ export default function SuperAdminShell({ children }) {
   const { logout } = useAuth();
   const location = useLocation();
   const [expanded, setExpanded] = useState({
+    'Platform BI': location.pathname.startsWith('/superadmin/platform'),
     Finance: location.pathname.startsWith('/finance'),
     Communication:
       location.pathname.startsWith('/superadmin/communication') ||
@@ -137,6 +177,12 @@ export default function SuperAdminShell({ children }) {
     Visitors:
       location.pathname.startsWith('/superadmin/visitors') ||
       location.pathname.startsWith('/visitors'),
+    Volunteers:
+      location.pathname.startsWith('/superadmin/volunteers') ||
+      location.pathname.startsWith('/volunteers'),
+    Events:
+      location.pathname.startsWith('/superadmin/events') ||
+      location.pathname.startsWith('/events'),
     'Pastoral Care':
       location.pathname.startsWith('/superadmin/pastoral') ||
       location.pathname.startsWith('/pastoral'),
@@ -150,6 +196,7 @@ export default function SuperAdminShell({ children }) {
   useEffect(() => {
     setExpanded((current) => ({
       ...current,
+      'Platform BI': current['Platform BI'] || location.pathname.startsWith('/superadmin/platform'),
       Finance: current.Finance || location.pathname.startsWith('/finance'),
       Communication:
         current.Communication ||
@@ -163,6 +210,14 @@ export default function SuperAdminShell({ children }) {
         current.Visitors ||
         location.pathname.startsWith('/superadmin/visitors') ||
         location.pathname.startsWith('/visitors'),
+      Volunteers:
+        current.Volunteers ||
+        location.pathname.startsWith('/superadmin/volunteers') ||
+        location.pathname.startsWith('/volunteers'),
+      Events:
+        current.Events ||
+        location.pathname.startsWith('/superadmin/events') ||
+        location.pathname.startsWith('/events'),
       'Pastoral Care':
         current['Pastoral Care'] ||
         location.pathname.startsWith('/superadmin/pastoral') ||
@@ -177,8 +232,10 @@ export default function SuperAdminShell({ children }) {
           key={subItem.to}
           to={subItem.to}
           className={({ isActive }) =>
-            `block rounded-xl px-3 py-2 text-[12px] uppercase tracking-[0.2em] ${
-              isActive ? 'bg-white/[0.06] text-accent' : 'text-white/40 hover:text-white/70'
+            `block rounded-xl border-l-2 px-3 py-2 text-[12px] uppercase tracking-[0.2em] transition ${
+              isActive
+                ? 'border-accent bg-accent/10 text-accent'
+                : 'border-transparent text-white/40 hover:bg-[#122033] hover:text-white/70'
             }`
           }
           onClick={() => {
@@ -212,10 +269,10 @@ export default function SuperAdminShell({ children }) {
                 [label]: !current[label],
               }))
             }
-            className={`flex w-full items-center justify-between rounded-2xl px-3 py-2.5 text-[14px] font-medium ${
+            className={`flex w-full items-center justify-between rounded-2xl border-l-2 px-3 py-2.5 text-[14px] font-medium ${
               isActive || isExpanded
-                ? 'bg-[linear-gradient(90deg,rgba(201,168,76,0.18),rgba(201,168,76,0.08))] text-[#f5deb0]'
-                : 'text-white/68 hover:bg-white/[0.05] hover:text-white'
+                ? 'border-accent bg-[linear-gradient(90deg,rgba(201,168,76,0.18),rgba(201,168,76,0.08))] text-[#f5deb0]'
+                : 'border-transparent text-white/68 hover:bg-[#122033] hover:text-white'
             }`}
             aria-label={isExpanded ? `Collapse ${label} menu` : `Expand ${label} menu`}
           >
@@ -236,10 +293,10 @@ export default function SuperAdminShell({ children }) {
       <NavLink
         to={to}
         className={({ isActive }) =>
-          `flex items-center justify-between rounded-2xl px-3 py-2.5 text-[14px] font-medium ${
+          `flex items-center justify-between rounded-2xl border-l-2 px-3 py-2.5 text-[14px] font-medium ${
             isActive
-              ? 'bg-[linear-gradient(90deg,rgba(201,168,76,0.18),rgba(201,168,76,0.08))] text-[#f5deb0]'
-              : 'text-white/68 hover:bg-white/[0.05] hover:text-white'
+              ? 'border-accent bg-[linear-gradient(90deg,rgba(201,168,76,0.18),rgba(201,168,76,0.08))] text-[#f5deb0]'
+              : 'border-transparent text-white/68 hover:bg-[#122033] hover:text-white'
           }`
         }
         onClick={() => {
@@ -342,7 +399,9 @@ export default function SuperAdminShell({ children }) {
             </div>
           </header>
           <main className="flex-1 overflow-x-hidden overflow-y-auto px-4 py-4 lg:px-5 lg:py-5 xl:px-6">
-            {children}
+            <ErrorBoundary>
+              <PageTransition>{children}</PageTransition>
+            </ErrorBoundary>
           </main>
         </div>
       </div>

@@ -32,6 +32,7 @@ const env = {
   SUPER_ADMIN_TENANT_ID: process.env.SUPER_ADMIN_TENANT_ID,
   SUPER_ADMIN_USERNAME: process.env.SUPER_ADMIN_USERNAME,
   SUPER_ADMIN_PIN: process.env.SUPER_ADMIN_PIN,
+  ANTHROPIC_API_KEY: process.env.ANTHROPIC_API_KEY || '',
   NODE_ENV: process.env.NODE_ENV || 'development',
   CLIENT_ORIGIN: process.env.CLIENT_ORIGIN || '*',
 };

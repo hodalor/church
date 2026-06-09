@@ -344,6 +344,97 @@ export const capabilitySections = [
     ],
   },
   {
+    module: 'volunteers',
+    label: 'Volunteers',
+    description: 'Manage volunteers, trainings, rosters, and volunteer reporting.',
+    actions: [
+      { key: 'view', label: 'Open Volunteer Workspace' },
+      { key: 'create', label: 'Create Volunteer Records' },
+      { key: 'modify', label: 'Modify Volunteer Records' },
+      { key: 'delete', label: 'Delete Volunteer Records' },
+    ],
+    groups: [
+      {
+        key: 'overview',
+        label: 'Overview',
+        description: 'Volunteer dashboard, registry, and volunteer profile access.',
+        actions: [
+          { key: 'view', label: 'Open Volunteer Overview' },
+          { key: 'create', label: 'Register Volunteers' },
+          { key: 'modify', label: 'Edit Volunteer Profiles' },
+        ],
+      },
+      {
+        key: 'rosters',
+        label: 'Rosters',
+        description: 'Duty roster building, assignment, publication, and attendance tracking.',
+        actions: [
+          { key: 'view', label: 'Open Rosters' },
+          { key: 'create', label: 'Create Rosters' },
+          { key: 'modify', label: 'Edit Rosters' },
+          { key: 'publish', label: 'Publish Rosters' },
+        ],
+      },
+      {
+        key: 'trainings',
+        label: 'Trainings',
+        description: 'Volunteer training records and certificate management.',
+        actions: [
+          { key: 'view', label: 'Open Trainings' },
+          { key: 'create', label: 'Add Training Records' },
+        ],
+      },
+      {
+        key: 'reports',
+        label: 'Reports',
+        description: 'Volunteer performance, reliability, and department insights.',
+        actions: [{ key: 'view', label: 'Open Volunteer Reports' }],
+      },
+    ],
+  },
+  {
+    module: 'events',
+    label: 'Events',
+    description: 'Manage event creation, publishing, registrations, and event reporting.',
+    actions: [
+      { key: 'view', label: 'Open Event Workspace' },
+      { key: 'create', label: 'Create Events' },
+      { key: 'modify', label: 'Modify Events' },
+      { key: 'delete', label: 'Delete Events' },
+    ],
+    groups: [
+      {
+        key: 'overview',
+        label: 'Overview',
+        description: 'Event dashboard, event detail, and publish workflows.',
+        actions: [
+          { key: 'view', label: 'Open Event Overview' },
+          { key: 'create', label: 'Create Events From Workspace' },
+          { key: 'modify', label: 'Edit Event Details' },
+          { key: 'publish', label: 'Publish Events' },
+        ],
+      },
+      {
+        key: 'registrations',
+        label: 'Registrations',
+        description: 'Registration approval, attendee check-in, and attendee management.',
+        actions: [
+          { key: 'view', label: 'Open Event Registrations' },
+          { key: 'create', label: 'Register Attendees' },
+          { key: 'modify', label: 'Edit Registrations' },
+          { key: 'check_in', label: 'Check In Registrants' },
+          { key: 'approve', label: 'Approve Registrations' },
+        ],
+      },
+      {
+        key: 'reports',
+        label: 'Reports',
+        description: 'Event statistics, attendance analysis, and event revenue reporting.',
+        actions: [{ key: 'view', label: 'Open Event Reports' }],
+      },
+    ],
+  },
+  {
     module: 'settings',
     label: 'Settings',
     description: 'Open tenant settings and manage branding, content, and platform config.',
@@ -378,6 +469,151 @@ export const capabilitySections = [
           { key: 'view', label: 'Open Config' },
           { key: 'modify', label: 'Edit Config' },
         ],
+      },
+    ],
+  },
+  {
+    module: 'branches',
+    label: 'Branches',
+    description: 'Manage branch profiles and branch-level analytics access.',
+    actions: [
+      { key: 'view', label: 'Open Branch Workspace' },
+      { key: 'create', label: 'Create Branches' },
+      { key: 'modify', label: 'Edit Branches' },
+      { key: 'delete', label: 'Deactivate Branches' },
+    ],
+    groups: [
+      {
+        key: 'metrics',
+        label: 'Metrics',
+        description: 'Branch KPI cards, health scores, and operational metrics.',
+        actions: [
+          { key: 'view', label: 'Open Branch Metrics' },
+          { key: 'refresh', label: 'Refresh Branch Cache' },
+        ],
+      },
+      {
+        key: 'snapshot',
+        label: 'Snapshot',
+        description: 'Branch analytics snapshots and cached period views.',
+        actions: [{ key: 'view', label: 'Open Branch Snapshots' }],
+      },
+    ],
+  },
+  {
+    module: 'hq',
+    label: 'Headquarters BI',
+    description: 'Access multi-branch dashboards, reports, and intelligence tools.',
+    actions: [{ key: 'view', label: 'Open Headquarters Workspace' }],
+    groups: [
+      {
+        key: 'overview',
+        label: 'Overview',
+        description: 'HQ dashboard overview and comparison cards.',
+        actions: [{ key: 'view', label: 'Open HQ Overview' }],
+      },
+      {
+        key: 'comparison',
+        label: 'Comparison',
+        description: 'Branch comparison tables and performance views.',
+        actions: [{ key: 'view', label: 'Open Branch Comparison' }],
+      },
+      {
+        key: 'growth',
+        label: 'Growth',
+        description: 'Growth trend charts and forecasting insights.',
+        actions: [{ key: 'view', label: 'Open Growth Intelligence' }],
+      },
+      {
+        key: 'finance',
+        label: 'Finance',
+        description: 'Financial intelligence charts and anomalies.',
+        actions: [{ key: 'view', label: 'Open Financial Intelligence' }],
+      },
+      {
+        key: 'members',
+        label: 'Members',
+        description: 'Member intelligence, risk scoring, and retention views.',
+        actions: [{ key: 'view', label: 'Open Member Intelligence' }],
+      },
+      {
+        key: 'operations',
+        label: 'Operations',
+        description: 'Operational health, volunteer gaps, and care workload.',
+        actions: [{ key: 'view', label: 'Open Operational Health' }],
+      },
+      {
+        key: 'reports',
+        label: 'Reports',
+        description: 'Consolidated reporting and intelligence exports.',
+        actions: [{ key: 'view', label: 'Open HQ Reports' }],
+      },
+    ],
+  },
+  {
+    module: 'analytics',
+    label: 'Analytics',
+    description: 'View and generate analytics snapshots and period comparisons.',
+    actions: [
+      { key: 'view', label: 'Open Analytics' },
+      { key: 'create', label: 'Generate Analytics' },
+    ],
+    groups: [
+      {
+        key: 'snapshots',
+        label: 'Snapshots',
+        description: 'Stored analytics snapshots by period.',
+        actions: [
+          { key: 'view', label: 'Open Snapshots' },
+          { key: 'create', label: 'Generate Snapshots' },
+        ],
+      },
+      {
+        key: 'compare',
+        label: 'Compare',
+        description: 'Compare analytics across periods.',
+        actions: [{ key: 'view', label: 'Compare Periods' }],
+      },
+    ],
+  },
+  {
+    module: 'insights',
+    label: 'AI Insights',
+    description: 'Review, action, and generate AI insights.',
+    actions: [
+      { key: 'view', label: 'Open Insights' },
+      { key: 'create', label: 'Generate Insights' },
+      { key: 'modify', label: 'Manage Insights' },
+    ],
+    groups: [
+      {
+        key: 'critical',
+        label: 'Critical',
+        description: 'Critical alerts and urgent AI findings.',
+        actions: [{ key: 'view', label: 'Open Critical Insights' }],
+      },
+      {
+        key: 'management',
+        label: 'Management',
+        description: 'Read/actioned workflows for insights.',
+        actions: [{ key: 'modify', label: 'Update Insight Status' }],
+      },
+    ],
+  },
+  {
+    module: 'ai',
+    label: 'AI Assistant',
+    description: 'Use the AI pastor assistant and access request history.',
+    actions: [
+      { key: 'view', label: 'Open AI Assistant' },
+      { key: 'create', label: 'Generate AI Content' },
+    ],
+    groups: [
+      {
+        key: 'history',
+        label: 'History',
+        description: 'Review previous AI requests.',
+        actions: [{ key: 'view', label: 'Open AI History' }],
       },
     ],
   },
@@ -474,6 +710,32 @@ const mediaCapabilities = [
   'notifications.view',
   'manual.view',
 ];
+const volunteerManagementCapabilities = [
+  'dashboard.view',
+  ...getCapabilitiesForSection('volunteers', ['view', 'create', 'modify', 'publish']),
+  ...getCapabilitiesForSection('events', ['view', 'create', 'modify', 'publish', 'check_in', 'approve']),
+  'notifications.view',
+  'manual.view',
+];
+const volunteerEventViewCapabilities = [
+  'dashboard.view',
+  ...getCapabilitiesForSection('volunteers', ['view']),
+  ...getCapabilitiesForSection('events', ['view']),
+  'notifications.view',
+  'manual.view',
+];
+const branchAnalyticsViewCapabilities = [
+  ...getCapabilitiesForSection('branches', ['view']),
+  ...getCapabilitiesForSection('branches', ['view', 'refresh']).filter((capability) =>
+    capability.startsWith('branches.metrics.') || capability.startsWith('branches.snapshot.'),
+  ),
+];
+const aiAssistantCapabilities = [
+  ...getCapabilitiesForSection('ai', ['view', 'create']),
+  ...getCapabilitiesForSection('ai', ['view']).filter((capability) =>
+    capability.startsWith('ai.history.'),
+  ),
+];
 
 export const defaultCapabilitiesByRole = {
   super_admin: [...allCapabilities],
@@ -485,6 +747,8 @@ export const defaultCapabilitiesByRole = {
     ...getCapabilitiesForSection('attendance', ['view']),
     ...getCapabilitiesForSection('visitors', ['view', 'assign', 'complete', 'reschedule', 'convert']),
     ...getCapabilitiesForSection('pastoral', ['view', 'create', 'modify', 'assign']),
+    ...volunteerManagementCapabilities,
+    ...branchAnalyticsViewCapabilities,
   ],
   associate_pastor: [
     ...leadershipCapabilities,
@@ -493,6 +757,10 @@ export const defaultCapabilitiesByRole = {
     ...getCapabilitiesForSection('settings', ['view']),
     ...getCapabilitiesForSection('pastoral', ['delete']),
     ...getCapabilitiesForSection('finance', ['view', 'export']),
+    ...getCapabilitiesForSection('volunteers', ['delete']),
+    ...getCapabilitiesForSection('events', ['delete']),
+    ...branchAnalyticsViewCapabilities,
+    ...aiAssistantCapabilities,
   ],
   treasurer: [
     ...financeFullCapabilities,
@@ -505,8 +773,9 @@ export const defaultCapabilitiesByRole = {
     ...leadershipCapabilities,
     ...getCapabilitiesForSection('visitors', ['delete']),
     ...getCapabilitiesForSection('pastoral', ['delete']),
+    ...volunteerEventViewCapabilities,
   ],
-  volunteer_leader: [...leadershipCapabilities],
+  volunteer_leader: [...leadershipCapabilities, ...volunteerManagementCapabilities],
   member: [...memberCapabilities],
 };
 

@@ -1,0 +1,260 @@
+import { useMemo, useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import {
+  Bar,
+  BarChart,
+  Cell,
+  Line,
+  Pie,
+  PieChart,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from 'recharts';
+import SuperAdminShell from '../../components/layout/SuperAdminShell';
+import Button from '../../components/ui/Button';
+import EmptyState from '../../components/ui/EmptyState';
+import { ChartSkeleton, TableRowSkeleton } from '../../components/ui/Skeleton';
+import { AnalyticsPage, FilterTabs, HealthBadge, KpiCard } from '../../components/analytics/AnalyticsWidgets';
+import {
+  getPlatformGrowthTrends,
+  getPlatformHealthScores,
+  getPlatformOverview,
+  getPlatformRevenue,
+  getTenantComparison,
+} from '../../api/endpoints/platform';
+import useAnalyticsAccess from '../../hooks/useAnalyticsAccess';
+import { formatAnalyticsCurrency, formatAnalyticsNumber } from '../../utils/analytics';
+
+const grades = ['all', 'A', 'B', 'C', 'D', 'F'];
+
+export default function PlatformBIPage() {
+  const { canViewPlatformBI } = useAnalyticsAccess();
+  const [gradeFilter, setGradeFilter] = useState('all');
+
+  const overviewQuery = useQuery({
+    queryKey: ['platform-bi-overview'],
+    queryFn: () => getPlatformOverview(),
+    enabled: canViewPlatformBI,
+  });
+  const growthQuery = useQuery({
+    queryKey: ['platform-bi-growth'],
+    queryFn: () => getPlatformGrowthTrends(),
+    enabled: canViewPlatformBI,
+  });
+  const healthQuery = useQuery({
+    queryKey: ['platform-bi-health'],
+    queryFn: () => getPlatformHealthScores(),
+    enabled: canViewPlatformBI,
+  });
+  const revenueQuery = useQuery({
+    queryKey: ['platform-bi-revenue'],
+    queryFn: () => getPlatformRevenue(),
+    enabled: canViewPlatformBI,
+  });
+  const tenantsQuery = useQuery({
+    queryKey: ['platform-bi-comparison'],
+    queryFn: () => getTenantComparison(),
+    enabled: canViewPlatformBI,
+  });
+
+  const overview = overviewQuery.data || {};
+  const growth = growthQuery.data?.items || [];
+  const healthRows = useMemo(() => healthQuery.data?.items || [], [healthQuery.data]);
+  const revenue = revenueQuery.data || {};
+  const tenants = useMemo(() => tenantsQuery.data?.items || [], [tenantsQuery.data]);
+
+  const tenantRows = useMemo(
+    () =>
+      tenants.filter((tenant) => {
+        if (gradeFilter === 'all') return true;
+        const score = Number(tenant.healthScore || 0);
+        const grade =
+          score >= 85 ? 'A' : score >= 70 ? 'B' : score >= 55 ? 'C' : score >= 40 ? 'D' : 'F';
+        return grade === gradeFilter;
+      }),
+    [gradeFilter, tenants],
+  );
+  const gradeCounts = useMemo(() => {
+    const counts = { A: 0, B: 0, C: 0, D: 0, F: 0 };
+    healthRows.forEach((item) => {
+      const score = Number(item.healthScore || 0);
+      const grade =
+        score >= 85 ? 'A' : score >= 70 ? 'B' : score >= 55 ? 'C' : score >= 40 ? 'D' : 'F';
+      counts[grade] += 1;
+    });
+    return Object.entries(counts).map(([name, value]) => ({ name, value }));
+  }, [healthRows]);
+  const planData = useMemo(() => {
+    const plans = overview.tenants?.reduce((acc, tenant) => {
+      const plan = tenant.subscriptionPlan || 'unknown';
+      acc[plan] = (acc[plan] || 0) + 1;
+      return acc;
+    }, {});
+    return Object.entries(plans || {}).map(([name, value], index) => ({
+      name,
+      value,
+      fill: ['#C9A84C', '#1E2A4A', '#8B5CF6', '#34D399'][index % 4],
+    }));
+  }, [overview.tenants]);
+
+  if (!canViewPlatformBI) {
+    return (
+      <SuperAdminShell>
+        <EmptyState
+          icon="SA"
+          title="Platform BI unavailable"
+          message="Only super admins can access platform-wide business intelligence."
+        />
+      </SuperAdminShell>
+    );
+  }
+
+  return (
+    <SuperAdminShell>
+      <AnalyticsPage
+        title="Platform Business Intelligence"
+        subtitle="Monitor tenant growth, health scores, branch expansion, revenue movement, and cross-platform ministry risk."
+        action={
+          <Button variant="secondary" onClick={() => (window.location.href = '/superadmin/platform/tenants')}>
+            Open Tenant Comparison
+          </Button>
+        }
+      >
+        {overviewQuery.isLoading ? (
+          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+            {Array.from({ length: 6 }).map((_, index) => (
+              <ChartSkeleton key={index} />
+            ))}
+          </div>
+        ) : (
+          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-6">
+            <KpiCard label="Total Tenants" value={formatAnalyticsNumber(overview.summary?.totalTenants || 0)} />
+            <KpiCard label="Total Members" value={formatAnalyticsNumber(overview.summary?.totalMembers || 0)} />
+            <KpiCard label="Platform Attendance" value={formatAnalyticsNumber(overview.summary?.totalAttendance || 0)} />
+            <KpiCard label="Platform Revenue" value={formatAnalyticsCurrency(overview.summary?.totalIncome || 0)} />
+            <KpiCard label="Total Branches" value={formatAnalyticsNumber(overview.summary?.totalBranches || 0)} />
+            <KpiCard label="Critical Insights" value={formatAnalyticsNumber(overview.summary?.criticalInsights || 0)} />
+          </div>
+        )}
+
+        <div className="grid gap-4 xl:grid-cols-[1.4fr_0.8fr]">
+          <div className="rounded-[22px] border border-white/8 bg-[#0d1320] p-4 text-white">
+            <h3 className="text-lg font-semibold text-white">Platform growth chart</h3>
+            {growthQuery.isLoading ? (
+              <ChartSkeleton />
+            ) : (
+              <div className="mt-4 h-[360px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={growth}>
+                    <XAxis dataKey="month" stroke="#94A3B8" />
+                    <YAxis stroke="#94A3B8" />
+                    <Tooltip />
+                    <Bar dataKey="income" fill="#445A8B" radius={[8, 8, 0, 0]} />
+                    <Line type="monotone" dataKey="members" stroke="#1E2A4A" strokeWidth={3} />
+                    <Line type="monotone" dataKey="attendance" stroke="#C9A84C" strokeWidth={3} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            )}
+          </div>
+
+          <div className="space-y-4">
+            <div className="rounded-[22px] border border-white/8 bg-[#0d1320] p-4 text-white">
+              <h3 className="text-lg font-semibold text-white">Plan distribution</h3>
+              <div className="mt-4 h-[220px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie data={planData} dataKey="value" nameKey="name" outerRadius={80}>
+                      {planData.map((item) => (
+                        <Cell key={item.name} fill={item.fill} />
+                      ))}
+                    </Pie>
+                    <Tooltip />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+            <div className="rounded-[22px] border border-white/8 bg-[#0d1320] p-4 text-white">
+              <h3 className="text-lg font-semibold text-white">Revenue by month</h3>
+              <div className="mt-4 h-[220px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={revenue.monthly || []}>
+                    <XAxis dataKey="month" stroke="#94A3B8" />
+                    <YAxis stroke="#94A3B8" />
+                    <Tooltip />
+                    <Bar dataKey="income" fill="#C9A84C" radius={[8, 8, 0, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="rounded-[22px] border border-white/8 bg-[#0d1320] p-4 text-white">
+          <div className="flex items-center justify-between gap-3">
+            <h3 className="text-lg font-semibold text-white">Health score distribution</h3>
+            <FilterTabs
+              tabs={grades.map((grade) => ({ label: grade, value: grade }))}
+              value={gradeFilter}
+              onChange={setGradeFilter}
+            />
+          </div>
+          <div className="mt-4 h-[260px]">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={gradeCounts}>
+                <XAxis dataKey="name" stroke="#94A3B8" />
+                <YAxis stroke="#94A3B8" />
+                <Tooltip />
+                <Bar dataKey="value" fill="#C9A84C" radius={[8, 8, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
+        <div className="rounded-[22px] border border-white/8 bg-[#0d1320] p-4 text-white">
+          <h3 className="text-lg font-semibold text-white">Tenant comparison</h3>
+          {tenantsQuery.isLoading ? (
+            <TableRowSkeleton columns={8} rows={6} />
+          ) : (
+            <div className="mt-4 overflow-x-auto">
+              <table className="min-w-full text-left text-sm text-white/75">
+                <thead className="text-[11px] uppercase tracking-[0.2em] text-white/40">
+                  <tr>
+                    <th className="pb-3">Church</th>
+                    <th className="pb-3">Members</th>
+                    <th className="pb-3">Attendance</th>
+                    <th className="pb-3">Income</th>
+                    <th className="pb-3">Health</th>
+                    <th className="pb-3">Branches</th>
+                    <th className="pb-3">Top Branch</th>
+                    <th className="pb-3">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {tenantRows.map((tenant) => (
+                    <tr key={tenant.tenantId} className="border-t border-white/8">
+                      <td className="py-3 font-medium text-white">{tenant.churchName}</td>
+                      <td>{formatAnalyticsNumber(tenant.members || 0)}</td>
+                      <td>{formatAnalyticsNumber(tenant.attendance || 0)}</td>
+                      <td>{formatAnalyticsCurrency(tenant.income || 0)}</td>
+                      <td><HealthBadge grade={tenant.healthScore >= 85 ? 'A' : tenant.healthScore >= 70 ? 'B' : tenant.healthScore >= 55 ? 'C' : tenant.healthScore >= 40 ? 'D' : 'F'} score={tenant.healthScore} /></td>
+                      <td>{formatAnalyticsNumber(tenant.branches || 0)}</td>
+                      <td>{tenant.topBranch || '-'}</td>
+                      <td>
+                        <Button variant="ghost" className="text-xs" onClick={() => (window.location.href = `/superadmin/tenants/${tenant.tenantId}`)}>
+                          View Tenant
+                        </Button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      </AnalyticsPage>
+    </SuperAdminShell>
+  );
+}

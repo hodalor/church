@@ -3,6 +3,8 @@ import Sidebar from './Sidebar';
 import SuperAdminShell from './SuperAdminShell';
 import TopBar from './TopBar';
 import { useAuth } from '../../hooks/useAuth';
+import ErrorBoundary from '../ui/ErrorBoundary';
+import PageTransition from '../ui/PageTransition';
 
 export default function AppShell({ children }) {
   const { role } = useAuth();
@@ -19,7 +21,9 @@ export default function AppShell({ children }) {
         <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
           <TopBar onMenuClick={() => setIsOpen(true)} />
           <main className="flex-1 overflow-x-hidden overflow-y-auto px-4 py-4 lg:px-5 lg:py-5 xl:px-6">
-            {children}
+            <ErrorBoundary>
+              <PageTransition>{children}</PageTransition>
+            </ErrorBoundary>
           </main>
         </div>
       </div>

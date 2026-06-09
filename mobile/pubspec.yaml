@@ -33,6 +33,10 @@ dependencies:
   table_calendar: ^3.1.0
   wakelock_plus: ^1.2.0
   auto_size_text: ^3.0.0
+  shimmer: ^3.0.0
+  flutter_animate: ^4.5.0
+  connectivity_plus: ^6.0.3
+  fl_chart: ^0.68.0
 
 dev_dependencies:
   flutter_test:

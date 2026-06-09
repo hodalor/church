@@ -18,11 +18,18 @@ import InboxPage from './pages/communication/InboxPage';
 import PollsPage from './pages/communication/PollsPage';
 import PrayerRequestsPage from './pages/communication/PrayerRequestsPage';
 import TemplatesPage from './pages/communication/TemplatesPage';
+import AIPastorAssistant from './pages/ai/AIPastorAssistant';
 import CreateMemberPage from './pages/members/CreateMemberPage';
 import ManualPage from './pages/manual/ManualPage';
 import MemberDetailPage from './pages/members/MemberDetailPage';
 import MembersListPage from './pages/members/MembersListPage';
 import NotificationsPage from './pages/notifications/NotificationsPage';
+import CreateEventPage from './pages/events/CreateEventPage';
+import EditEventPage from './pages/events/EditEventPage';
+import EventCheckInPage from './pages/events/EventCheckInPage';
+import EventDetailPage from './pages/events/EventDetailPage';
+import EventRegistrationsPage from './pages/events/EventRegistrationsPage';
+import EventsDashboard from './pages/events/EventsDashboard';
 import AppointmentsPage from './pages/pastoral/AppointmentsPage';
 import CaseDetailPage from './pages/pastoral/CaseDetailPage';
 import CasesPage from './pages/pastoral/CasesPage';
@@ -34,7 +41,21 @@ import EnrollmentDetailPage from './pages/pastoral/EnrollmentDetailPage';
 import PastoralDashboard from './pages/pastoral/PastoralDashboard';
 import PastoralReportsPage from './pages/pastoral/PastoralReportsPage';
 import TracksPage from './pages/pastoral/TracksPage';
+import CreateRosterPage from './pages/volunteers/CreateRosterPage';
+import RosterDetailPage from './pages/volunteers/RosterDetailPage';
+import RostersPage from './pages/volunteers/RostersPage';
+import RegisterVolunteerPage from './pages/volunteers/RegisterVolunteerPage';
+import VolunteerDetailPage from './pages/volunteers/VolunteerDetailPage';
+import VolunteersDashboard from './pages/volunteers/VolunteersDashboard';
+import VolunteersListPage from './pages/volunteers/VolunteersListPage';
 import UsersPage from './pages/users/UsersPage';
+import BranchDetailPage from './pages/hq/BranchDetailPage';
+import BranchesPage from './pages/hq/BranchesPage';
+import ConsolidatedReportsPage from './pages/hq/ConsolidatedReportsPage';
+import CreateBranchPage from './pages/hq/CreateBranchPage';
+import HQDashboard from './pages/hq/HQDashboard';
+import IntelligencePage from './pages/hq/IntelligencePage';
+import InsightsPage from './pages/insights/InsightsPage';
 import AuditLogPage from './pages/finance/AuditLogPage';
 import BudgetDetailPage from './pages/finance/BudgetDetailPage';
 import BudgetsPage from './pages/finance/BudgetsPage';
@@ -63,9 +84,13 @@ import SuperAdminCommunicationPage from './pages/superadmin/SuperAdminCommunicat
 import SuperAdminAttendancePage from './pages/superadmin/SuperAdminAttendancePage';
 import SuperAdminDashboard from './pages/superadmin/SuperAdminDashboard';
 import SuperAdminNotificationsPage from './pages/superadmin/SuperAdminNotificationsPage';
+import SuperAdminEventsPage from './pages/superadmin/SuperAdminEventsPage';
 import SuperAdminPastoralPage from './pages/superadmin/SuperAdminPastoralPage';
+import SuperAdminVolunteersPage from './pages/superadmin/SuperAdminVolunteersPage';
 import SuperAdminVisitorsPage from './pages/superadmin/SuperAdminVisitorsPage';
+import PlatformBIPage from './pages/superadmin/PlatformBIPage';
 import TenantDetailPage from './pages/superadmin/TenantDetailPage';
+import TenantComparisonPage from './pages/superadmin/TenantComparisonPage';
 import TenantsListPage from './pages/superadmin/TenantsListPage';
 import SuperAdminUsersPage from './pages/superadmin/SuperAdminUsersPage';
 import { useAuthStore } from './stores/authStore';
@@ -111,6 +136,70 @@ export default function App() {
             <AppShell>
               <DashboardPage />
             </AppShell>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/hq"
+        element={
+          <ProtectedRoute allowedRoles={['super_admin', 'head_pastor']}>
+            <HQDashboard />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/hq/branches"
+        element={
+          <ProtectedRoute allowedRoles={['super_admin', 'head_pastor', 'branch_pastor', 'associate_pastor']}>
+            <BranchesPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/hq/branches/new"
+        element={
+          <ProtectedRoute allowedRoles={['super_admin', 'head_pastor']}>
+            <CreateBranchPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/hq/branches/:branchId"
+        element={
+          <ProtectedRoute allowedRoles={['super_admin', 'head_pastor', 'branch_pastor', 'associate_pastor']}>
+            <BranchDetailPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/hq/intelligence"
+        element={
+          <ProtectedRoute allowedRoles={['super_admin', 'head_pastor']}>
+            <IntelligencePage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/hq/reports"
+        element={
+          <ProtectedRoute allowedRoles={['super_admin', 'head_pastor']}>
+            <ConsolidatedReportsPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/ai"
+        element={
+          <ProtectedRoute allowedRoles={['super_admin', 'head_pastor', 'associate_pastor']}>
+            <AIPastorAssistant />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/insights"
+        element={
+          <ProtectedRoute allowedRoles={['super_admin', 'head_pastor']}>
+            <InsightsPage />
           </ProtectedRoute>
         }
       />
@@ -339,6 +428,110 @@ export default function App() {
         }
       />
       <Route
+        path="/volunteers"
+        element={
+          <ProtectedRoute>
+            <VolunteersDashboard />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/volunteers/list"
+        element={
+          <ProtectedRoute>
+            <VolunteersListPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/volunteers/new"
+        element={
+          <ProtectedRoute>
+            <RegisterVolunteerPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/volunteers/rosters"
+        element={
+          <ProtectedRoute>
+            <RostersPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/volunteers/rosters/new"
+        element={
+          <ProtectedRoute>
+            <CreateRosterPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/volunteers/rosters/:rosterId"
+        element={
+          <ProtectedRoute>
+            <RosterDetailPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/volunteers/:volunteerId"
+        element={
+          <ProtectedRoute>
+            <VolunteerDetailPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/events"
+        element={
+          <ProtectedRoute>
+            <EventsDashboard />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/events/new"
+        element={
+          <ProtectedRoute>
+            <CreateEventPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/events/:eventId/edit"
+        element={
+          <ProtectedRoute>
+            <EditEventPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/events/:eventId/registrations"
+        element={
+          <ProtectedRoute>
+            <EventRegistrationsPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/events/:eventId/checkin"
+        element={
+          <ProtectedRoute>
+            <EventCheckInPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/events/:eventId"
+        element={
+          <ProtectedRoute>
+            <EventDetailPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
         path="/settings"
         element={
           <ProtectedRoute>
@@ -547,6 +740,22 @@ export default function App() {
         }
       />
       <Route
+        path="/superadmin/events"
+        element={
+          <ProtectedRoute allowedRoles={['super_admin']}>
+            <SuperAdminEventsPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/superadmin/volunteers"
+        element={
+          <ProtectedRoute allowedRoles={['super_admin']}>
+            <SuperAdminVolunteersPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
         path="/superadmin/notifications"
         element={
           <ProtectedRoute allowedRoles={['super_admin']}>
@@ -559,6 +768,22 @@ export default function App() {
         element={
           <ProtectedRoute allowedRoles={['super_admin']}>
             <TenantsListPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/superadmin/platform"
+        element={
+          <ProtectedRoute allowedRoles={['super_admin']}>
+            <PlatformBIPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/superadmin/platform/tenants"
+        element={
+          <ProtectedRoute allowedRoles={['super_admin']}>
+            <TenantComparisonPage />
           </ProtectedRoute>
         }
       />

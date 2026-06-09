@@ -1,234 +1,135 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMemo } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
+import { Bar, BarChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import {
-  Bar,
-  BarChart,
-  Cell,
-  Legend,
-  Pie,
-  PieChart,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis,
-} from 'recharts';
-import { getPlatformAttendanceOverview } from '../../api/endpoints/attendance';
-import { activateTenant, getAllTenants, getPlatformAnalytics, suspendTenant } from '../../api/endpoints/tenants';
-import { getPlatformCommunicationStats } from '../../api/endpoints/communication';
-import { getPlatformPastoralOverview } from '../../api/endpoints/pastoral';
-import { getPlatformVisitorOverview } from '../../api/endpoints/visitors';
+  getPlatformGrowthTrends,
+  getPlatformHealthScores,
+  getPlatformOverview,
+  getPlatformRevenue,
+  getTenantComparison,
+} from '../../api/endpoints/platform';
 import SuperAdminShell from '../../components/layout/SuperAdminShell';
+import { KpiCard } from '../../components/analytics/AnalyticsWidgets';
 import Button from '../../components/ui/Button';
 import Card from '../../components/ui/Card';
-import DataTable from '../../components/ui/DataTable';
+import EmptyState from '../../components/ui/EmptyState';
 import PageHeader from '../../components/ui/PageHeader';
-import StatusBadge from '../../components/ui/StatusBadge';
-import { formatDate } from '../../utils/formatDate';
+import { formatAnalyticsCurrency, formatAnalyticsNumber } from '../../utils/analytics';
 
 export default function SuperAdminDashboard() {
   const navigate = useNavigate();
-  const queryClient = useQueryClient();
-  const tenantsQuery = useQuery({
-    queryKey: ['admin-dashboard-tenants'],
-    queryFn: () => getAllTenants({ page: 1, limit: 5 }),
+  const overviewQuery = useQuery({
+    queryKey: ['superadmin-platform-overview'],
+    queryFn: getPlatformOverview,
   });
-  const analyticsQuery = useQuery({
-    queryKey: ['platform-analytics-overview'],
-    queryFn: getPlatformAnalytics,
+  const growthQuery = useQuery({
+    queryKey: ['superadmin-platform-growth'],
+    queryFn: getPlatformGrowthTrends,
   });
-  const communicationQuery = useQuery({
-    queryKey: ['platform-communication-overview'],
-    queryFn: getPlatformCommunicationStats,
+  const healthQuery = useQuery({
+    queryKey: ['superadmin-platform-health'],
+    queryFn: getPlatformHealthScores,
   });
-  const attendanceQuery = useQuery({
-    queryKey: ['platform-attendance-overview-card'],
-    queryFn: getPlatformAttendanceOverview,
+  const revenueQuery = useQuery({
+    queryKey: ['superadmin-platform-revenue'],
+    queryFn: getPlatformRevenue,
   });
-  const visitorsQuery = useQuery({
-    queryKey: ['platform-visitors-overview-card'],
-    queryFn: getPlatformVisitorOverview,
-  });
-  const pastoralQuery = useQuery({
-    queryKey: ['platform-pastoral-overview-card'],
-    queryFn: getPlatformPastoralOverview,
+  const comparisonQuery = useQuery({
+    queryKey: ['superadmin-platform-comparison'],
+    queryFn: getTenantComparison,
   });
 
-  const toggleMutation = useMutation({
-    mutationFn: ({ tenantId, shouldActivate }) =>
-      shouldActivate ? activateTenant(tenantId) : suspendTenant(tenantId, 'Suspended by super admin'),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['admin-dashboard-tenants'] });
-      queryClient.invalidateQueries({ queryKey: ['admin-tenants'] });
-    },
-  });
+  const overview = overviewQuery.data || {};
+  const summary = overview.summary || {};
+  const growthItems = growthQuery.data?.items || [];
+  const healthItems = useMemo(() => healthQuery.data?.items || [], [healthQuery.data]);
+  const revenueItems = revenueQuery.data?.monthly || [];
+  const tenantRows = useMemo(() => comparisonQuery.data?.items || [], [comparisonQuery.data]);
 
-  const summary = tenantsQuery.data?.summary ?? {
-    total: 0,
-    active: 0,
-    suspended: 0,
-    plans: { small: 0, medium: 0, mega: 0 },
-  };
-  const analytics = analyticsQuery.data || {};
-  const planChartData = [
-    { name: 'Small', value: summary.plans.small || 0, fill: '#C9A84C' },
-    { name: 'Medium', value: summary.plans.medium || 0, fill: '#1E2A4A' },
-    { name: 'Mega', value: summary.plans.mega || 0, fill: '#8B5CF6' },
-  ];
-  const statusChartData = [
-    { name: 'Active Churches', value: analytics.activeTenants ?? summary.active ?? 0 },
-    { name: 'Suspended Churches', value: analytics.suspendedTenants ?? summary.suspended ?? 0 },
-    { name: 'Users', value: analytics.totalUsers ?? 0 },
-  ];
+  const healthDistribution = useMemo(() => {
+    const counts = { A: 0, B: 0, C: 0, D: 0, F: 0 };
+    healthItems.forEach((item) => {
+      const score = Number(item.healthScore || 0);
+      if (score >= 85) counts.A += 1;
+      else if (score >= 70) counts.B += 1;
+      else if (score >= 55) counts.C += 1;
+      else if (score >= 40) counts.D += 1;
+      else counts.F += 1;
+    });
+    return Object.entries(counts).map(([name, value]) => ({ name, value }));
+  }, [healthItems]);
 
-  const stats = [
-    { label: 'Total Churches', value: analytics.totalTenants ?? summary.total },
-    { label: 'Active Churches', value: analytics.activeTenants ?? summary.active },
-    { label: 'Suspended Churches', value: analytics.suspendedTenants ?? summary.suspended },
-    { label: 'Total Users', value: analytics.totalUsers ?? 0 },
-  ];
+  const fastestGrowing = useMemo(
+    () =>
+      tenantRows
+        .slice()
+        .sort((left, right) => Number(right.growth || 0) - Number(left.growth || 0))
+        .slice(0, 5),
+    [tenantRows],
+  );
 
-  const columns = [
-    { key: 'churchName', header: 'Church Name' },
-    { key: 'tenantId', header: 'Tenant ID' },
-    { key: 'subscriptionPlan', header: 'Plan' },
-    {
-      key: 'status',
-      header: 'Status',
-      render: (tenant) => <StatusBadge status={tenant.isSuspended ? 'Suspended' : 'Active'} />,
-    },
-    {
-      key: 'createdAt',
-      header: 'Created Date',
-      render: (tenant) => formatDate(tenant.createdAt),
-    },
-    {
-      key: 'actions',
-      header: 'Actions',
-      render: (tenant) => (
-        <div className="flex gap-2">
-          <Button variant="subtle" onClick={() => navigate(`/superadmin/tenants/${tenant.tenantId}`)}>
-            View
-          </Button>
-          <Button
-            variant="secondary"
-            onClick={() =>
-              toggleMutation.mutate({
-                tenantId: tenant.tenantId,
-                shouldActivate: tenant.isSuspended,
-              })
-            }
-          >
-            {tenant.isSuspended ? 'Activate' : 'Suspend'}
-          </Button>
-        </div>
-      ),
-    },
-  ];
+  const alertTenants = useMemo(
+    () =>
+      tenantRows
+        .filter((tenant) => Number(tenant.healthScore || 0) < 55 || Number(tenant.growth || 0) < 0)
+        .slice(0, 5),
+    [tenantRows],
+  );
 
   return (
     <SuperAdminShell>
       <div className="space-y-6">
         <PageHeader
           title="Master Dashboard"
-          subtitle="Oversee churches, monitor growth, and manage tenant health across the platform."
+          subtitle="Track platform-wide growth, health, revenue, and tenant risk across all churches."
           action={
-            <Button variant="secondary" onClick={() => navigate('/superadmin/tenants?create=tenant')}>
-              + Register New Church
-            </Button>
+            <div className="flex flex-wrap gap-3">
+              <Button variant="ghost" onClick={() => navigate('/superadmin/platform/tenants')}>
+                Tenant Comparison
+              </Button>
+              <Button variant="secondary" onClick={() => navigate('/superadmin/platform')}>
+                Open Platform BI
+              </Button>
+            </div>
           }
         />
 
-        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-          {stats.map((stat) => (
-            <Card key={stat.label} className="min-h-[110px] p-4">
-              <p className="text-[11px] uppercase tracking-[0.22em] text-white/55">{stat.label}</p>
-              <h2 className="mt-3 font-serif text-4xl font-semibold leading-none text-white">{stat.value}</h2>
-              {stat.helper ? <p className="mt-2 text-xs text-white/60">{stat.helper}</p> : null}
-            </Card>
-          ))}
+        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-6">
+          <KpiCard label="Total Tenants" value={formatAnalyticsNumber(summary.totalTenants || 0)} />
+          <KpiCard label="Total Members" value={formatAnalyticsNumber(summary.totalMembers || 0)} />
+          <KpiCard label="Attendance" value={formatAnalyticsNumber(summary.totalAttendance || 0)} />
+          <KpiCard label="Revenue" value={formatAnalyticsCurrency(summary.totalIncome || 0)} />
+          <KpiCard label="Branches" value={formatAnalyticsNumber(summary.totalBranches || 0)} />
+          <KpiCard label="Critical Insights" value={formatAnalyticsNumber(summary.criticalInsights || 0)} />
         </div>
 
-        <Card className="flex flex-col gap-4 p-5 lg:flex-row lg:items-center lg:justify-between">
-          <div>
-            <p className="text-[11px] uppercase tracking-[0.22em] text-white/55">Communication Summary</p>
-            <h2 className="mt-2 text-xl font-semibold text-white">
-              {communicationQuery.data?.totalBroadcasts || 0} broadcasts sent across all churches
-            </h2>
-          </div>
-          <Button variant="secondary" onClick={() => navigate('/superadmin/communication')}>
-            Open Communication
-          </Button>
-        </Card>
-
-        <Card className="flex flex-col gap-4 p-5 lg:flex-row lg:items-center lg:justify-between">
-          <div>
-            <p className="text-[11px] uppercase tracking-[0.22em] text-white/55">Attendance Summary</p>
-            <h2 className="mt-2 text-xl font-semibold text-white">
-              {attendanceQuery.data?.servicesHeldThisWeek || 0} services held across all churches this week
-            </h2>
-          </div>
-          <Button variant="secondary" onClick={() => navigate('/superadmin/attendance')}>
-            Open Attendance
-          </Button>
-        </Card>
-
-        <Card className="flex flex-col gap-4 p-5 lg:flex-row lg:items-center lg:justify-between">
-          <div>
-            <p className="text-[11px] uppercase tracking-[0.22em] text-white/55">Visitors Summary</p>
-            <h2 className="mt-2 text-xl font-semibold text-white">
-              {visitorsQuery.data?.totalVisitors || 0} visitors tracked across all churches
-            </h2>
-          </div>
-          <Button variant="secondary" onClick={() => navigate('/superadmin/visitors')}>
-            Open Visitors
-          </Button>
-        </Card>
-
-        <Card
-          className={`flex flex-col gap-4 p-5 lg:flex-row lg:items-center lg:justify-between ${
-            (pastoralQuery.data?.totalCriticalCases || 0) > 0 ? 'border-rose-500/30 bg-rose-500/10' : ''
-          }`}
-        >
-          <div>
-            <p className="text-[11px] uppercase tracking-[0.22em] text-white/55">Pastoral Summary</p>
-            <h2 className="mt-2 text-xl font-semibold text-white">
-              {pastoralQuery.data?.totalCriticalCases || 0} critical care cases across all churches
-            </h2>
-          </div>
-          <Button variant="secondary" onClick={() => navigate('/superadmin/pastoral')}>
-            Open Pastoral
-          </Button>
-        </Card>
-
-        <div className="grid gap-6 xl:grid-cols-2">
+        <div className="grid gap-6 xl:grid-cols-[1.2fr_0.8fr]">
           <Card className="space-y-4">
             <div>
-              <p className="text-sm uppercase tracking-[0.25em] text-white/55">Plan Analytics</p>
-              <h2 className="mt-2 text-2xl font-semibold text-white">Tenant plan distribution</h2>
+              <p className="text-sm uppercase tracking-[0.25em] text-white/55">Platform Growth</p>
+              <h2 className="mt-2 text-2xl font-semibold text-white">Tenant growth momentum</h2>
             </div>
             <div className="h-80">
               <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie data={planChartData} dataKey="value" nameKey="name" outerRadius={110}>
-                    {planChartData.map((entry) => (
-                      <Cell key={entry.name} fill={entry.fill} />
-                    ))}
-                  </Pie>
+                <BarChart data={growthItems}>
+                  <XAxis dataKey="month" stroke="#94a3b8" />
+                  <YAxis stroke="#94a3b8" />
                   <Tooltip />
-                  <Legend />
-                </PieChart>
+                  <Bar dataKey="income" fill="#C9A84C" radius={[8, 8, 0, 0]} />
+                </BarChart>
               </ResponsiveContainer>
             </div>
           </Card>
 
           <Card className="space-y-4">
             <div>
-              <p className="text-sm uppercase tracking-[0.25em] text-white/55">Platform Activity</p>
-              <h2 className="mt-2 text-2xl font-semibold text-white">Tenant and user footprint</h2>
+              <p className="text-sm uppercase tracking-[0.25em] text-white/55">Platform Health</p>
+              <h2 className="mt-2 text-2xl font-semibold text-white">Church health distribution</h2>
             </div>
             <div className="h-80">
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={statusChartData}>
+                <BarChart data={healthDistribution}>
                   <XAxis dataKey="name" stroke="#94a3b8" />
                   <YAxis stroke="#94a3b8" />
                   <Tooltip />
@@ -239,19 +140,145 @@ export default function SuperAdminDashboard() {
           </Card>
         </div>
 
-        <Card className="space-y-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm uppercase tracking-[0.25em] text-white/55">Recent Churches</p>
-              <h2 className="mt-2 text-2xl font-semibold text-white">Latest registrations</h2>
+        <div className="grid gap-6 xl:grid-cols-3">
+          <Card className="space-y-4 xl:col-span-2">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm uppercase tracking-[0.25em] text-white/55">Revenue</p>
+                <h2 className="mt-2 text-2xl font-semibold text-white">Monthly platform revenue</h2>
+              </div>
+              <Button variant="ghost" onClick={() => navigate('/superadmin/platform')}>
+                Open BI
+              </Button>
             </div>
-            <Button variant="subtle" onClick={() => navigate('/superadmin/tenants')}>
-              View all
-            </Button>
-          </div>
+            <div className="h-72">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={revenueItems}>
+                  <XAxis dataKey="month" stroke="#94a3b8" />
+                  <YAxis stroke="#94a3b8" />
+                  <Tooltip />
+                  <Bar dataKey="income" fill="#C9A84C" radius={[8, 8, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </Card>
 
-          <DataTable columns={columns} data={tenantsQuery.data?.tenants || []} />
-        </Card>
+          <Card className="space-y-4">
+            <div>
+              <p className="text-sm uppercase tracking-[0.25em] text-white/55">Fastest Growing Churches</p>
+              <h2 className="mt-2 text-2xl font-semibold text-white">Leaderboard</h2>
+            </div>
+            <div className="space-y-3">
+              {fastestGrowing.length ? (
+                fastestGrowing.map((tenant, index) => (
+                  <button
+                    key={tenant.tenantId}
+                    type="button"
+                    onClick={() => navigate(`/superadmin/tenants/${tenant.tenantId}`)}
+                    className="flex w-full items-center justify-between rounded-2xl border border-white/10 bg-[#101827] px-4 py-3 text-left"
+                  >
+                    <div>
+                      <p className="font-medium text-white">
+                        {index + 1}. {tenant.churchName}
+                      </p>
+                      <p className="mt-1 text-xs text-white/45">
+                        {tenant.country || 'Unknown'} • {tenant.subscriptionPlan || tenant.plan || '-'}
+                      </p>
+                    </div>
+                    <span className="text-sm font-semibold text-emerald-300">
+                      {Number(tenant.growth || 0).toFixed(1)}%
+                    </span>
+                  </button>
+                ))
+              ) : (
+                <EmptyState
+                  icon="SA"
+                  title="No growth data yet"
+                  message="Tenant growth trends will appear here when data is available."
+                />
+              )}
+            </div>
+          </Card>
+        </div>
+
+        <div className="grid gap-6 xl:grid-cols-[1.15fr_0.85fr]">
+          <Card className="space-y-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm uppercase tracking-[0.25em] text-white/55">Tenant Snapshot</p>
+                <h2 className="mt-2 text-2xl font-semibold text-white">Recent comparison table</h2>
+              </div>
+              <Button variant="ghost" onClick={() => navigate('/superadmin/platform/tenants')}>
+                View all
+              </Button>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="min-w-full text-left text-sm text-white/75">
+                <thead className="text-[11px] uppercase tracking-[0.2em] text-white/40">
+                  <tr>
+                    <th className="pb-3">Church</th>
+                    <th className="pb-3">Plan</th>
+                    <th className="pb-3">Members</th>
+                    <th className="pb-3">Attendance</th>
+                    <th className="pb-3">Health</th>
+                    <th className="pb-3">Growth</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {tenantRows.slice(0, 6).map((tenant) => (
+                    <tr key={tenant.tenantId} className="border-t border-white/8">
+                      <td className="py-3 font-medium text-white">{tenant.churchName}</td>
+                      <td>{tenant.subscriptionPlan || tenant.plan || '-'}</td>
+                      <td>{formatAnalyticsNumber(tenant.members || 0)}</td>
+                      <td>{formatAnalyticsNumber(tenant.attendance || 0)}</td>
+                      <td>{Math.round(Number(tenant.healthScore || 0))}%</td>
+                      <td className={Number(tenant.growth || 0) >= 0 ? 'text-emerald-300' : 'text-rose-300'}>
+                        {Number(tenant.growth || 0).toFixed(1)}%
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </Card>
+
+          <Card className="space-y-4">
+            <div>
+              <p className="text-sm uppercase tracking-[0.25em] text-white/55">Alert Tenants</p>
+              <h2 className="mt-2 text-2xl font-semibold text-white">Needs attention now</h2>
+            </div>
+            <div className="space-y-3">
+              {alertTenants.length ? (
+                alertTenants.map((tenant) => (
+                  <div
+                    key={tenant.tenantId}
+                    className="rounded-2xl border border-rose-500/25 bg-rose-500/10 px-4 py-3"
+                  >
+                    <p className="font-medium text-white">{tenant.churchName}</p>
+                    <p className="mt-1 text-sm text-white/65">
+                      {Number(tenant.healthScore || 0) < 55
+                        ? `Health score is ${Math.round(Number(tenant.healthScore || 0))}%.`
+                        : `Growth has fallen to ${Number(tenant.growth || 0).toFixed(1)}%.`}
+                    </p>
+                    <Button
+                      variant="ghost"
+                      className="mt-3 text-xs"
+                      onClick={() => navigate(`/superadmin/tenants/${tenant.tenantId}`)}
+                    >
+                      Contact Church
+                    </Button>
+                  </div>
+                ))
+              ) : (
+                <EmptyState
+                  icon="OK"
+                  title="No tenants in the alert zone"
+                  message="Critical platform issues will surface here automatically."
+                />
+              )}
+            </div>
+          </Card>
+        </div>
       </div>
     </SuperAdminShell>
   );

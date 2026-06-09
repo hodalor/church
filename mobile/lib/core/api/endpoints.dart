@@ -17,7 +17,17 @@ class Endpoints {
   static const String attendanceServices = '$attendance/services';
   static const String attendanceReports = '$attendance/reports';
   static const String attendanceAbsentees = '$attendance/absentees';
+  static const String events = '$apiV1/events';
+  static const String volunteers = '$apiV1/volunteers';
+  static const String rosters = '$apiV1/rosters';
   static const String visitors = '$apiV1/visitors';
+  static const String finance = '$apiV1/finance';
+  static const String pastoral = '$apiV1/pastoral';
+  static const String analyticsBranches = '$apiV1/branches';
+  static const String analyticsHq = '$apiV1/hq';
+  static const String analyticsInsights = '$apiV1/insights';
+  static const String analyticsCriticalInsights = '$analyticsInsights/critical';
+  static const String ai = '$apiV1/ai';
   static const String visitorsFollowUps = '$visitors/follow-ups';
   static const String visitorsPipeline = '$visitors/pipeline';
   static const String visitorsWorkflow = '$visitors/workflow';
@@ -27,6 +37,23 @@ class Endpoints {
   static const String visitorsAssignableLeaders = '$visitors/assignable-leaders';
   static const String visitorsKioskRegister = '$visitors/kiosk/register';
   static const String adminVisitorsOverview = '$apiV1/admin/visitors/overview';
+  static const String financeTransactions = '$finance/transactions';
+  static const String financePledges = '$finance/pledges';
+  static const String financeReports = '$finance/reports';
+  static const String pastoralCases = '$pastoral/cases';
+  static const String pastoralAppointments = '$pastoral/appointments';
+  static const String pastoralDiscipleship = '$pastoral/discipleship';
+  static const String hqOverview = '$analyticsHq/overview';
+  static const String hqBranchComparison = '$analyticsHq/branch-comparison';
+  static const String hqGrowthTrends = '$analyticsHq/growth-trends';
+  static const String hqFinancialIntelligence =
+      '$analyticsHq/financial-intelligence';
+  static const String hqMemberIntelligence = '$analyticsHq/member-intelligence';
+  static const String hqOperationalHealth = '$analyticsHq/operational-health';
+  static const String aiSermonDraft = '$ai/sermon-draft';
+  static const String aiAnnouncement = '$ai/announcement';
+  static const String aiPrayerPoints = '$ai/prayer-points';
+  static const String aiDevotional = '$ai/devotional';
 
   static String inboxMessage(String messageId) => '$communicationInbox/$messageId';
 
@@ -59,6 +86,34 @@ class Endpoints {
   static String attendanceServiceRecords(String serviceId) =>
       '$attendanceServices/$serviceId/check-ins';
 
+  static String event(String eventId) => '$events/$eventId';
+
+  static String eventPublish(String eventId) => '$events/$eventId/publish';
+
+  static String eventRegister(String eventId) => '$events/$eventId/register';
+
+  static String eventRegistrations(String eventId) => '$events/$eventId/registrations';
+
+  static String eventRegistration(String eventId, String registrationId) =>
+      '$events/$eventId/registrations/$registrationId';
+
+  static String eventRegistrationCheckIn(String eventId, String registrationId) =>
+      '$events/$eventId/registrations/$registrationId/checkin';
+
+  static String myEventRegistrations() => '$events/my-registrations';
+
+  static String volunteerMe() => '$volunteers/member/me';
+
+  static String volunteerByMember(String memberId) => '$volunteers/member/$memberId';
+
+  static String roster(String rosterId) => '$rosters/$rosterId';
+
+  static String rosterAssignment(String rosterId, String assignmentId) =>
+      '$rosters/$rosterId/assignments/$assignmentId';
+
+  static String rosterAttendance(String rosterId, String assignmentId) =>
+      '$rosters/$rosterId/assignments/$assignmentId/attendance';
+
   static String visitor(String visitorId) => '$visitors/$visitorId';
 
   static String visitorStage(String visitorId) => '$visitors/$visitorId/stage';
@@ -76,4 +131,19 @@ class Endpoints {
 
   static String visitorRescheduleFollowUp(String visitorId, String followUpId) =>
       '$visitors/$visitorId/follow-ups/$followUpId/reschedule';
+
+  static String financeTransaction(String id) => '$financeTransactions/$id';
+
+  static String financeMemberHistory(String memberId) =>
+      '$financeTransactions/by-member/$memberId';
+
+  static String analyticsInsightRead(String id) => '$analyticsInsights/$id/read';
+
+  static String analyticsInsightActioned(String id) =>
+      '$analyticsInsights/$id/actioned';
+
+  static String pastoralCase(String caseId) => '$pastoralCases/$caseId';
+
+  static String pastoralEnrollment(String enrollmentId) =>
+      '$pastoralDiscipleship/$enrollmentId';
 }

@@ -67,3 +67,12 @@ select:not([multiple])::-ms-expand {
   min-height: 100vh;
   overflow-x: hidden;
 }
+
+.route-fade {
+  opacity: 0;
+  transition: opacity 200ms ease;
+}
+
+.route-fade-entered {
+  opacity: 1;
+}

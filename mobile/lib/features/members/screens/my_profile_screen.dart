@@ -7,6 +7,8 @@ import '../widgets/health_score_card.dart';
 import '../widgets/member_avatar.dart';
 import '../widgets/member_bottom_navigation.dart';
 import '../widgets/qr_code_sheet.dart';
+import '../../volunteers/providers/volunteer_roster_provider.dart';
+import 'package:go_router/go_router.dart';
 
 class MyProfileScreen extends ConsumerWidget {
   const MyProfileScreen({super.key});
@@ -14,6 +16,7 @@ class MyProfileScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final profileAsync = ref.watch(myProfileProvider);
+    final volunteerAsync = ref.watch(myVolunteerProfileProvider);
 
     return Scaffold(
       backgroundColor: AppColors.surface,
@@ -64,6 +67,20 @@ class MyProfileScreen extends ConsumerWidget {
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColors.primary,
                         foregroundColor: Colors.white,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    OutlinedButton.icon(
+                      onPressed: () => context.push('/volunteer'),
+                      icon: Icon(
+                        volunteerAsync.valueOrNull == null
+                            ? Icons.volunteer_activism_outlined
+                            : Icons.calendar_month_rounded,
+                      ),
+                      label: Text(
+                        volunteerAsync.valueOrNull == null
+                            ? 'Volunteer Info'
+                            : 'My Volunteer Dashboard',
                       ),
                     ),
                   ],

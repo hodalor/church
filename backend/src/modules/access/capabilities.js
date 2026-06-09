@@ -70,6 +70,78 @@ const capabilitySections = [
     ],
   },
   {
+    module: 'volunteers',
+    actions: ['view', 'create', 'modify', 'delete'],
+    groups: [
+      { key: 'overview', actions: ['view', 'create', 'modify'] },
+      { key: 'rosters', actions: ['view', 'create', 'modify', 'publish'] },
+      { key: 'trainings', actions: ['view', 'create'] },
+      { key: 'reports', actions: ['view'] },
+    ],
+  },
+  {
+    module: 'events',
+    actions: ['view', 'create', 'modify', 'delete'],
+    groups: [
+      { key: 'overview', actions: ['view', 'create', 'modify', 'publish'] },
+      { key: 'registrations', actions: ['view', 'create', 'modify', 'check_in', 'approve'] },
+      { key: 'reports', actions: ['view'] },
+    ],
+  },
+  {
+    module: 'branches',
+    actions: ['view', 'create', 'modify', 'delete'],
+    groups: [
+      { key: 'metrics', actions: ['view', 'refresh'] },
+      { key: 'snapshot', actions: ['view'] },
+    ],
+  },
+  {
+    module: 'hq',
+    actions: ['view'],
+    groups: [
+      { key: 'overview', actions: ['view'] },
+      { key: 'comparison', actions: ['view'] },
+      { key: 'growth', actions: ['view'] },
+      { key: 'finance', actions: ['view'] },
+      { key: 'members', actions: ['view'] },
+      { key: 'operations', actions: ['view'] },
+      { key: 'reports', actions: ['view'] },
+    ],
+  },
+  {
+    module: 'analytics',
+    actions: ['view', 'create'],
+    groups: [
+      { key: 'snapshots', actions: ['view', 'create'] },
+      { key: 'compare', actions: ['view'] },
+    ],
+  },
+  {
+    module: 'insights',
+    actions: ['view', 'create', 'modify'],
+    groups: [
+      { key: 'critical', actions: ['view'] },
+      { key: 'management', actions: ['modify'] },
+    ],
+  },
+  {
+    module: 'ai',
+    actions: ['view', 'create'],
+    groups: [{ key: 'history', actions: ['view'] }],
+  },
+  {
+    module: 'platform',
+    actions: ['view'],
+    groups: [
+      { key: 'overview', actions: ['view'] },
+      { key: 'growth', actions: ['view'] },
+      { key: 'health', actions: ['view'] },
+      { key: 'revenue', actions: ['view'] },
+      { key: 'comparison', actions: ['view'] },
+    ],
+  },
+  {
     module: 'settings',
     actions: ['view', 'modify'],
     groups: [
@@ -167,6 +239,30 @@ const mediaCapabilities = [
   'notifications.view',
   'manual.view',
 ];
+const volunteerManagementCapabilities = [
+  'dashboard.view',
+  ...getCapabilitiesForSection('volunteers', ['view', 'create', 'modify', 'publish']),
+  ...getCapabilitiesForSection('events', ['view', 'create', 'modify', 'publish', 'check_in', 'approve']),
+  'notifications.view',
+  'manual.view',
+];
+const volunteerEventViewCapabilities = [
+  'dashboard.view',
+  ...getCapabilitiesForSection('volunteers', ['view']),
+  ...getCapabilitiesForSection('events', ['view']),
+  'notifications.view',
+  'manual.view',
+];
+const analyticsLeadershipCapabilities = [
+  'dashboard.view',
+  ...getCapabilitiesForSection('branches', ['view', 'create', 'modify', 'refresh']),
+  ...getCapabilitiesForSection('hq', ['view']),
+  ...getCapabilitiesForSection('analytics', ['view', 'create']),
+  ...getCapabilitiesForSection('insights', ['view', 'create', 'modify']),
+  ...getCapabilitiesForSection('ai', ['view', 'create']),
+  'notifications.view',
+  'manual.view',
+];
 export const defaultCapabilitiesByRole = {
   super_admin: [...supportedCapabilities],
   head_pastor: [...supportedCapabilities],
@@ -177,6 +273,8 @@ export const defaultCapabilitiesByRole = {
     ...getCapabilitiesForSection('attendance', ['view']),
     ...getCapabilitiesForSection('visitors', ['view', 'assign', 'complete', 'reschedule', 'convert']),
     ...getCapabilitiesForSection('pastoral', ['view', 'create', 'modify', 'assign']),
+    ...volunteerManagementCapabilities,
+    ...analyticsLeadershipCapabilities,
   ],
   associate_pastor: [
     ...leadershipCapabilities,
@@ -185,20 +283,32 @@ export const defaultCapabilitiesByRole = {
     ...getCapabilitiesForSection('settings', ['view']),
     ...getCapabilitiesForSection('finance', ['view', 'export']),
     ...getCapabilitiesForSection('pastoral', ['delete']),
+    ...getCapabilitiesForSection('volunteers', ['delete']),
+    ...getCapabilitiesForSection('events', ['delete']),
+    ...analyticsLeadershipCapabilities,
   ],
   treasurer: [
     ...financeFullCapabilities,
     ...getCapabilitiesForSection('settings', ['view']),
     ...getCapabilitiesForSection('members', ['view']),
+    ...getCapabilitiesForSection('analytics', ['view']),
+    ...getCapabilitiesForSection('hq', ['view']),
   ],
-  finance_officer: [...financeRecordOnlyCapabilities],
+  finance_officer: [...financeRecordOnlyCapabilities, ...getCapabilitiesForSection('analytics', ['view'])],
   media_team: [...mediaCapabilities],
   care_leader: [
     ...leadershipCapabilities,
     ...getCapabilitiesForSection('visitors', ['delete']),
     ...pastoralLeadershipCapabilities,
+    ...volunteerEventViewCapabilities,
+    ...getCapabilitiesForSection('insights', ['view']),
+    ...getCapabilitiesForSection('ai', ['create', 'view']),
   ],
-  volunteer_leader: [...leadershipCapabilities],
+  volunteer_leader: [
+    ...leadershipCapabilities,
+    ...volunteerManagementCapabilities,
+    ...getCapabilitiesForSection('insights', ['view']),
+  ],
   member: [...memberCapabilities],
 };
 
