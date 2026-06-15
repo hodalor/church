@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { param } from 'express-validator';
 import auth from '../../middleware/auth.js';
+import auditMiddleware from '../../middleware/auditMiddleware.js';
 import isSuperAdmin from '../../middleware/isSuperAdmin.js';
 import tenantScope from '../../middleware/tenantScope.js';
 import validate from '../../middleware/validate.js';
@@ -31,7 +32,7 @@ const adminVolunteersRouter = Router();
 volunteersRouter.use(auth, tenantScope);
 rostersRouter.use(auth, tenantScope);
 
-volunteersRouter.post('/', registerVolunteerValidation, validate, volunteerController.registerVolunteer);
+volunteersRouter.post('/', auditMiddleware('volunteers', 'Volunteer'), registerVolunteerValidation, validate, volunteerController.registerVolunteer);
 volunteersRouter.get('/', volunteerListValidation, validate, volunteerController.getAllVolunteers);
 volunteersRouter.get('/stats', volunteerListValidation, validate, volunteerController.getVolunteerStats);
 volunteersRouter.get(
@@ -54,12 +55,14 @@ volunteersRouter.get(
 );
 volunteersRouter.patch(
   '/:volunteerId',
+  auditMiddleware('volunteers', 'Volunteer'),
   updateVolunteerValidation,
   validate,
   volunteerController.updateVolunteer,
 );
 volunteersRouter.patch(
   '/:volunteerId/status',
+  auditMiddleware('volunteers', 'Volunteer', { action: 'STATUS_CHANGE' }),
   updateVolunteerStatusValidation,
   validate,
   volunteerController.updateVolunteerStatus,
@@ -78,12 +81,13 @@ volunteersRouter.post(
 );
 volunteersRouter.delete(
   '/:volunteerId',
+  auditMiddleware('volunteers', 'Volunteer'),
   volunteerIdParamValidation,
   validate,
   volunteerController.removeVolunteer,
 );
 
-rostersRouter.post('/', createRosterValidation, validate, volunteerController.createRoster);
+rostersRouter.post('/', auditMiddleware('volunteers', 'DutyRoster'), createRosterValidation, validate, volunteerController.createRoster);
 rostersRouter.get('/', rosterListValidation, validate, volunteerController.getAllRosters);
 rostersRouter.get(
   '/upcoming',
@@ -92,8 +96,8 @@ rostersRouter.get(
   volunteerController.getUpcomingRosters,
 );
 rostersRouter.get('/:rosterId', rosterIdParamValidation, validate, volunteerController.getRosterById);
-rostersRouter.patch('/:rosterId', updateRosterValidation, validate, volunteerController.updateRoster);
-rostersRouter.delete('/:rosterId', rosterIdParamValidation, validate, volunteerController.deleteRoster);
+rostersRouter.patch('/:rosterId', auditMiddleware('volunteers', 'DutyRoster'), updateRosterValidation, validate, volunteerController.updateRoster);
+rostersRouter.delete('/:rosterId', auditMiddleware('volunteers', 'DutyRoster'), rosterIdParamValidation, validate, volunteerController.deleteRoster);
 rostersRouter.post(
   '/:rosterId/assign',
   addAssignmentValidation,
@@ -114,6 +118,7 @@ rostersRouter.delete(
 );
 rostersRouter.patch(
   '/:rosterId/publish',
+  auditMiddleware('volunteers', 'DutyRoster', { action: 'PUBLISH' }),
   rosterIdParamValidation,
   validate,
   volunteerController.publishRoster,

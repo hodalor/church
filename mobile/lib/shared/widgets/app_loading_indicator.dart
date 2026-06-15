@@ -8,11 +8,13 @@ class AppLoadingIndicator extends StatelessWidget {
     this.label = 'Loading...',
     this.showLabel = true,
     this.size = 56,
+    this.textColor,
   });
 
   final String label;
   final bool showLabel;
   final double size;
+  final Color? textColor;
 
   @override
   Widget build(BuildContext context) {
@@ -44,7 +46,7 @@ class AppLoadingIndicator extends StatelessWidget {
           Text(
             label,
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: AppColors.primary,
+                  color: textColor ?? AppColors.primary,
                   fontWeight: FontWeight.w600,
                 ),
           ),

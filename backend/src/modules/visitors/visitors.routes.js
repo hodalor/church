@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import auth from '../../middleware/auth.js';
+import auditMiddleware from '../../middleware/auditMiddleware.js';
 import isSuperAdmin from '../../middleware/isSuperAdmin.js';
 import tenantScope from '../../middleware/tenantScope.js';
 import validate from '../../middleware/validate.js';
@@ -40,15 +41,15 @@ visitorsRouter.get(
   validate,
   visitorsController.checkVisitorDuplicateByPhone,
 );
-visitorsRouter.post('/', registerVisitorValidation, validate, visitorsController.registerVisitor);
+visitorsRouter.post('/', auditMiddleware('visitors', 'Visitor'), registerVisitorValidation, validate, visitorsController.registerVisitor);
 visitorsRouter.get('/', listVisitorsValidation, validate, visitorsController.getVisitors);
 visitorsRouter.get('/pipeline', listVisitorsValidation, validate, visitorsController.getVisitorPipeline);
 visitorsRouter.get('/follow-ups', listVisitorsValidation, validate, visitorsController.getVisitorFollowUps);
 visitorsRouter.get('/workflow', visitorsController.getVisitorWorkflow);
-visitorsRouter.put('/workflow', workflowValidation, validate, visitorsController.saveVisitorWorkflow);
+visitorsRouter.put('/workflow', auditMiddleware('visitors', 'VisitorWorkflow'), workflowValidation, validate, visitorsController.saveVisitorWorkflow);
 visitorsRouter.post('/workflow/test', workflowValidation, validate, visitorsController.testVisitorWorkflow);
 visitorsRouter.get('/reports', visitorsController.getVisitorReports);
-visitorsRouter.post('/assign', assignVisitorsValidation, validate, visitorsController.assignVisitorsToCareLeader);
+visitorsRouter.post('/assign', auditMiddleware('visitors', 'Visitor', { action: 'ASSIGN' }), assignVisitorsValidation, validate, visitorsController.assignVisitorsToCareLeader);
 visitorsRouter.get(
   '/:visitorId',
   visitorIdParamValidation,
@@ -57,6 +58,7 @@ visitorsRouter.get(
 );
 visitorsRouter.patch(
   '/:visitorId/stage',
+  auditMiddleware('visitors', 'Visitor', { action: 'STATUS_CHANGE' }),
   stageUpdateValidation,
   validate,
   visitorsController.updateVisitorStage,
@@ -87,6 +89,7 @@ visitorsRouter.patch(
 );
 visitorsRouter.post(
   '/:visitorId/convert',
+  auditMiddleware('visitors', 'Visitor', { action: 'STATUS_CHANGE' }),
   convertVisitorValidation,
   validate,
   visitorsController.convertVisitorToMember,

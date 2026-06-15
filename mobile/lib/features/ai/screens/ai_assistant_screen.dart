@@ -142,11 +142,14 @@ class _AIAssistantScreenState extends ConsumerState<AIAssistantScreen> {
               result: aiState.result!,
               onCopy: () async {
                 await Clipboard.setData(ClipboardData(text: aiState.result!));
-                if (mounted) {
-                  SnackHelper.showSuccess(context, 'Copied to clipboard.');
+                if (!mounted) {
+                  return;
                 }
+                SnackHelper.showSuccess(context, 'Copied to clipboard.');
               },
-              onShare: () => Share.share(aiState.result!),
+              onShare: () => SharePlus.instance.share(
+                ShareParams(text: aiState.result!),
+              ),
               onRegenerate: _regenerate,
             )
           else if (aiState.error != null)
@@ -214,7 +217,7 @@ class _AIAssistantScreenState extends ConsumerState<AIAssistantScreen> {
             ),
             const SizedBox(height: 12),
             DropdownButtonFormField<String>(
-              value: _sermonType,
+              initialValue: _sermonType,
               items: const <String>['Expository', 'Topical', 'Narrative', 'Evangelistic']
                   .map((item) => DropdownMenuItem(value: item, child: Text(item)))
                   .toList(),
@@ -223,7 +226,7 @@ class _AIAssistantScreenState extends ConsumerState<AIAssistantScreen> {
             ),
             const SizedBox(height: 12),
             DropdownButtonFormField<String>(
-              value: _audience,
+              initialValue: _audience,
               items: const <String>['General', 'Youth', 'Men', 'Women', 'Children']
                   .map((item) => DropdownMenuItem(value: item, child: Text(item)))
                   .toList(),
@@ -232,7 +235,7 @@ class _AIAssistantScreenState extends ConsumerState<AIAssistantScreen> {
             ),
             const SizedBox(height: 12),
             DropdownButtonFormField<String>(
-              value: _duration,
+              initialValue: _duration,
               items: const <String>['20', '30', '45', '60']
                   .map((item) => DropdownMenuItem(value: item, child: Text('$item min')))
                   .toList(),
@@ -324,7 +327,7 @@ class _AIAssistantScreenState extends ConsumerState<AIAssistantScreen> {
               valueListenable: _dayController,
               builder: (context, value, _) {
                 return DropdownButtonFormField<String>(
-                  value: value,
+                  initialValue: value,
                   items: const <String>[
                     'Monday',
                     'Tuesday',

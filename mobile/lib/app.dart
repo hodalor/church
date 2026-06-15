@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'core/services/connectivity_service.dart';
 import 'core/utils/app_colors.dart';
+import 'core/utils/role_helper.dart';
 import 'core/utils/app_theme.dart';
 import 'features/ai/screens/ai_assistant_screen.dart';
 import 'features/analytics/screens/hq_overview_screen.dart';
@@ -24,10 +25,17 @@ import 'features/events/screens/event_detail_screen.dart';
 import 'features/events/screens/event_qr_screen.dart';
 import 'features/events/screens/events_screen.dart';
 import 'features/events/screens/my_tickets_screen.dart';
+import 'features/cbs/screens/cbs_screen.dart';
+import 'features/cbs/screens/prospect_detail_screen.dart';
+import 'features/cbs/screens/record_session_screen.dart';
+import 'features/leadership/screens/leadership_screen.dart';
 import 'features/members/screens/member_detail_screen.dart';
 import 'features/members/screens/members_screen.dart';
 import 'features/members/screens/my_profile_screen.dart';
 import 'features/members/widgets/member_bottom_navigation.dart';
+import 'features/ministry/screens/ministry_screen.dart';
+import 'features/settings/screens/sync_status_screen.dart';
+import 'features/strategic/screens/scorecard_screen.dart';
 import 'features/volunteers/screens/my_volunteer_screen.dart';
 import 'features/volunteers/screens/roster_detail_screen.dart';
 import 'features/volunteers/screens/roster_list_screen.dart';
@@ -37,6 +45,7 @@ import 'features/visitors/screens/visitor_detail_screen.dart';
 import 'features/visitors/screens/visitor_registration_screen.dart';
 import 'features/visitors/screens/visitors_screen.dart';
 import 'shared/widgets/app_loading_indicator.dart';
+import 'shared/widgets/offline_banner.dart';
 
 final GlobalKey<NavigatorState> rootNavigatorKey = GlobalKey<NavigatorState>();
 
@@ -150,6 +159,53 @@ class PrynovaApp extends ConsumerWidget {
         GoRoute(
           path: '/profile',
           builder: (context, state) => const MyProfileScreen(),
+        ),
+        GoRoute(
+          path: '/settings/sync',
+          builder: (context, state) => const SyncStatusScreen(),
+        ),
+        GoRoute(
+          path: '/ministry',
+          builder: (context, state) => const MinistryScreen(),
+        ),
+        GoRoute(
+          path: '/cbs',
+          builder: (context, state) => _RoleGate(
+            allowed: RoleHelper.canAccessCBS(authState.user?.role ?? ''),
+            child: const CBSScreen(),
+          ),
+        ),
+        GoRoute(
+          path: '/cbs/prospects/:id',
+          builder: (context, state) => _RoleGate(
+            allowed: RoleHelper.canAccessCBS(authState.user?.role ?? ''),
+            child: ProspectDetailScreen(
+              prospectId: state.pathParameters['id'] ?? '',
+            ),
+          ),
+        ),
+        GoRoute(
+          path: '/cbs/session/new/:groupId',
+          builder: (context, state) => _RoleGate(
+            allowed: RoleHelper.canAccessCBS(authState.user?.role ?? ''),
+            child: RecordSessionScreen(
+              groupId: state.pathParameters['groupId'] ?? '',
+            ),
+          ),
+        ),
+        GoRoute(
+          path: '/strategic/scorecard',
+          builder: (context, state) => _RoleGate(
+            allowed: RoleHelper.canAccessStrategicMobile(authState.user?.role ?? ''),
+            child: const ScorecardScreen(),
+          ),
+        ),
+        GoRoute(
+          path: '/leadership/pipeline',
+          builder: (context, state) => _RoleGate(
+            allowed: RoleHelper.canAccessLeadershipMobile(authState.user?.role ?? ''),
+            child: const LeadershipScreen(),
+          ),
         ),
         GoRoute(
           path: '/finance',
@@ -352,50 +408,44 @@ class _ConnectivityBannerShell extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final connectivity = ref.watch(connectivityProvider);
+    return OfflineBanner(child: child);
+  }
+}
 
-    return Stack(
-      children: <Widget>[
-        child,
-        IgnorePointer(
-          ignoring: connectivity.isOnline,
-          child: AnimatedSlide(
-            duration: const Duration(milliseconds: 220),
-            offset: connectivity.isOnline ? const Offset(0, -1.1) : Offset.zero,
-            child: SafeArea(
-              child: Align(
-                alignment: Alignment.topCenter,
-                child: Container(
-                  margin: const EdgeInsets.all(12),
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 12,
-                  ),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFFFF3CD),
-                    borderRadius: BorderRadius.circular(14),
-                    border: Border.all(color: const Color(0xFFE0B14A)),
-                  ),
-                  child: const Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: <Widget>[
-                      Icon(Icons.wifi_off_rounded, color: Color(0xFF8A6D1A)),
-                      SizedBox(width: 8),
-                      Text(
-                        'No internet connection',
-                        style: TextStyle(
-                          color: Color(0xFF8A6D1A),
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
+class _RoleGate extends StatelessWidget {
+  const _RoleGate({
+    required this.allowed,
+    required this.child,
+  });
+
+  final bool allowed;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    if (allowed) {
+      return child;
+    }
+    return const _AccessDeniedScreen();
+  }
+}
+
+class _AccessDeniedScreen extends StatelessWidget {
+  const _AccessDeniedScreen();
+
+  @override
+  Widget build(BuildContext context) {
+    return const Scaffold(
+      backgroundColor: AppColors.surface,
+      body: Center(
+        child: Padding(
+          padding: EdgeInsets.all(24),
+          child: Text(
+            'You do not have permission to open this mobile workspace.',
+            textAlign: TextAlign.center,
           ),
         ),
-      ],
+      ),
     );
   }
 }

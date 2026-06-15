@@ -435,6 +435,68 @@ export const capabilitySections = [
     ],
   },
   {
+    module: 'ministry_management',
+    label: 'Ministry Management',
+    description: 'Manage ministries, membership assignment, meetings, goals, and ministry reports.',
+    actions: [
+      { key: 'view', label: 'Open Ministry Workspace' },
+      { key: 'create', label: 'Create Ministries' },
+      { key: 'modify', label: 'Modify Ministries' },
+      { key: 'export', label: 'Export Ministry Data' },
+    ],
+  },
+  {
+    module: 'cbs',
+    label: 'CBS Groups',
+    description: 'Manage CBS groups, prospects, sessions, pipeline movement, and reports.',
+    actions: [
+      { key: 'view', label: 'Open CBS Workspace' },
+      { key: 'create', label: 'Create CBS Records' },
+      { key: 'modify', label: 'Modify CBS Records' },
+      { key: 'export', label: 'Export CBS Data' },
+    ],
+  },
+  {
+    module: 'leadership_development',
+    label: 'Leadership Development',
+    description: 'Review leadership profiles, readiness, succession plans, and development reporting.',
+    actions: [
+      { key: 'view', label: 'Open Leadership Workspace' },
+      { key: 'create', label: 'Create Leadership Records' },
+      { key: 'modify', label: 'Modify Leadership Records' },
+      { key: 'export', label: 'Export Leadership Data' },
+    ],
+  },
+  {
+    module: 'strategic_planning',
+    label: 'Strategic Planning',
+    description: 'Manage strategic plans, balanced scorecards, KPIs, and strategic reporting.',
+    actions: [
+      { key: 'view', label: 'Open Strategic Workspace' },
+      { key: 'create', label: 'Create Strategic Records' },
+      { key: 'modify', label: 'Modify Strategic Records' },
+      { key: 'export', label: 'Export Strategic Data' },
+    ],
+  },
+  {
+    module: 'family_ministry',
+    label: 'Family Ministry',
+    description: 'Access family analytics, at-risk households, and family ministry dashboards.',
+    actions: [
+      { key: 'view', label: 'Open Family Ministry Workspace' },
+      { key: 'export', label: 'Export Family Ministry Data' },
+    ],
+  },
+  {
+    module: 'audit_trail',
+    label: 'Audit Trail',
+    description: 'Review system-wide audit activity, suspicious events, logins, and export history.',
+    actions: [
+      { key: 'view', label: 'Open Audit Trail Workspace' },
+      { key: 'export', label: 'Export Audit Trail Data' },
+    ],
+  },
+  {
     module: 'settings',
     label: 'Settings',
     description: 'Open tenant settings and manage branding, content, and platform config.',
@@ -736,6 +798,9 @@ const aiAssistantCapabilities = [
     capability.startsWith('ai.history.'),
   ),
 ];
+const ministryManagementCapabilities = getCapabilitiesForSection('ministry_management', ['view', 'create', 'modify', 'export']);
+const cbsCapabilities = getCapabilitiesForSection('cbs', ['view', 'create', 'modify', 'export']);
+const familyMinistryCapabilities = getCapabilitiesForSection('family_ministry', ['view', 'export']);
 
 export const defaultCapabilitiesByRole = {
   super_admin: [...allCapabilities],
@@ -759,6 +824,9 @@ export const defaultCapabilitiesByRole = {
     ...getCapabilitiesForSection('finance', ['view', 'export']),
     ...getCapabilitiesForSection('volunteers', ['delete']),
     ...getCapabilitiesForSection('events', ['delete']),
+    ...ministryManagementCapabilities,
+    ...cbsCapabilities,
+    ...familyMinistryCapabilities,
     ...branchAnalyticsViewCapabilities,
     ...aiAssistantCapabilities,
   ],
@@ -773,9 +841,17 @@ export const defaultCapabilitiesByRole = {
     ...leadershipCapabilities,
     ...getCapabilitiesForSection('visitors', ['delete']),
     ...getCapabilitiesForSection('pastoral', ['delete']),
+    ...cbsCapabilities,
+    ...familyMinistryCapabilities,
     ...volunteerEventViewCapabilities,
   ],
-  volunteer_leader: [...leadershipCapabilities, ...volunteerManagementCapabilities],
+  volunteer_leader: [...leadershipCapabilities, ...volunteerManagementCapabilities, ...ministryManagementCapabilities],
+  cbs_leader: [
+    'dashboard.view',
+    ...cbsCapabilities,
+    'notifications.view',
+    'manual.view',
+  ],
   member: [...memberCapabilities],
 };
 
@@ -788,6 +864,7 @@ export const userRoleOptions = [
   'media_team',
   'care_leader',
   'volunteer_leader',
+  'cbs_leader',
   'member',
 ];
 

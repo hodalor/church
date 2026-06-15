@@ -17,6 +17,7 @@ import {
   Radio,
   Settings,
   Shield,
+  Target,
   Users,
   UserRoundPlus,
 } from 'lucide-react';
@@ -117,10 +118,51 @@ const navigation = [
         capabilityOptions: ['insights.view'],
       },
       {
+        label: 'Family Ministry',
+        to: '/hq/family-ministry',
+        icon: HeartHandshake,
+        capabilityOptions: ['family_ministry.view'],
+      },
+      {
+        label: 'Audit Trail',
+        to: '/audit',
+        icon: Shield,
+        capabilityOptions: ['audit_trail.view'],
+      },
+      {
         label: 'AI Assistant',
         to: '/ai',
         icon: Bot,
         capabilityOptions: ['ai.view', 'ai.create'],
+      },
+    ],
+  },
+  {
+    title: 'Church Growth',
+    items: [
+      {
+        label: 'Ministry',
+        to: '/ministry',
+        icon: HandHelping,
+        capabilityOptions: ['ministry_management.view'],
+      },
+      {
+        label: 'CBS Groups',
+        to: '/cbs',
+        icon: BookOpen,
+        capabilityOptions: ['cbs.view'],
+      },
+      {
+        label: 'Leadership',
+        to: '/leadership',
+        icon: Users,
+        capabilityOptions: ['leadership_development.view'],
+      },
+      {
+        label: 'Strategic Plan',
+        to: '/strategic',
+        icon: Target,
+        capabilityOptions: ['strategic_planning.view'],
       },
     ],
   },

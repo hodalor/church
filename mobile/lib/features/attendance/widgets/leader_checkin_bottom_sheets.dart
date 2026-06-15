@@ -94,6 +94,7 @@ class _ManualCheckInSheetState extends ConsumerState<_ManualCheckInSheet> {
   final FocusNode _focusNode = FocusNode();
   Timer? _debounce;
   List<Member> _results = const <Member>[];
+  bool _fromOfflineCache = false;
   bool _isSearching = false;
   bool _isSubmitting = false;
   String? _error;
@@ -116,6 +117,7 @@ class _ManualCheckInSheetState extends ConsumerState<_ManualCheckInSheet> {
     if (query.trim().length < 2) {
       setState(() {
         _results = const <Member>[];
+        _fromOfflineCache = false;
         _isSearching = false;
         _error = null;
       });
@@ -128,15 +130,13 @@ class _ManualCheckInSheetState extends ConsumerState<_ManualCheckInSheet> {
     });
 
     try {
-      final response = await ref.read(memberRepositoryProvider).getMembers(
-            limit: 10,
-            search: query.trim(),
-          );
+      final response = await ref.read(attendanceRepositoryProvider).getMemberSearch(query.trim());
       if (!mounted) {
         return;
       }
       setState(() {
         _results = response.members;
+        _fromOfflineCache = response.fromOfflineCache;
         _isSearching = false;
       });
     } catch (error) {
@@ -226,6 +226,13 @@ class _ManualCheckInSheetState extends ConsumerState<_ManualCheckInSheet> {
             Text(
               _error!,
               style: AppTextStyles.bodyMedium.copyWith(color: AppColors.danger),
+            ),
+          ],
+          if (_fromOfflineCache) ...<Widget>[
+            const SizedBox(height: 10),
+            Text(
+              'Offline cache results',
+              style: AppTextStyles.bodyMedium.copyWith(color: AppColors.accent),
             ),
           ],
           const SizedBox(height: 14),

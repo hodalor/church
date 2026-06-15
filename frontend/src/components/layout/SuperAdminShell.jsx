@@ -16,6 +16,7 @@ import {
   Search,
   Settings,
   Shield,
+  Target,
   Users,
   UserRoundPlus,
 } from 'lucide-react';
@@ -142,6 +143,22 @@ const navigation = [
         children: eventSubItems,
         matchPrefixes: ['/superadmin/events', '/events'],
       },
+    ],
+  },
+  {
+    title: 'Church Growth',
+    items: [
+      { label: 'Ministry', to: '/ministry', icon: HandHelping },
+      { label: 'CBS Groups', to: '/cbs', icon: BookOpen },
+      { label: 'Leadership', to: '/leadership', icon: Users },
+      { label: 'Strategic Plan', to: '/strategic', icon: Target },
+    ],
+  },
+  {
+    title: 'Intelligence',
+    items: [
+      { label: 'Family Ministry', to: '/hq/family-ministry', icon: HeartHandshake },
+      { label: 'Audit Trail', to: '/audit', icon: Shield },
     ],
   },
   {

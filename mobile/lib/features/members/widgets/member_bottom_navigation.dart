@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../core/utils/app_colors.dart';
 import '../../../core/utils/role_helper.dart';
+import '../../../core/services/sync_service.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../../communication/providers/inbox_provider.dart';
 import '../../visitors/providers/follow_ups_provider.dart';
@@ -48,12 +49,14 @@ class _MemberBottomNavigationState
     final unreadAsync = ref.watch(unreadCountProvider);
     final unreadCount = unreadAsync.value ?? 0;
     final overdueCount = ref.watch(followUpsProvider).overdueFollowUps.length;
+    final sync = ref.watch(syncStatusProvider).valueOrNull ?? const SyncStatus();
     final location = GoRouterState.of(context).matchedLocation;
     final layout = _resolveLayout(role);
     final destinations = _buildDestinations(
       layout: layout,
       unreadCount: unreadCount,
       overdueCount: overdueCount,
+      pendingSyncCount: sync.pendingTotal,
       canAccessHq: RoleHelper.canAccessHQ(role),
     );
     final selectedIndex = _resolveSelectedIndex(
@@ -101,6 +104,7 @@ class _MemberBottomNavigationState
     required _NavLayout layout,
     required int unreadCount,
     required int overdueCount,
+    required int pendingSyncCount,
     required bool canAccessHq,
   }) {
     switch (layout) {
@@ -138,8 +142,16 @@ class _MemberBottomNavigationState
             label: 'More',
             route: _moreRoute,
             matches: const <String>[],
-            icon: const Icon(Icons.menu_open_rounded),
-            selectedIcon: const Icon(Icons.menu_rounded),
+            icon: _buildPendingSyncIcon(
+              pendingSyncCount,
+              rounded: false,
+              child: const Icon(Icons.menu_open_rounded),
+            ),
+            selectedIcon: _buildPendingSyncIcon(
+              pendingSyncCount,
+              rounded: true,
+              child: const Icon(Icons.menu_rounded),
+            ),
           ),
         ];
       case _NavLayout.leader:
@@ -180,8 +192,16 @@ class _MemberBottomNavigationState
             label: 'More',
             route: _moreRoute,
             matches: const <String>[],
-            icon: const Icon(Icons.menu_open_rounded),
-            selectedIcon: const Icon(Icons.menu_rounded),
+            icon: _buildPendingSyncIcon(
+              pendingSyncCount,
+              rounded: false,
+              child: const Icon(Icons.menu_open_rounded),
+            ),
+            selectedIcon: _buildPendingSyncIcon(
+              pendingSyncCount,
+              rounded: true,
+              child: const Icon(Icons.menu_rounded),
+            ),
           ),
         ];
       case _NavLayout.member:
@@ -217,9 +237,17 @@ class _MemberBottomNavigationState
           _NavDestinationConfig(
             label: 'Profile',
             route: '/profile',
-            matches: const <String>['/profile'],
-            icon: const Icon(Icons.person_outline_rounded),
-            selectedIcon: const Icon(Icons.person_rounded),
+            matches: const <String>['/profile', '/settings/sync'],
+            icon: _buildPendingSyncIcon(
+              pendingSyncCount,
+              rounded: false,
+              child: const Icon(Icons.person_outline_rounded),
+            ),
+            selectedIcon: _buildPendingSyncIcon(
+              pendingSyncCount,
+              rounded: true,
+              child: const Icon(Icons.person_rounded),
+            ),
           ),
         ];
     }
@@ -275,8 +303,46 @@ class _MemberBottomNavigationState
     );
   }
 
+  Widget _buildPendingSyncIcon(
+    int pendingSyncCount, {
+    required bool rounded,
+    required Widget child,
+  }) {
+    if (pendingSyncCount <= 0) {
+      return child;
+    }
+    return Badge(
+      label: Text(pendingSyncCount > 99 ? '99+' : '$pendingSyncCount'),
+      backgroundColor: rounded ? AppColors.success : AppColors.accent,
+      child: child,
+    );
+  }
+
   Future<void> _openMoreSheet(BuildContext context, String role) async {
     final items = <_MoreNavItem>[
+      const _MoreNavItem(
+        label: 'Ministries',
+        route: '/ministry',
+        icon: Icons.groups_3_rounded,
+      ),
+      if (RoleHelper.canAccessCBS(role))
+        const _MoreNavItem(
+          label: 'CBS Group',
+          route: '/cbs',
+          icon: Icons.menu_book_rounded,
+        ),
+      if (RoleHelper.canAccessStrategicMobile(role))
+        const _MoreNavItem(
+          label: 'Scorecard',
+          route: '/strategic/scorecard',
+          icon: Icons.track_changes_rounded,
+        ),
+      if (RoleHelper.canAccessLeadershipMobile(role))
+        const _MoreNavItem(
+          label: 'Leadership',
+          route: '/leadership/pipeline',
+          icon: Icons.account_tree_rounded,
+        ),
       if (RoleHelper.canAccessHQ(role))
         const _MoreNavItem(
           label: 'HQ Overview',
@@ -330,6 +396,11 @@ class _MemberBottomNavigationState
         label: 'Profile',
         route: '/profile',
         icon: Icons.person_rounded,
+      ),
+      const _MoreNavItem(
+        label: 'Sync Status',
+        route: '/settings/sync',
+        icon: Icons.sync_rounded,
       ),
     ];
 

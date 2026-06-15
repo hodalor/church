@@ -9,6 +9,7 @@ import Member from '../members/member.model.js';
 import Tenant from '../tenants/model.js';
 import User from '../users/model.js';
 import NotificationLog from '../notifications/notification.model.js';
+import SystemAuditLog from '../audit/models/systemAuditLog.model.js';
 import { createHttpError } from '../../utils/httpError.js';
 import { generateReceipt } from '../../utils/receiptGenerator.js';
 import { uploadBufferToSupabase } from '../../utils/supabaseStorage.js';
@@ -1600,23 +1601,24 @@ export const getAuditLog = async (tenantId, query = {}) => {
   const { page, limit, skip } = buildPagination(query);
   const filters = {
     tenantId,
+    module: 'finance',
     ...(query.entityType ? { entityType: query.entityType } : {}),
     ...(query.action ? { action: query.action } : {}),
-    ...(query.performedBy ? { performedBy: query.performedBy } : {}),
+    ...(query.performedBy ? { userId: query.performedBy } : {}),
   };
 
   const fromDate = parseDate(query.from);
   const toDate = parseDate(query.to);
   if (fromDate || toDate) {
-    filters.performedAt = {
+    filters.createdAt = {
       ...(fromDate ? { $gte: fromDate } : {}),
       ...(toDate ? { $lte: toDate } : {}),
     };
   }
 
   const [logs, total] = await Promise.all([
-    AuditLog.find(filters).sort({ performedAt: -1 }).skip(skip).limit(limit),
-    AuditLog.countDocuments(filters),
+    SystemAuditLog.find(filters).sort({ createdAt: -1 }).skip(skip).limit(limit),
+    SystemAuditLog.countDocuments(filters),
   ]);
 
   return {

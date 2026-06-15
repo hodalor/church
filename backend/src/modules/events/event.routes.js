@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import auth from '../../middleware/auth.js';
+import auditMiddleware from '../../middleware/auditMiddleware.js';
 import isSuperAdmin from '../../middleware/isSuperAdmin.js';
 import tenantScope from '../../middleware/tenantScope.js';
 import validate from '../../middleware/validate.js';
@@ -23,7 +24,7 @@ const adminEventsRouter = Router();
 
 eventsRouter.use(auth, tenantScope);
 
-eventsRouter.post('/', createEventValidation, validate, eventController.createEvent);
+eventsRouter.post('/', auditMiddleware('events', 'Event'), createEventValidation, validate, eventController.createEvent);
 eventsRouter.get('/', listEventsValidation, validate, eventController.getAllEvents);
 eventsRouter.get('/my-registrations', listEventsValidation, validate, eventController.getMyRegistrations);
 eventsRouter.get('/upcoming', listEventsValidation, validate, eventController.getUpcomingEvents);
@@ -35,15 +36,16 @@ eventsRouter.get(
   eventController.getRegistrationStats,
 );
 eventsRouter.get('/:eventId', eventIdParamValidation, validate, eventController.getEventById);
-eventsRouter.patch('/:eventId', updateEventValidation, validate, eventController.updateEvent);
-eventsRouter.delete('/:eventId', eventIdParamValidation, validate, eventController.deleteEvent);
+eventsRouter.patch('/:eventId', auditMiddleware('events', 'Event'), updateEventValidation, validate, eventController.updateEvent);
+eventsRouter.delete('/:eventId', auditMiddleware('events', 'Event'), eventIdParamValidation, validate, eventController.deleteEvent);
 eventsRouter.patch(
   '/:eventId/status',
+  auditMiddleware('events', 'Event', { action: 'STATUS_CHANGE' }),
   updateEventStatusValidation,
   validate,
   eventController.updateEventStatus,
 );
-eventsRouter.post('/:eventId/publish', eventIdParamValidation, validate, eventController.publishEvent);
+eventsRouter.post('/:eventId/publish', auditMiddleware('events', 'Event', { action: 'PUBLISH' }), eventIdParamValidation, validate, eventController.publishEvent);
 eventsRouter.post(
   '/:eventId/register',
   registerForEventValidation,
@@ -58,18 +60,21 @@ eventsRouter.get(
 );
 eventsRouter.patch(
   '/:eventId/registrations/:regId',
+  auditMiddleware('events', 'Registration'),
   updateRegistrationValidation,
   validate,
   eventController.updateRegistration,
 );
 eventsRouter.patch(
   '/:eventId/registrations/:regId/checkin',
+  auditMiddleware('events', 'Registration', { action: 'STATUS_CHANGE' }),
   checkInRegistrationValidation,
   validate,
   eventController.checkInToEvent,
 );
 eventsRouter.patch(
   '/:eventId/registrations/:regId/approve',
+  auditMiddleware('events', 'Registration', { action: 'APPROVE' }),
   approveRegistrationValidation,
   validate,
   eventController.approveRegistration,

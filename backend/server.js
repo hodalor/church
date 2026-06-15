@@ -11,6 +11,8 @@ import { startEventAutoCloseJob } from './src/jobs/eventAutoClose.job.js';
 import { startEventRemindersJob } from './src/jobs/eventReminders.job.js';
 import { startFinanceAlertsJob } from './src/jobs/financeAlerts.job.js';
 import { startHealthScoreRefreshJob } from './src/jobs/healthScoreRefresh.job.js';
+import { startMinistryRemindersJob } from './src/jobs/ministryReminders.job.js';
+import { startReportAutomationJob } from './src/jobs/reportAutomation.job.js';
 import { startRosterRemindersJob } from './src/jobs/rosterReminders.job.js';
 import { startStaleCaseAlertsJob } from './src/jobs/staleCaseAlerts.job.js';
 import { startVolunteerAbsenceTrackerJob } from './src/jobs/volunteerAbsenceTracker.job.js';
@@ -27,6 +29,8 @@ const startServer = async () => {
   startEventRemindersJob();
   startFinanceAlertsJob();
   startHealthScoreRefreshJob();
+  startMinistryRemindersJob();
+  startReportAutomationJob();
   startRosterRemindersJob();
   startStaleCaseAlertsJob();
   startVolunteerAbsenceTrackerJob();

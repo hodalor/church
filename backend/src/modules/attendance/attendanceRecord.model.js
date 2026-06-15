@@ -43,7 +43,7 @@ const attendanceRecordSchema = new Schema(
     },
     checkInMethod: {
       type: String,
-      enum: ['qr', 'manual', 'visitor_form', 'child_check_in', 'online'],
+      enum: ['qr', 'manual', 'visitor_form', 'child_check_in', 'online', 'bulk'],
       default: 'manual',
       index: true,
     },

@@ -1,0 +1,1412 @@
+You are a senior Node.js backend engineer. Implement Phase 11 of the Prynova Church Management
+System: Leadership Development & Succession Planning, Strategic Planning & Balanced Scorecard,
+Ministry Management, Community Bible Study (CBS) Groups, Family Ministry Analytics,
+and System-wide Audit Trail.
+
+CONTEXT:
+- ES Modules, MongoDB + Mongoose, JWT auth, multi-tenant (tenantId on every query)
+- All previous modules exist (Phases 1-10) — do NOT modify or remove anything just inpromw
+- These are pure ADDITIONS to the existing system
+- All routes: auth + tenantScope middleware
+- Super admin sees all tenants via /admin routes
+- All existing models (Member, User, Tenant, Attendance, Finance, etc.) already exist
+- Communication module exists for notifications
+- Pastoral Care module exists (discipleship tracks, care cases)
+- Notification model exists
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ADDITION 1: SYSTEM-WIDE AUDIT TRAIL
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+This extends the existing Phase 4 finance audit logger to cover ALL modules.
+
+1. CREATE src/modules/audit/models/systemAuditLog.model.js:
+{
+  tenantId:     { type: String, required: true, index: true },
+  userId:       String,
+  userName:     String,
+  userRole:     String,
+  action: {
+    type: String,
+    enum: [
+      "LOGIN","LOGOUT","LOGIN_FAILED",
+      "CREATE","UPDATE","DELETE","VIEW","EXPORT",
+      "PUBLISH","APPROVE","REJECT","ASSIGN",
+      "STATUS_CHANGE","BULK_ACTION"
+    ]
+  },
+  module: {
+    type: String,
+    enum: [
+      "auth","members","finance","attendance","communication",
+      "visitors","pastoral","volunteers","events","analytics",
+      "ministry","cbs","leadership","strategic","audit"
+    ]
+  },
+  entityType:   String,    // e.g. "Member", "Transaction", "CareCase"
+  entityId:     String,    // the _id of the affected document
+  entityName:   String,    // human-readable e.g. "John Banda" for quick display
+  description:  String,    // human-readable summary e.g. "Updated member profile"
+  changes: {
+    before:     Object,    // snapshot of data before change (sensitive fields redacted)
+    after:      Object     // snapshot after change
+  },
+  ipAddress:    String,
+  userAgent:    String,
+  requestPath:  String,    // e.g. "/api/v1/members/abc123"
+  requestMethod: String,   // GET, POST, PATCH, DELETE
+  statusCode:   Number,    // HTTP response code
+  isSuspicious: { type: Boolean, default: false },
+  // Flagged automatically if: failed login 3+ times, delete on sensitive records,
+  // access from new IP, bulk deletions
+  createdAt:    { type: Date, default: Date.now }
+}
+Indexes:
+  { tenantId, createdAt }
+  { tenantId, userId }
+  { tenantId, module }
+  { tenantId, action }
+  { tenantId, isSuspicious }
+TTL index: { createdAt: 1 } expireAfterSeconds: 31536000 (1 year retention)
+
+2. UPDATE src/utils/auditLogger.js — make it system-wide:
+  
+  logAudit({
+    tenantId, userId, userName, userRole,
+    action, module, entityType, entityId, entityName,
+    description, changes, req
+  }):
+    Extract ipAddress from req.ip or req.headers['x-forwarded-for']
+    Extract userAgent from req.headers['user-agent']
+    Extract requestPath from req.originalUrl
+    Extract requestMethod from req.method
+    
+    Auto-detect suspicious activity:
+      if action === "LOGIN_FAILED": check if same userId had 3+ failures
+        in last 15 minutes → isSuspicious = true
+      if action === "DELETE" AND module IN ["members","finance"]:
+        isSuspicious = true (all deletes on sensitive data are flagged)
+      if action === "BULK_ACTION" AND count > 50: isSuspicious = true
+    
+    If isSuspicious: also create a Notification for head_pastor/super_admin
+      message: "⚠️ Suspicious activity detected: [description] by [userName]"
+    
+    Always fire-and-forget (do NOT await) — never block request pipeline
+    
+    Redact sensitive fields from changes object before saving:
+      Remove: pinHash, password, twoFactorSecret, backupCodes, fcmToken
+
+3. CREATE src/middleware/auditMiddleware.js:
+  Automatic audit logging middleware for all routes:
+  
+  auditMiddleware(module, entityType):
+    Returns Express middleware function that:
+    1. Captures req.body before handler runs
+    2. After response sent (using res.on('finish')):
+       Extract entityId from req.params.id or response body
+       Determine action from HTTP method:
+         POST → "CREATE"
+         PATCH/PUT → "UPDATE"  
+         DELETE → "DELETE"
+         GET → "VIEW" (only log GET for sensitive endpoints)
+    3. Call logAudit() with all context
+    
+  Usage in routes:
+    router.patch('/:id', auth, tenantScope,
+      auditMiddleware('members','Member'), updateMember)
+
+4. APPLY auditMiddleware to ALL sensitive routes:
+  Apply to: members, finance (transactions, expenses),
+  pastoral (cases), communication (broadcasts),
+  visitors (conversions), volunteers, events,
+  leadership, ministry, cbs, strategic modules
+  
+  Auth events: manually call logAudit in auth.service.js:
+    On successful login: action "LOGIN"
+    On failed login: action "LOGIN_FAILED"
+    On logout: action "LOGOUT"
+
+5. ROUTES — mount at /api/v1/audit:
+  GET /                → getAuditLogs (head_pastor + super_admin only)
+  GET /suspicious      → getSuspiciousActivity
+  GET /user/:userId    → getUserAuditTrail
+  GET /module/:module  → getModuleAuditTrail
+  GET /entity/:entityType/:entityId → getEntityAuditTrail
+  GET /logins          → getLoginHistory
+  GET /exports         → getExportHistory
+
+  GET /admin/audit     → getAllTenantsAuditSummary (super admin only)
+
+6. AUDIT SERVICE src/modules/audit/audit.service.js:
+  
+  getAuditLogs(tenantId, query):
+    Filters: module, action, userId, dateFrom, dateTo,
+             isSuspicious, entityType, search
+    Pagination: page, limit (max 100)
+    Sort: createdAt desc
+    Return: { logs, total, page, totalPages,
+              summary: { byModule, byAction, suspiciousCount } }
+
+  getSuspiciousActivity(tenantId):
+    Find all logs where isSuspicious = true, last 30 days
+    Group by userId: { user, events: [...], count }
+    Sort by count desc
+
+  getLoginHistory(tenantId, query):
+    Filter: action IN ["LOGIN","LOGIN_FAILED","LOGOUT"]
+    Include: userId, userName, ipAddress, userAgent, createdAt, action
+    Useful for security review
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ADDITION 2: MINISTRY MANAGEMENT
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1. CREATE src/modules/ministry/models/ministry.model.js:
+{
+  tenantId:       { type: String, required: true, index: true },
+  ministryId:     { type: String, unique: true },  // MIN-{tenantId}-{sequence}
+
+  name:           { type: String, required: true },
+  code:           String,          // short code e.g. "CHOIR", "YOUTH", "WOMEN"
+  type: {
+    type: String,
+    enum: [
+      "worship","youth","women","men","children","elders","deacons",
+      "evangelism","media","ushers","security","hospitality",
+      "prayer","bible_study","community_outreach","missions",
+      "family","welfare","drama","sports","other"
+    ]
+  },
+  description:    String,
+  vision:         String,
+  branch:         String,
+
+  leaderId:       String,          // userId of ministry leader
+  leaderName:     String,
+  deputyLeaderId: String,
+  deputyLeaderName: String,
+
+  // Meeting schedule
+  meetingSchedule: {
+    frequency:   { type: String, enum: ["weekly","fortnightly","monthly","as_needed"] },
+    dayOfWeek:   Number,           // 0=Sunday
+    time:        String,           // "14:00"
+    venue:       String,
+    notes:       String
+  },
+
+  // Membership
+  memberCount:    { type: Number, default: 0 },  // cached, updated by cron
+  maxMembers:     Number,          // null = unlimited
+  requiresApproval: { type: Boolean, default: false },
+
+  // Goals
+  annualGoals:    [String],
+  currentFocus:   String,
+
+  isActive:       { type: Boolean, default: true },
+  establishedDate: Date,
+  logoUrl:        String,          // Supabase URL
+
+  createdBy:      String,
+  updatedBy:      String,
+  createdAt:      { type: Date, default: Date.now },
+  updatedAt:      { type: Date, default: Date.now }
+}
+Indexes: { tenantId, type }, { tenantId, leaderId }
+
+---
+
+CREATE src/modules/ministry/models/ministryMember.model.js:
+{
+  tenantId:     { type: String, required: true, index: true },
+  ministryId:   { type: String, required: true, index: true },
+  ministryName: String,
+  memberId:     { type: String, required: true },
+  memberName:   String,
+  memberPhoto:  String,
+
+  role:         String,           // e.g. "Lead Singer", "Secretary", "Treasurer"
+  joinedAt:     { type: Date, default: Date.now },
+  status: {
+    type: String,
+    enum: ["active","inactive","on_leave","pending_approval"],
+    default: "active"
+  },
+  approvedBy:   String,
+  approvedAt:   Date,
+  notes:        String,
+  createdAt:    { type: Date, default: Date.now }
+}
+Compound unique index: { tenantId, ministryId, memberId }
+
+---
+
+CREATE src/modules/ministry/models/ministryMeeting.model.js:
+{
+  tenantId:       { type: String, required: true, index: true },
+  meetingId:      { type: String, unique: true },
+  ministryId:     String,
+  ministryName:   String,
+
+  title:          String,
+  date:           { type: Date, required: true },
+  startTime:      String,
+  endTime:        String,
+  venue:          String,
+  branch:         String,
+
+  agenda:         String,
+  minutes:        String,         // meeting notes/minutes
+  actionPoints:   [{
+    task:         String,
+    assignedTo:   String,
+    dueDate:      Date,
+    isCompleted:  { type: Boolean, default: false }
+  }],
+
+  // Attendance — links to attendance module
+  serviceId:      String,         // if linked to a service attendance record
+  attendeeIds:    [String],       // memberIds who attended
+  attendanceCount: Number,
+  absentCount:    Number,
+
+  status: {
+    type: String,
+    enum: ["scheduled","completed","cancelled"],
+    default: "scheduled"
+  },
+
+  createdBy:      String,
+  createdAt:      { type: Date, default: Date.now },
+  updatedAt:      { type: Date, default: Date.now }
+}
+Indexes: { tenantId, ministryId }, { tenantId, date }
+
+2. ROUTES — mount at /api/v1/ministry:
+  POST   /                              → createMinistry
+  GET    /                              → getAllMinistries
+  GET    /stats                         → getMinistryStats
+  GET    /:ministryId                   → getMinistryById
+  PATCH  /:ministryId                   → updateMinistry
+  DELETE /:ministryId                   → deactivateMinistry
+
+  POST   /:ministryId/members           → addMemberToMinistry
+  GET    /:ministryId/members           → getMinistryMembers
+  PATCH  /:ministryId/members/:memberId → updateMemberRole
+  DELETE /:ministryId/members/:memberId → removeMemberFromMinistry
+  POST   /:ministryId/members/bulk      → bulkAddMembers
+  GET    /member/:memberId/ministries   → getMemberMinistries
+
+  POST   /:ministryId/meetings          → createMeeting
+  GET    /:ministryId/meetings          → getMinistryMeetings
+  GET    /:ministryId/meetings/:meetingId → getMeetingById
+  PATCH  /:ministryId/meetings/:meetingId → updateMeeting
+  POST   /:ministryId/meetings/:meetingId/attendance → recordMeetingAttendance
+
+  GET    /reports/overview              → getMinistryOverviewReport
+  GET    /reports/:ministryId           → getMinistryReport
+
+  GET    /admin/ministries              → getAllMinistriesAcrossTenants
+
+3. MINISTRY SERVICE src/modules/ministry/ministry.service.js:
+
+  createMinistry(tenantId, data, createdBy):
+    1. Check ministry name unique within tenant
+    2. Save ministry
+    3. If leaderId provided: notify the assigned leader
+    4. Return ministry
+
+  addMemberToMinistry(tenantId, ministryId, memberId, role, addedBy):
+    1. Verify member exists in tenant
+    2. Check member not already in this ministry
+    3. If requiresApproval: set status "pending_approval",
+       notify ministry leader to approve
+    4. Otherwise: set status "active"
+    5. Increment ministry.memberCount
+    6. Return ministryMember
+
+  recordMeetingAttendance(tenantId, ministryId, meetingId, attendeeIds):
+    1. Update meeting.attendeeIds = attendeeIds
+    2. meeting.attendanceCount = attendeeIds.length
+    3. meeting.absentCount = ministryMemberCount - attendanceCount
+    4. Also create individual Attendance records for each attendee
+       linking to attendance module (attendeeType: "member",
+       checkInMethod: "bulk")
+    5. Return meeting with stats
+
+  getMinistryStats(tenantId):
+  {
+    total, active, inactive,
+    byType: [{ type, count, totalMembers }],
+    totalMinistryMembers,        // unique members across all ministries
+    membersInNoMinistry: count,  // members not in any ministry
+    upcomingMeetings: [ next 5 ],
+    mostActiveMinistry: { name, meetingCount, avgAttendance },
+    meetingsThisMonth: count
+  }
+
+  getMinistryReport(tenantId, ministryId, query):
+  {
+    ministry: { name, type, leader, memberCount },
+    meetings: {
+      total, completed, avgAttendance, attendanceTrend
+    },
+    members: {
+      total, active, inactive, joinedThisMonth
+    },
+    topAttendees: [ top 5 members by attendance rate ],
+    actionPoints: { total, completed, pending, overdue }
+  }
+
+  getMinistryOverviewReport(tenantId):
+    All ministries summary with health indicators:
+    { ministryId, name, type, memberCount, meetingsThisMonth,
+      avgAttendance, lastMeetingDate, health: "active"|"low"|"inactive" }
+    health: "active" if meeting in last 30 days,
+            "low" if 30-60 days,
+            "inactive" if >60 days or no meetings
+
+4. UPDATE Member model — add:
+  ministries: [{ ministryId: String, ministryName: String, role: String }]
+  (cached array updated when ministry membership changes)
+  
+  This allows quick lookup of member's ministries without joining.
+
+5. CRON JOB src/jobs/ministryReminders.job.js (runs daily 8 AM):
+  Find meetings scheduled for tomorrow → notify all ministry members
+  Find action points overdue → notify assignedTo + ministry leader
+  Register in server.js
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ADDITION 3: COMMUNITY BIBLE STUDY (CBS) GROUP TRACKING
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+CBS is a small-group evangelism model: prospects are invited to
+home/community Bible studies, progress through a study pipeline,
+and eventually become formal members. Build this as a generic
+"Small Group Evangelism" module usable by any church.
+
+1. CREATE src/modules/cbs/models/cbsGroup.model.js:
+{
+  tenantId:       { type: String, required: true, index: true },
+  groupId:        { type: String, unique: true },  // CBS-{tenantId}-{sequence}
+
+  name:           { type: String, required: true },  // e.g. "Chilenje Zone A CBS"
+  code:           String,          // short code e.g. "CZA"
+  type: {
+    type: String,
+    enum: ["home_bible_study","community_study","workplace_study",
+           "campus_study","online_study","other"],
+    default: "home_bible_study"
+  },
+
+  leaderId:       String,          // userId — CBS leader
+  leaderName:     String,
+  coLeaderId:     String,
+  coLeaderName:   String,
+  supervisorId:   String,          // userId of overseer (elder/deacon)
+
+  location:       String,          // host home address or venue
+  zone:           String,          // geographical zone e.g. "North Zone"
+  branch:         String,
+  gpsCoordinates: { lat: Number, lng: Number },
+
+  meetingSchedule: {
+    frequency: { type: String, enum: ["weekly","fortnightly","monthly"] },
+    dayOfWeek:  Number,
+    time:       String,
+    notes:      String
+  },
+
+  // Membership counts (cached)
+  prospectCount:  { type: Number, default: 0 },
+  studyCount:     { type: Number, default: 0 },
+  convertedCount: { type: Number, default: 0 },
+
+  studyMaterial:  String,          // current study material/curriculum
+  isActive:       { type: Boolean, default: true },
+  startedDate:    Date,
+
+  createdBy:      String,
+  updatedBy:      String,
+  createdAt:      { type: Date, default: Date.now },
+  updatedAt:      { type: Date, default: Date.now }
+}
+Indexes: { tenantId, leaderId }, { tenantId, zone }, { tenantId, branch }
+
+---
+
+CREATE src/modules/cbs/models/cbsProspect.model.js:
+{
+  tenantId:       { type: String, required: true, index: true },
+  prospectId:     { type: String, unique: true },  // PRO-{tenantId}-{sequence}
+  groupId:        { type: String, required: true, index: true },
+  groupName:      String,
+
+  // Personal Info
+  firstName:      { type: String, required: true },
+  lastName:       { type: String, required: true },
+  phone:          String,
+  email:          String,
+  gender:         { type: String, enum: ["male","female","other"] },
+  ageGroup:       { type: String, enum: ["youth","adult","senior"] },
+  address:        String,
+  occupation:     String,
+
+  // How they were found
+  contactMethod: {
+    type: String,
+    enum: ["door_to_door","referral","workplace","campus",
+           "community_event","online","other"]
+  },
+  referredByMemberId: String,
+  referredByName:     String,
+  firstContactDate:   Date,
+
+  // CBS Pipeline — specific to Bible study progression
+  studyStage: {
+    type: String,
+    enum: [
+      "initial_contact",      // first met, not yet studying
+      "interested",           // expressed interest
+      "studying",             // actively attending studies
+      "advanced_study",       // completed basic studies, going deeper
+      "baptism_candidate",    // expressed desire to be baptised
+      "baptised",             // has been baptised
+      "member",               // formally added to church membership
+      "inactive",             // stopped attending
+      "not_interested"        // declined further study
+    ],
+    default: "initial_contact"
+  },
+
+  // Study Progress
+  studiesAttended:    { type: Number, default: 0 },
+  studiesTotal:       Number,      // expected number of studies in curriculum
+  lastStudyDate:      Date,
+  nextStudyDate:      Date,
+
+  // Conversion tracking
+  baptismDate:        Date,
+  baptismServiceId:   String,
+  convertedToMemberId: String,     // links to Member document after conversion
+  convertedAt:        Date,
+
+  // Personal notes from CBS leader
+  spiritualInterests: [String],    // e.g. ["family","forgiveness","afterlife"]
+  prayerRequests:     [String],
+  challenges:         [String],    // obstacles to conversion
+  leaderNotes:        String,
+
+  // Follow-up
+  lastContactDate:    Date,
+  nextFollowUpDate:   Date,
+
+  isActive:           { type: Boolean, default: true },
+  createdBy:          String,
+  updatedBy:          String,
+  createdAt:          { type: Date, default: Date.now },
+  updatedAt:          { type: Date, default: Date.now }
+}
+Indexes:
+  { tenantId, groupId }
+  { tenantId, studyStage }
+  { tenantId, phone }
+  { tenantId, convertedToMemberId }
+
+---
+
+CREATE src/modules/cbs/models/cbsSession.model.js:
+{
+  tenantId:       { type: String, required: true, index: true },
+  sessionId:      { type: String, unique: true },
+  groupId:        { type: String, required: true, index: true },
+  groupName:      String,
+
+  date:           { type: Date, required: true },
+  startTime:      String,
+  duration:       Number,          // minutes
+  venue:          String,
+  conductedBy:    String,          // userId of CBS leader
+
+  studyTopic:     String,
+  studyReference: String,          // e.g. "John 3:1-21"
+  curriculum:     String,
+
+  // Attendance
+  attendees: [{
+    prospectId:   String,
+    prospectName: String,
+    isFirstTime:  Boolean
+  }],
+  attendanceCount: { type: Number, default: 0 },
+  guestsCount:    { type: Number, default: 0 },   // new faces not yet registered
+
+  // Outcomes from this session
+  decisions: [{
+    prospectId:   String,
+    prospectName: String,
+    decision: {
+      type: String,
+      enum: ["baptism_request","prayer_request","wants_to_study_more",
+             "accepted_christ","requested_home_visit","other"]
+    },
+    notes: String
+  }],
+
+  leaderObservations: String,
+  nextSessionDate:    Date,
+  nextSessionTopic:   String,
+
+  createdBy:          String,
+  createdAt:          { type: Date, default: Date.now }
+}
+Indexes: { tenantId, groupId }, { tenantId, date }
+
+2. ROUTES — mount at /api/v1/cbs:
+
+GROUPS:
+  POST   /groups                        → createGroup
+  GET    /groups                        → getAllGroups
+  GET    /groups/stats                  → getCBSStats
+  GET    /groups/:groupId               → getGroupById
+  PATCH  /groups/:groupId               → updateGroup
+  DELETE /groups/:groupId               → deactivateGroup
+  GET    /groups/my                     → getMyGroup (for CBS leader role)
+
+PROSPECTS:
+  POST   /groups/:groupId/prospects     → addProspect
+  GET    /groups/:groupId/prospects     → getGroupProspects
+  GET    /prospects                     → getAllProspects
+  GET    /prospects/pipeline            → getProspectsPipeline
+  GET    /prospects/:prospectId         → getProspectById
+  PATCH  /prospects/:prospectId         → updateProspect
+  PATCH  /prospects/:prospectId/stage   → updateStudyStage
+  POST   /prospects/:prospectId/convert → convertToMember
+
+SESSIONS:
+  POST   /groups/:groupId/sessions      → recordSession
+  GET    /groups/:groupId/sessions      → getGroupSessions
+  GET    /sessions/:sessionId           → getSessionById
+  PATCH  /sessions/:sessionId           → updateSession
+
+REPORTS:
+  GET    /reports/overview              → getCBSOverviewReport
+  GET    /reports/pipeline              → getCBSPipelineReport
+  GET    /reports/conversion            → getCBSConversionReport
+  GET    /reports/group/:groupId        → getGroupReport
+  GET    /reports/leader/:leaderId      → getLeaderReport
+
+SUPER ADMIN:
+  GET    /admin/cbs/overview            → getPlatformCBSOverview
+
+3. CBS SERVICE src/modules/cbs/cbs.service.js:
+
+  createGroup(tenantId, data, createdBy):
+    1. Save group
+    2. Notify assigned leaderId + supervisorId
+    3. Return group
+
+  addProspect(tenantId, groupId, data, createdBy):
+    1. Check phone not already a prospect in this tenant
+       If exists: return existing with "already exists" flag
+    2. Save prospect with studyStage: "initial_contact"
+    3. Increment group.prospectCount
+    4. Notify CBS leader of new prospect
+    5. Return prospect
+
+  recordSession(tenantId, groupId, data, conductedBy):
+    1. Save session
+    2. For each attendee in session.attendees:
+       - Find prospect by prospectId
+       - Increment prospect.studiesAttended
+       - Update prospect.lastStudyDate = session.date
+       - If prospect.studyStage = "initial_contact" AND studiesAttended >= 1:
+         auto-advance to "interested"
+       - If prospect.studyStage = "interested" AND studiesAttended >= 3:
+         auto-advance to "studying"
+    3. For each decision in session.decisions:
+       - If decision.decision = "baptism_request":
+         auto-advance prospect.studyStage to "baptism_candidate"
+         create notification for supervisor/elder:
+         "🎉 Baptism request from [name] in [group]"
+    4. Return session
+
+  updateStudyStage(tenantId, prospectId, newStage, updatedBy):
+    1. Update stage
+    2. If stage = "baptism_candidate":
+       notify supervisor + head_pastor
+    3. If stage = "baptised":
+       update prospect.baptismDate = today
+       notify head_pastor + supervisor
+    4. If stage = "member":
+       offer to auto-convert to member (see convertToMember)
+    5. Return updated prospect
+
+  convertToMember(tenantId, prospectId, additionalData, convertedBy):
+    1. Fetch prospect
+    2. Create Member document using prospect data:
+       firstName, lastName, phone, email, gender, branch
+       membershipStatus: "new_convert"
+       membershipDate: today
+       salvationDate: prospect.baptismDate
+    3. Update prospect:
+       convertedToMemberId = new member._id
+       convertedAt = now
+       studyStage = "member"
+    4. Update group.convertedCount++
+    5. Create care case for new convert:
+       type: "discipleship", auto-assign to CBS supervisor
+    6. Send welcome notification to member
+    7. Return { prospect, member }
+
+  getCBSStats(tenantId):
+  {
+    groups: { total, active, inactive },
+    prospects: {
+      total, byStage: { initial_contact, interested, studying,
+        advanced_study, baptism_candidate, baptised, member,
+        inactive, not_interested }
+    },
+    sessions: { thisMonth, total },
+    conversions: {
+      total, thisMonth, conversionRate,
+      avgStudiesToBaptism
+    },
+    baptisms: { thisMonth, thisYear, total },
+    topGroups: [ top 5 by conversion count ],
+    topLeaders: [ top 5 by conversions ],
+    pipelineFunnel: [
+      { stage, count, percentage }
+    ]
+  }
+
+  getCBSPipelineReport(tenantId):
+    Same funnel structure as visitor pipeline (Phase 7)
+    but using CBS study stages
+
+  getGroupReport(tenantId, groupId, query):
+  {
+    group: { name, leader, zone, startedDate },
+    sessions: { total, thisMonth, avgAttendance },
+    prospects: { total, active, converted, inactive },
+    conversionRate,
+    avgStudiesToConversion,
+    stageBreakdown: [...],
+    recentDecisions: [ last 10 baptism requests + acceptances ],
+    attendanceTrend: [ last 12 sessions ]
+  }
+
+  getPlatformCBSOverview (super admin):
+    Per tenant: { tenantId, churchName, groups, prospects,
+                  converted, conversionRate, baptismsThisMonth }
+
+4. CRON JOBS:
+
+  src/jobs/cbsFollowUp.job.js (runs daily 7:30 AM):
+    For each tenant:
+    1. Find prospects where nextFollowUpDate <= today AND
+       studyStage NOT IN ["member","not_interested","inactive"]
+    2. Notify CBS leader: "Follow-up due: [name] in [group]"
+    3. Find prospects with no contact in 14+ days:
+       Notify leader: "[name] hasn't been contacted in 14 days"
+    4. Find baptism_candidates with no baptism date set after 30+ days:
+       Notify supervisor: "[name] is a baptism candidate for 30+ days —
+       please follow up"
+
+  Register in server.js.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ADDITION 4: LEADERSHIP DEVELOPMENT & SUCCESSION PLANNING
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1. CREATE src/modules/leadership/models/leadershipProfile.model.js:
+{
+  tenantId:         { type: String, required: true, index: true },
+  profileId:        { type: String, unique: true },  // LDR-{tenantId}-{sequence}
+  memberId:         { type: String, required: true },
+  memberName:       String,
+
+  // Current Role
+  currentRole: {
+    type: String,
+    enum: [
+      "elder","deacon","head_pastor","associate_pastor",
+      "branch_pastor","ministry_leader","cbs_leader",
+      "care_leader","volunteer_leader","administrator","other"
+    ]
+  },
+  currentRoleTitle: String,        // custom title e.g. "Senior Elder"
+  currentRoleDate:  Date,          // when they took this role
+  appointedBy:      String,        // userId
+
+  // Leadership Tier
+  tier: {
+    type: String,
+    enum: ["tier1_executive","tier2_senior","tier3_middle","tier4_emerging"],
+    default: "tier4_emerging"
+  },
+  // tier1 = Elders/Head Pastor
+  // tier2 = Deacons/Associate Pastors/Branch Pastors
+  // tier3 = Ministry Leaders/CBS Leaders
+  // tier4 = Emerging/In Development
+
+  // Development Status
+  developmentStatus: {
+    type: String,
+    enum: ["identified","in_development","ready","appointed","paused"],
+    default: "identified"
+  },
+
+  mentoredBy:       String,        // userId of mentor
+  mentoredByName:   String,
+
+  // Assessments
+  assessments: [{
+    assessmentId:   String,
+    date:           Date,
+    assessedBy:     String,        // userId
+    assessedByName: String,
+    type: {
+      type: String,
+      enum: ["spiritual_maturity","character","competency",
+             "annual_review","360_feedback"]
+    },
+    scores: {
+      spiritualMaturity:  { type: Number, min: 1, max: 10 },
+      characterIntegrity: { type: Number, min: 1, max: 10 },
+      leadershipAbility:  { type: Number, min: 1, max: 10 },
+      biblicalKnowledge:  { type: Number, min: 1, max: 10 },
+      servanthood:        { type: Number, min: 1, max: 10 },
+      communication:      { type: Number, min: 1, max: 10 },
+      teamwork:           { type: Number, min: 1, max: 10 },
+      visionAlignment:    { type: Number, min: 1, max: 10 }
+    },
+    overallScore:   Number,        // average of all scores
+    strengths:      [String],
+    areasForGrowth: [String],
+    comments:       String,
+    isConfidential: { type: Boolean, default: true }
+    // Confidential: only head_pastor/elders/super_admin can read
+  }],
+
+  // Development Milestones
+  milestones: [{
+    title:          String,
+    date:           Date,
+    type: {
+      type: String,
+      enum: ["ordained","appointed","completed_training","completed_course",
+             "led_first_service","completed_mentorship","other"]
+    },
+    notes:          String,
+    recordedBy:     String
+  }],
+
+  // Training + Qualifications
+  qualifications: [{
+    title:          String,
+    institution:    String,
+    completedAt:    Date,
+    certificateUrl: String         // Supabase URL
+  }],
+
+  // Succession Planning
+  targetRole: {
+    type: String,
+    enum: ["elder","deacon","head_pastor","associate_pastor",
+           "branch_pastor","ministry_leader","cbs_leader",
+           "administrator","other"]
+  },
+  targetRoleTitle:    String,
+  readinessScore:     { type: Number, min: 0, max: 100, default: 0 },
+  // Computed: avgAssessmentScore / 10 * 100
+  estimatedReadyDate: Date,
+  successionNotes:    String,
+
+  isActive:           { type: Boolean, default: true },
+  createdBy:          String,
+  updatedBy:          String,
+  createdAt:          { type: Date, default: Date.now },
+  updatedAt:          { type: Date, default: Date.now }
+}
+Indexes:
+  { tenantId, memberId } unique
+  { tenantId, tier }
+  { tenantId, currentRole }
+  { tenantId, developmentStatus }
+
+---
+
+CREATE src/modules/leadership/models/successionPlan.model.js:
+{
+  tenantId:         { type: String, required: true },
+  planId:           { type: String, unique: true },
+  role:             String,         // the role being planned for
+  roleTitle:        String,
+
+  currentHolderId:  String,         // memberId currently in role
+  currentHolderName: String,
+
+  successors: [{
+    rank:           Number,         // 1 = primary successor, 2 = backup
+    memberId:       String,
+    memberName:     String,
+    leadershipProfileId: String,
+    readinessScore: Number,
+    estimatedReadyDate: Date,
+    developmentNotes: String
+  }],
+
+  riskLevel: {
+    type: String,
+    enum: ["low","medium","high","critical"],
+    default: "medium"
+  },
+  // critical = no identified successor
+  // high = successor readiness < 50%
+  // medium = successor readiness 50-80%
+  // low = successor ready
+
+  reviewDate:       Date,
+  notes:            String,
+  createdBy:        String,
+  createdAt:        { type: Date, default: Date.now },
+  updatedAt:        { type: Date, default: Date.now }
+}
+
+2. ROUTES — mount at /api/v1/leadership:
+  POST   /profiles                      → createLeadershipProfile
+  GET    /profiles                      → getAllProfiles
+  GET    /profiles/stats                → getLeadershipStats
+  GET    /profiles/pipeline             → getDevelopmentPipeline
+  GET    /profiles/:profileId           → getProfileById
+  GET    /profiles/member/:memberId     → getProfileByMember
+  PATCH  /profiles/:profileId           → updateProfile
+  PATCH  /profiles/:profileId/status    → updateDevelopmentStatus
+  POST   /profiles/:profileId/assessments → addAssessment
+  POST   /profiles/:profileId/milestones  → addMilestone
+  POST   /profiles/:profileId/qualifications → addQualification
+
+  POST   /succession                    → createSuccessionPlan
+  GET    /succession                    → getAllSuccessionPlans
+  GET    /succession/:planId            → getSuccessionPlanById
+  PATCH  /succession/:planId            → updateSuccessionPlan
+  GET    /succession/risk               → getSuccessionRiskReport
+
+  GET    /reports/overview              → getLeadershipReport
+  GET    /reports/readiness             → getReadinessReport
+
+  GET    /admin/leadership/overview     → getPlatformLeadershipOverview
+
+3. LEADERSHIP SERVICE src/modules/leadership/leadership.service.js:
+
+  createLeadershipProfile(tenantId, data, createdBy):
+    1. Verify member exists
+    2. Check profile doesn't already exist for this member
+    3. Save profile
+    4. Notify assigned mentor (mentoredBy) if provided
+    5. Return profile
+
+  addAssessment(tenantId, profileId, data, assessedBy):
+    1. CONFIDENTIALITY: verify assessedBy role is
+       head_pastor/associate_pastor/elder/super_admin
+    2. Calculate overallScore:
+       avg of all score values in data.scores
+    3. Push to profile.assessments
+    4. Recalculate readinessScore:
+       avg of last 3 assessments' overallScore / 10 * 100
+    5. If readinessScore >= 80 AND developmentStatus = "in_development":
+       auto-advance developmentStatus to "ready"
+       notify head_pastor: "[name] is now READY for [targetRole]"
+    6. Return updated profile
+
+  getDevelopmentPipeline(tenantId):
+    Group profiles by developmentStatus:
+    {
+      identified: [ profiles ],
+      in_development: [ profiles ],
+      ready: [ profiles ],
+      appointed: [ profiles ],
+      paused: [ profiles ]
+    }
+    Include readinessScore + targetRole per profile
+
+  getSuccessionRiskReport(tenantId):
+    For each succession plan:
+    {
+      role, currentHolder, successors,
+      riskLevel, riskReason
+    }
+    Overall risk summary:
+    { critical: N, high: N, medium: N, low: N }
+    Highlight roles with NO succession plan at all
+
+  getLeadershipStats(tenantId):
+  {
+    totalLeaders,
+    byTier: { tier1, tier2, tier3, tier4 },
+    byStatus: { identified, in_development, ready, appointed },
+    avgReadinessScore,
+    readyForPromotion: count,     // readinessScore >= 80
+    successionCoverage: {         // % of key roles with a succession plan
+      covered: N, uncovered: N, coverageRate: %
+    },
+    recentMilestones: [ last 5 ],
+    assessmentsDue: [ profiles with no assessment in 6+ months ]
+  }
+
+  getPlatformLeadershipOverview (super admin):
+    Per tenant: { tenantId, churchName, totalLeaders,
+                  readyForPromotion, criticalSuccessionGaps }
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ADDITION 5: STRATEGIC PLANNING & BALANCED SCORECARD
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+This is the most unique module — a church-specific Strategic KPI
+management system aligned to the church's own strategic pillars.
+
+1. CREATE src/modules/strategic/models/strategicPlan.model.js:
+{
+  tenantId:       { type: String, required: true, unique: true },
+  // One active strategic plan per tenant at a time
+
+  title:          { type: String, required: true },
+  // e.g. "Prynova Church 5-Year Strategic Plan 2024-2029"
+  description:    String,
+  startYear:      Number,
+  endYear:        Number,
+  visionStatement: String,
+  missionStatement: String,
+
+  pillars: [{
+    pillarId:     String,          // auto-generated UUID
+    name:         String,          // e.g. "Faith-Based Church"
+    description:  String,
+    color:        String,          // hex color for UI e.g. "#1E2A4A"
+    icon:         String,          // icon name e.g. "cross", "heart", "chart"
+    order:        Number,
+
+    focusAreas: [{
+      areaId:     String,
+      name:       String,          // e.g. "Spiritual Growth"
+      description: String,
+      objectives: [{
+        objectiveId: String,
+        statement:   String,       // e.g. "Increase weekly Bible study attendance"
+        owner:       String,       // userId responsible
+        ownerName:   String
+      }]
+    }]
+  }],
+
+  status: {
+    type: String,
+    enum: ["draft","active","review","archived"],
+    default: "draft"
+  },
+
+  approvedBy:     String,
+  approvedAt:     Date,
+  createdBy:      String,
+  createdAt:      { type: Date, default: Date.now },
+  updatedAt:      { type: Date, default: Date.now }
+}
+
+---
+
+CREATE src/modules/strategic/models/kpi.model.js:
+{
+  tenantId:       { type: String, required: true, index: true },
+  kpiId:          { type: String, unique: true },   // KPI-{tenantId}-{sequence}
+
+  // Link to strategic plan
+  planId:         String,
+  pillarId:       String,
+  pillarName:     String,
+  focusAreaId:    String,
+  focusAreaName:  String,
+  objectiveId:    String,
+
+  name:           { type: String, required: true },
+  description:    String,
+  unit: {
+    type: String,
+    enum: ["number","percentage","currency","boolean","text"],
+    default: "number"
+  },
+  // e.g. unit: "percentage" → target: 80, current: 65 → "65%"
+
+  // Targets
+  annualTarget:   Number,
+  q1Target:       Number,
+  q2Target:       Number,
+  q3Target:       Number,
+  q4Target:       Number,
+
+  // Data source
+  dataSource: {
+    type: String,
+    enum: ["manual","auto_attendance","auto_finance","auto_members",
+           "auto_visitors","auto_cbs","auto_volunteers","auto_events"],
+    default: "manual"
+  },
+  // auto_ sources: system pulls the value automatically from that module
+  autoQuery:      Object,   // config for auto data pull e.g.
+  // { module: "attendance", metric: "avgSundayAttendance", period: "monthly" }
+
+  // Current Values
+  currentValue:   Number,
+  currentPeriod:  String,   // e.g. "2024-Q2"
+  lastUpdated:    Date,
+
+  // Status
+  status: {
+    type: String,
+    enum: ["on_track","at_risk","off_track","exceeded","not_started"],
+    default: "not_started"
+  },
+  // Auto-computed:
+  // exceeded: current >= annual target * 1.05
+  // on_track: current >= period target * 0.9
+  // at_risk: current >= period target * 0.7
+  // off_track: current < period target * 0.7
+
+  // History of values
+  history: [{
+    period:       String,          // e.g. "2024-Q1", "2024-W15"
+    value:        Number,
+    enteredBy:    String,
+    enteredAt:    Date,
+    notes:        String
+  }],
+
+  measurementFrequency: {
+    type: String,
+    enum: ["weekly","monthly","quarterly","annually"],
+    default: "monthly"
+  },
+
+  ownerId:        String,          // userId responsible for this KPI
+  ownerName:      String,
+
+  isActive:       { type: Boolean, default: true },
+  createdBy:      String,
+  createdAt:      { type: Date, default: Date.now },
+  updatedAt:      { type: Date, default: Date.now }
+}
+Indexes:
+  { tenantId, pillarId }
+  { tenantId, status }
+  { tenantId, ownerId }
+  { tenantId, dataSource }
+
+2. ROUTES — mount at /api/v1/strategic:
+
+STRATEGIC PLAN:
+  POST   /plan                          → createStrategicPlan
+  GET    /plan                          → getStrategicPlan
+  PATCH  /plan                          → updateStrategicPlan
+  PATCH  /plan/activate                 → activatePlan
+
+KPIs:
+  POST   /kpis                          → createKPI
+  GET    /kpis                          → getAllKPIs
+  GET    /kpis/scorecard                → getBalancedScorecard
+  GET    /kpis/dashboard                → getStrategicDashboard
+  GET    /kpis/:kpiId                   → getKPIById
+  PATCH  /kpis/:kpiId                   → updateKPI
+  DELETE /kpis/:kpiId                   → deactivateKPI
+  POST   /kpis/:kpiId/values            → recordKPIValue
+  GET    /kpis/:kpiId/history           → getKPIHistory
+  POST   /kpis/auto-refresh             → autoRefreshKPIs
+
+REPORTS:
+  GET    /reports/scorecard             → getScorecardReport
+  GET    /reports/pillar/:pillarId      → getPillarReport
+  GET    /reports/quarterly             → getQuarterlyReport
+  GET    /reports/annual                → getAnnualReport
+
+SUPER ADMIN:
+  GET    /admin/strategic/overview      → getPlatformStrategicOverview
+
+3. STRATEGIC SERVICE src/modules/strategic/strategic.service.js:
+
+  createKPI(tenantId, data, createdBy):
+    1. Link to strategic plan + pillar + focus area
+    2. Validate targets (q1+q2+q3+q4 should not need to equal annual
+       but warn if they total > annual target)
+    3. Save KPI with status "not_started"
+    4. Return KPI
+
+  recordKPIValue(tenantId, kpiId, { value, period, notes, enteredBy }):
+    1. Find KPI
+    2. Push to history array: { period, value, enteredBy, enteredAt, notes }
+    3. Update currentValue = value, currentPeriod = period,
+       lastUpdated = now
+    4. Recalculate status:
+       Determine which period target to compare against (q1/q2/q3/q4)
+       based on current date
+       if value >= annualTarget * 1.05: "exceeded"
+       else if value >= periodTarget * 0.9: "on_track"
+       else if value >= periodTarget * 0.7: "at_risk"
+       else: "off_track"
+    5. If status changed to "off_track":
+       Notify ownerId: "⚠️ KPI [name] is off track — current: X, target: Y"
+    6. Return updated KPI
+
+  autoRefreshKPIs(tenantId):
+    Find all KPIs where dataSource !== "manual" AND isActive = true
+    For each:
+      Pull value from the relevant module using autoQuery config:
+      
+      "auto_attendance": 
+        query Attendance + Service collections
+        metrics: avgSundayAttendance, totalHeadcount, attendanceGrowthRate
+      
+      "auto_finance":
+        query Transaction collection
+        metrics: monthlyIncome, givingGrowthRate, avgGiving
+      
+      "auto_members":
+        query Member collection
+        metrics: totalMembers, newMembersThisMonth, retentionRate
+      
+      "auto_visitors":
+        query Visitor collection
+        metrics: totalVisitors, conversionRate, followUpRate
+      
+      "auto_cbs":
+        query CBSProspect collection
+        metrics: totalProspects, baptismsThisMonth, studyAttendance
+      
+      "auto_volunteers":
+        query Volunteer collection
+        metrics: totalVolunteers, avgReliability
+      
+      "auto_events":
+        query Event collection
+        metrics: totalEvents, avgAttendanceRate
+      
+      Call recordKPIValue() with the pulled value
+    
+    Return: { refreshed: N, errors: N }
+
+  getBalancedScorecard(tenantId):
+    Groups all KPIs by pillar:
+    {
+      plan: { title, visionStatement },
+      pillars: [{
+        pillarId, pillarName, color, icon,
+        kpis: [{
+          kpiId, name, currentValue, annualTarget,
+          status, unit, progress: (current/target * 100)
+        }],
+        pillarScore: avg progress across all KPIs in pillar,
+        pillarStatus: "on_track"|"at_risk"|"off_track"
+        // pillarStatus = worst status among its KPIs
+      }],
+      overallScore: avg of all pillar scores,
+      overallStatus: "on_track"|"at_risk"|"off_track",
+      summary: {
+        on_track: count,
+        at_risk: count,
+        off_track: count,
+        exceeded: count,
+        not_started: count
+      }
+    }
+
+  getQuarterlyReport(tenantId, { year, quarter }):
+    For each KPI:
+    {
+      kpiId, name, pillar, focusArea,
+      target: qNTarget,
+      actual: value for that quarter period,
+      variance: actual - target,
+      variancePercent: (variance / target) * 100,
+      status,
+      trend: "improving"|"stable"|"declining"
+        (compare to previous quarter)
+    }
+    Include executive commentary placeholders
+    (actual narrative generated by AI assistant in Phase 10)
+
+  SEED DEFAULT KPIS for Chilenje-style churches:
+    When a tenant activates strategic plan:
+    Offer to seed suggested KPIs per pillar:
+    
+    Pillar 1 — Faith:
+      - Average Sunday attendance
+      - Bible study participation rate
+      - New baptisms per month
+      - Members enrolled in discipleship tracks
+      - Prayer meeting attendance
+
+    Pillar 2 — Financial:
+      - Monthly giving total
+      - Giving growth rate vs last year
+      - % members who tithe regularly
+      - Budget utilization rate
+      - Number of active pledges
+
+    Pillar 3 — Evangelism:
+      - New visitors per month
+      - Visitor conversion rate
+      - CBS baptisms per quarter
+      - Community outreach events per month
+      - Prospect pipeline size
+
+    Pillar 4 — Organisational:
+      - Volunteer reliability score
+      - Leadership succession coverage rate
+      - Ministry active rate
+      - Member satisfaction score
+      - Communication delivery rate
+
+    Seed as: status "not_started", dataSource auto where applicable
+    POST /api/v1/strategic/kpis/seed-defaults
+
+4. CRON JOBS:
+
+  src/jobs/kpiAutoRefresh.job.js (runs every Sunday at 11 PM):
+    For each tenant with an active strategic plan:
+    Call autoRefreshKPIs(tenantId)
+    Log: "KPIs refreshed for X tenants"
+
+  src/jobs/kpiAlerts.job.js (runs first day of each month):
+    For each tenant:
+    Find KPIs where status IN ["off_track","at_risk"]
+    Create notification for head_pastor + KPI owners:
+      "📊 Monthly KPI Review: X KPIs need attention"
+    Include list of at-risk/off-track KPIs in notification
+
+  Register both in server.js.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ADDITION 6: FAMILY MINISTRY DASHBOARD DATA
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+No new model needed — this uses existing Member data.
+Add these computed endpoints to the analytics module.
+
+Add to src/modules/analytics/hq.service.js:
+
+getFamilyMinistryDashboard(tenantId):
+  Using existing Member collection:
+  {
+    totalFamilyGroups: count of unique non-null familyGroupIds,
+    completeFamilies: count where both spouseMemberId is set
+      and that spouse is active,
+    singleParentFamilies: count where maritalStatus = "married"
+      but no spouseMemberId in system,
+    childrenInSystem: count of members with ageGroup = "child"
+      OR count of entries in all members' children[] arrays,
+    familiesInPastoralCare: count of unique memberIds in open
+      care cases where type = "marriage_counseling" or "family_crisis",
+    newFamiliesThisMonth: families where both members joinedDate
+      within last 30 days,
+    familyRetentionRate: families where BOTH spouses are active
+      / total complete families * 100,
+    familyDiscipleshipEnrollment: count of family groups where
+      at least one member is in an active discipleship track,
+    recentFamilyMilestones: from pastoral care milestones
+      where type IN ["marriage_restored","other"] last 30 days
+  }
+
+Add route to /api/v1/analytics:
+  GET /family-ministry → getFamilyMinistryDashboard
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ADDITION 7: EXPORT ENHANCEMENTS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+They specifically require PDF, Excel, and CSV exports
+with automated weekly/monthly/quarterly/annual reports.
+
+Install: npm install exceljs (for proper Excel generation)
+
+Create src/utils/exportHelpers.js:
+
+  generateExcelReport(data, sheetConfig):
+    Uses exceljs to generate a proper .xlsx file:
+    - Church header with logo placeholder + report title
+    - Styled headers (navy background, white text)
+    - Data rows with alternating row colors
+    - Auto-width columns
+    - Summary row at bottom (totals where applicable)
+    - Returns Buffer
+    
+  generateCSVExport(data, headers):
+    Simple CSV generation
+    Returns string
+
+  For PDF: use existing pdfkit (already installed Phase 4)
+    Add generateReportPDF(reportData, type) to handle
+    ministry, CBS, leadership, and strategic report PDFs
+
+Add export endpoints to each new module:
+  GET /ministry/export?format=pdf|excel|csv
+  GET /cbs/export?format=pdf|excel|csv
+  GET /leadership/export?format=pdf|excel|csv
+  GET /strategic/reports/export?format=pdf|excel|csv&type=quarterly|annual
+
+AUTOMATED REPORT SCHEDULER:
+  Create src/jobs/automatedReports.job.js:
+    
+    Weekly (every Monday 6 AM):
+      For each tenant: generate weekly summary
+      Modules: attendance, finance, cbs, visitors
+      Send as in-app notification to head_pastor with download link
+    
+    Monthly (1st of month 6 AM):
+      Full monthly report across all modules
+      Auto-refresh KPIs before generating
+      Send to head_pastor + associate_pastor
+    
+    Quarterly (1st of Jan/Apr/Jul/Oct 6 AM):
+      Balanced scorecard quarterly report
+      Ministry overview report
+      CBS pipeline report
+      Leadership readiness report
+    
+    Annual (1st Jan 7 AM):
+      Full annual consolidated report
+      KPI annual performance vs targets
+      Year-over-year comparisons
+    
+    Store generated report as a notification with
+    a flag indicating a downloadable report is ready.
+    
+  Register in server.js.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+VALIDATION FILES TO CREATE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+src/modules/ministry/ministry.validation.js:
+  createMinistry: name required, type valid enum, branch optional
+  addMember: memberId required, role optional string
+  createMeeting: date required, title required
+
+src/modules/cbs/cbs.validation.js:
+  createGroup: name required, type valid enum
+  addProspect: firstName, lastName required,
+    phone optional valid format, firstContactDate required
+  recordSession: date required, topic required,
+    attendees array required min 1
+
+src/modules/leadership/leadership.validation.js:
+  createProfile: memberId required, currentRole valid enum,
+    tier valid enum
+  addAssessment: type valid enum, all scores 1-10 range,
+    date required not future
+
+src/modules/strategic/strategic.validation.js:
+  createKPI: name required, unit valid enum,
+    annualTarget required positive number,
+    measurementFrequency valid enum, dataSource valid enum
+  recordKPIValue: value required number, period required string
+    format "YYYY-QN" or "YYYY-WNN" or "YYYY-MM"

@@ -3,7 +3,7 @@ import * as authService from './service.js';
 import { success } from '../../utils/apiResponse.js';
 
 export const login = asyncHandler(async (req, res) => {
-  const data = await authService.loginService(req.body);
+  const data = await authService.loginService(req.body, req);
   return success(res, data, 'Login successful.');
 });
 
@@ -13,7 +13,7 @@ export const refreshSession = asyncHandler(async (req, res) => {
 });
 
 export const logout = asyncHandler(async (req, res) => {
-  const data = await authService.logoutService(req.user);
+  const data = await authService.logoutService(req.user, req);
   return success(res, data, 'Logged out successfully.');
 });
 

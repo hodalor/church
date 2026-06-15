@@ -1,6 +1,8 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../core/database/local_database.dart';
 import '../../auth/providers/auth_provider.dart';
+import '../../members/providers/members_provider.dart';
 import '../data/attendance_repository.dart';
 import '../data/models/service.dart';
 
@@ -55,7 +57,11 @@ class AttendanceState {
 }
 
 final attendanceRepositoryProvider = Provider<AttendanceRepository>((ref) {
-  return AttendanceRepository(dio: ref.watch(dioProvider));
+  return AttendanceRepository(
+    dio: ref.watch(dioProvider),
+    database: ref.watch(appDatabaseProvider),
+    memberRepository: ref.watch(memberRepositoryProvider),
+  );
 });
 
 final attendanceProvider =

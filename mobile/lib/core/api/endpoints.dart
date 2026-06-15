@@ -28,6 +28,10 @@ class Endpoints {
   static const String analyticsInsights = '$apiV1/insights';
   static const String analyticsCriticalInsights = '$analyticsInsights/critical';
   static const String ai = '$apiV1/ai';
+  static const String ministry = '$apiV1/ministry';
+  static const String cbs = '$apiV1/cbs';
+  static const String leadership = '$apiV1/leadership';
+  static const String strategic = '$apiV1/strategic';
   static const String visitorsFollowUps = '$visitors/follow-ups';
   static const String visitorsPipeline = '$visitors/pipeline';
   static const String visitorsWorkflow = '$visitors/workflow';
@@ -133,6 +137,41 @@ class Endpoints {
       '$visitors/$visitorId/follow-ups/$followUpId/reschedule';
 
   static String financeTransaction(String id) => '$financeTransactions/$id';
+
+  static String ministryById(String id) => '$ministry/$id';
+
+  static String ministryMembers(String id) => '$ministry/$id/members';
+
+  static String ministryMeetings(String id) => '$ministry/$id/meetings';
+
+  static String memberMinistries(String memberId) => '$ministry/member/$memberId/ministries';
+
+  static String cbsGroup(String groupId) => '$cbs/groups/$groupId';
+
+  static String get cbsGroups => '$cbs/groups';
+
+  static String get cbsStats => '$cbs/groups/stats';
+
+  static String cbsGroupProspects(String groupId) => '$cbs/groups/$groupId/prospects';
+
+  static String cbsGroupProspect(String groupId, String prospectId) =>
+      '$cbs/groups/$groupId/prospects/$prospectId';
+
+  static String cbsGroupConvertProspect(String groupId, String prospectId) =>
+      '$cbs/groups/$groupId/prospects/$prospectId/convert';
+
+  static String cbsGroupSessions(String groupId) => '$cbs/groups/$groupId/sessions';
+
+  static String cbsGroupSession(String groupId, String sessionId) =>
+      '$cbs/groups/$groupId/sessions/$sessionId';
+
+  static String leadershipCandidate(String candidateId) => '$leadership/candidates/$candidateId';
+
+  static String leadershipPlan(String planId) => '$leadership/plans/$planId';
+
+  static String strategicPlan(String planId) => '$strategic/plans/$planId';
+
+  static String strategicKpi(String kpiId) => '$strategic/kpis/$kpiId';
 
   static String financeMemberHistory(String memberId) =>
       '$financeTransactions/by-member/$memberId';

@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { body, param } from 'express-validator';
 import auth from '../../middleware/auth.js';
+import auditMiddleware from '../../middleware/auditMiddleware.js';
 import tenantScope from '../../middleware/tenantScope.js';
 import validate from '../../middleware/validate.js';
 import { createHttpError } from '../../utils/httpError.js';
@@ -26,7 +27,7 @@ const requireBulkImportRole = (req, res, next) => {
 router.use(auth, tenantScope);
 
 router.get('/', memberController.getAllMembers);
-router.post('/', createMemberValidation, validate, memberController.createMember);
+router.post('/', auditMiddleware('members', 'Member'), createMemberValidation, validate, memberController.createMember);
 router.get('/search', memberController.searchMembers);
 router.get('/stats', memberController.getMemberStats);
 router.get('/health-scores', memberController.getMembersByHealthStatus);
@@ -37,7 +38,7 @@ router.post(
   validate,
   memberController.bulkImportMembers,
 );
-router.get('/export', memberController.exportMembers);
+router.get('/export', auditMiddleware('members', 'Member', { action: 'EXPORT' }), memberController.exportMembers);
 router.get(
   '/family/:familyGroupId',
   [param('familyGroupId').trim().notEmpty().withMessage('Family group ID is required.')],
@@ -73,18 +74,21 @@ router.get(
 );
 router.get(
   '/:memberId',
+  auditMiddleware('members', 'Member', { logView: true }),
   [param('memberId').trim().notEmpty().withMessage('Member ID is required.')],
   validate,
   memberController.getMemberById,
 );
 router.patch(
   '/:memberId',
+  auditMiddleware('members', 'Member'),
   [param('memberId').trim().notEmpty().withMessage('Member ID is required.'), ...updateMemberValidation],
   validate,
   memberController.updateMember,
 );
 router.delete(
   '/:memberId',
+  auditMiddleware('members', 'Member'),
   [param('memberId').trim().notEmpty().withMessage('Member ID is required.')],
   validate,
   memberController.softDeleteMember,

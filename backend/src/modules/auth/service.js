@@ -10,6 +10,7 @@ import { autoLinkUserToMember } from '../users/memberLink.service.js';
 import { resolveTenantCapabilities, resolveUserCapabilities } from '../access/capabilities.js';
 import RefreshToken from './refreshToken.model.js';
 import { normalizeBranchList } from '../../utils/branchScope.js';
+import { logAudit } from '../../utils/auditLogger.js';
 
 const REFRESH_TOKEN_SALT_ROUNDS = 10;
 
@@ -49,16 +50,62 @@ const saveRefreshTokenDocument = async ({ refreshToken, userId, tenantId }) => {
   });
 };
 
-export const loginService = async ({ tenantId, username, pin }) => {
+const logAuthAudit = ({
+  tenantId,
+  userId,
+  userName,
+  userRole,
+  action,
+  description,
+  req,
+  statusCode,
+}) => {
+  if (!tenantId) {
+    return;
+  }
+
+  logAudit({
+    tenantId,
+    userId,
+    userName,
+    userRole,
+    action,
+    module: 'auth',
+    entityType: 'User',
+    entityId: userId,
+    entityName: userName,
+    description,
+    req,
+    statusCode,
+  });
+};
+
+export const loginService = async ({ tenantId, username, pin }, req) => {
   const normalizedTenantId = tenantId.trim().toLowerCase();
   const normalizedUsername = username.trim();
 
   const tenant = await Tenant.findOne({ tenantId: normalizedTenantId });
   if (!tenant) {
+    logAuthAudit({
+      tenantId: normalizedTenantId,
+      userName: normalizedUsername,
+      action: 'LOGIN_FAILED',
+      description: `Failed login attempt for ${normalizedUsername}: tenant not found`,
+      req,
+      statusCode: 404,
+    });
     throw createHttpError(404, 'Tenant not found');
   }
 
   if (!tenant.isActive || tenant.isSuspended) {
+    logAuthAudit({
+      tenantId: normalizedTenantId,
+      userName: normalizedUsername,
+      action: 'LOGIN_FAILED',
+      description: `Failed login attempt for ${normalizedUsername}: account suspended`,
+      req,
+      statusCode: 403,
+    });
     throw createHttpError(403, 'Account suspended');
   }
 
@@ -68,10 +115,28 @@ export const loginService = async ({ tenantId, username, pin }) => {
   });
 
   if (!user) {
+    logAuthAudit({
+      tenantId: normalizedTenantId,
+      userName: normalizedUsername,
+      action: 'LOGIN_FAILED',
+      description: `Failed login attempt for ${normalizedUsername}: invalid user`,
+      req,
+      statusCode: 401,
+    });
     throw createHttpError(401, 'Invalid credentials');
   }
 
   if (!user.isActive) {
+    logAuthAudit({
+      tenantId: normalizedTenantId,
+      userId: user._id.toString(),
+      userName: user.fullName || user.username,
+      userRole: user.role,
+      action: 'LOGIN_FAILED',
+      description: `Failed login attempt for ${user.username}: user inactive`,
+      req,
+      statusCode: 403,
+    });
     throw createHttpError(403, 'User account is inactive');
   }
 
@@ -79,6 +144,16 @@ export const loginService = async ({ tenantId, username, pin }) => {
 
   const isPinValid = await comparePin(pin, user.pinHash);
   if (!isPinValid) {
+    logAuthAudit({
+      tenantId: normalizedTenantId,
+      userId: user._id.toString(),
+      userName: user.fullName || user.username,
+      userRole: user.role,
+      action: 'LOGIN_FAILED',
+      description: `Failed login attempt for ${user.username}: invalid PIN`,
+      req,
+      statusCode: 401,
+    });
     throw createHttpError(401, 'Invalid credentials');
   }
 
@@ -94,6 +169,17 @@ export const loginService = async ({ tenantId, username, pin }) => {
     refreshToken,
     userId: user._id,
     tenantId: user.tenantId,
+  });
+
+  logAuthAudit({
+    tenantId: user.tenantId,
+    userId: user._id.toString(),
+    userName: user.fullName || user.username,
+    userRole: user.role,
+    action: 'LOGIN',
+    description: `${user.fullName || user.username} signed in successfully`,
+    req,
+    statusCode: 200,
   });
 
   return {
@@ -186,8 +272,20 @@ export const refreshTokenService = async ({ refreshToken }) => {
   };
 };
 
-export const logoutService = async ({ userId }) => {
+export const logoutService = async ({ userId, tenantId, username, role }, req) => {
   await RefreshToken.deleteMany({ userId });
+
+  logAuthAudit({
+    tenantId,
+    userId,
+    userName: username,
+    userRole: role,
+    action: 'LOGOUT',
+    description: `${username || 'User'} logged out`,
+    req,
+    statusCode: 200,
+  });
+
   return { success: true };
 };
 

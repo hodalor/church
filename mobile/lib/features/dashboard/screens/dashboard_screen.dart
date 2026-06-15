@@ -9,7 +9,6 @@ import '../../../shared/widgets/empty_state_widget.dart';
 import '../../analytics/data/models/branch_metric.dart';
 import '../../analytics/data/models/hq_overview.dart';
 import '../../analytics/providers/hq_provider.dart';
-import '../../attendance/attendance_utils.dart';
 import '../../attendance/data/models/member_attendance_history.dart';
 import '../../attendance/providers/attendance_provider.dart';
 import '../../attendance/providers/my_attendance_provider.dart';
@@ -219,6 +218,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                 ),
               _DashboardMode.member => _buildMemberDashboard(
                   context: context,
+                  role: role,
                   attendanceHistoryAsync: attendanceHistoryAsync!,
                   upcomingEvents: upcomingEvents,
                   announcements: announcements,
@@ -312,6 +312,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
 
   Widget _buildMemberDashboard({
     required BuildContext context,
+    required String role,
     required AsyncValue<MemberAttendanceHistory> attendanceHistoryAsync,
     required List<Event> upcomingEvents,
     required List<InboxMessage> announcements,
@@ -406,6 +407,17 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
               icon: Icons.event_rounded,
               onTap: () => context.push('/events'),
             ),
+            _QuickActionCard(
+              label: 'Ministries',
+              icon: Icons.groups_3_rounded,
+              onTap: () => context.push('/ministry'),
+            ),
+            if (RoleHelper.canAccessCBS(role))
+              _QuickActionCard(
+                label: 'CBS Group',
+                icon: Icons.menu_book_rounded,
+                onTap: () => context.push('/cbs'),
+              ),
           ],
         ),
       ],
@@ -615,24 +627,24 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
           runSpacing: 12,
           children: <Widget>[
             _QuickActionCard(
+              label: 'Scorecard',
+              icon: Icons.track_changes_rounded,
+              onTap: () => context.push('/strategic/scorecard'),
+            ),
+            _QuickActionCard(
+              label: 'Leadership',
+              icon: Icons.account_tree_rounded,
+              onTap: () => context.push('/leadership/pipeline'),
+            ),
+            _QuickActionCard(
+              label: 'Ministries',
+              icon: Icons.groups_3_rounded,
+              onTap: () => context.push('/ministry'),
+            ),
+            _QuickActionCard(
               label: canAccessHq ? 'HQ Overview' : 'Intelligence',
               icon: Icons.hub_rounded,
               onTap: () => context.push(canAccessHq ? '/hq' : '/intelligence'),
-            ),
-            _QuickActionCard(
-              label: 'AI Assistant',
-              icon: Icons.auto_awesome_rounded,
-              onTap: () => context.push('/ai-assistant'),
-            ),
-            _QuickActionCard(
-              label: 'Reports',
-              icon: Icons.analytics_rounded,
-              onTap: () => context.push('/intelligence'),
-            ),
-            _QuickActionCard(
-              label: 'Insights',
-              icon: Icons.notification_important_rounded,
-              onTap: () => context.push('/insights'),
             ),
           ],
         ),

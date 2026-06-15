@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'sync_service.dart';
 
 class ConnectivityState {
   const ConnectivityState({
@@ -42,19 +43,25 @@ class ConnectivityNotifier extends StateNotifier<ConnectivityState> {
 
   Future<void> _bootstrap() async {
     final current = await _connectivity.checkConnectivity();
-    _apply(current);
-    _subscription = _connectivity.onConnectivityChanged.listen(_apply);
+    await _apply(current);
+    _subscription = _connectivity.onConnectivityChanged.listen((results) {
+      unawaited(_apply(results));
+    });
   }
 
-  void _apply(List<ConnectivityResult> results) {
+  Future<void> _apply(List<ConnectivityResult> results) async {
     final isOnline = !results.contains(ConnectivityResult.none);
     final reconnected = !state.isOnline && isOnline;
     state = ConnectivityState(
       isOnline: isOnline,
       justReconnected: reconnected,
     );
+
+    await _ref.read(syncServiceProvider).refreshStatus(isOnline: isOnline);
+
     if (reconnected) {
       _ref.read(connectivityRefreshTickProvider.notifier).state++;
+      unawaited(_ref.read(syncServiceProvider).syncAll());
     }
   }
 

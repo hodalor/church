@@ -55,8 +55,10 @@ import ConsolidatedReportsPage from './pages/hq/ConsolidatedReportsPage';
 import CreateBranchPage from './pages/hq/CreateBranchPage';
 import HQDashboard from './pages/hq/HQDashboard';
 import IntelligencePage from './pages/hq/IntelligencePage';
+import FamilyMinistryDashboard from './pages/hq/FamilyMinistryDashboard';
 import InsightsPage from './pages/insights/InsightsPage';
-import AuditLogPage from './pages/finance/AuditLogPage';
+import FinanceAuditLogPage from './pages/finance/AuditLogPage';
+import AuditLogPage from './pages/audit/AuditLogPage';
 import BudgetDetailPage from './pages/finance/BudgetDetailPage';
 import BudgetsPage from './pages/finance/BudgetsPage';
 import CreateBudgetPage from './pages/finance/CreateBudgetPage';
@@ -93,6 +95,37 @@ import TenantDetailPage from './pages/superadmin/TenantDetailPage';
 import TenantComparisonPage from './pages/superadmin/TenantComparisonPage';
 import TenantsListPage from './pages/superadmin/TenantsListPage';
 import SuperAdminUsersPage from './pages/superadmin/SuperAdminUsersPage';
+import {
+  CreateMeetingPage,
+  CreateMinistryPage,
+  MinistriesListPage,
+  MinistryDashboard,
+  MinistryDetailPage,
+} from './pages/ministry/Phase11MinistryPages';
+import {
+  AllProspectsPage,
+  CBSDashboard,
+  CBSGroupDetailPage,
+  CBSGroupsPage,
+  CBSPipelinePage,
+  CBSReportsPage,
+  CreateCBSGroupPage,
+  ProspectDetailPage,
+} from './pages/cbs/Phase11CbsPages';
+import {
+  CreateProfilePage,
+  LeadershipDashboard,
+  LeadershipProfilesPage,
+  LeadershipReportsPage,
+  ProfileDetailPage,
+  SuccessionPlanningPage,
+} from './pages/leadership/Phase11LeadershipPages';
+import StrategicDashboard from './pages/strategic/StrategicDashboard';
+import StrategicPlanPage from './pages/strategic/StrategicPlanPage';
+import KPIsPage from './pages/strategic/KPIsPage';
+import CreateKPIPage from './pages/strategic/CreateKPIPage';
+import BalancedScorecardPage from './pages/strategic/BalancedScorecardPage';
+import StrategicReportsPage from './pages/strategic/StrategicReportsPage';
 import { useAuthStore } from './stores/authStore';
 
 function HomeRedirect() {
@@ -532,6 +565,222 @@ export default function App() {
         }
       />
       <Route
+        path="/ministry"
+        element={
+          <ProtectedRoute allowedRoles={['super_admin', 'head_pastor', 'associate_pastor', 'volunteer_leader']}>
+            <MinistryDashboard />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/ministry/list"
+        element={
+          <ProtectedRoute allowedRoles={['super_admin', 'head_pastor', 'associate_pastor', 'volunteer_leader']}>
+            <MinistriesListPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/ministry/new"
+        element={
+          <ProtectedRoute allowedRoles={['super_admin', 'head_pastor', 'associate_pastor', 'volunteer_leader']}>
+            <CreateMinistryPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/ministry/:ministryId"
+        element={
+          <ProtectedRoute allowedRoles={['super_admin', 'head_pastor', 'associate_pastor', 'volunteer_leader']}>
+            <MinistryDetailPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/ministry/:ministryId/meetings/new"
+        element={
+          <ProtectedRoute allowedRoles={['super_admin', 'head_pastor', 'associate_pastor', 'volunteer_leader']}>
+            <CreateMeetingPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/cbs"
+        element={
+          <ProtectedRoute allowedRoles={['super_admin', 'head_pastor', 'associate_pastor', 'care_leader', 'cbs_leader']}>
+            <CBSDashboard />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/cbs/groups"
+        element={
+          <ProtectedRoute allowedRoles={['super_admin', 'head_pastor', 'associate_pastor', 'care_leader', 'cbs_leader']}>
+            <CBSGroupsPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/cbs/groups/new"
+        element={
+          <ProtectedRoute allowedRoles={['super_admin', 'head_pastor', 'associate_pastor', 'care_leader', 'cbs_leader']}>
+            <CreateCBSGroupPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/cbs/groups/:groupId"
+        element={
+          <ProtectedRoute allowedRoles={['super_admin', 'head_pastor', 'associate_pastor', 'care_leader', 'cbs_leader']}>
+            <CBSGroupDetailPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/cbs/prospects"
+        element={
+          <ProtectedRoute allowedRoles={['super_admin', 'head_pastor', 'associate_pastor', 'care_leader', 'cbs_leader']}>
+            <AllProspectsPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/cbs/prospects/pipeline"
+        element={
+          <ProtectedRoute allowedRoles={['super_admin', 'head_pastor', 'associate_pastor', 'care_leader', 'cbs_leader']}>
+            <CBSPipelinePage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/cbs/prospects/:prospectId"
+        element={
+          <ProtectedRoute allowedRoles={['super_admin', 'head_pastor', 'associate_pastor', 'care_leader', 'cbs_leader']}>
+            <ProspectDetailPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/cbs/reports"
+        element={
+          <ProtectedRoute allowedRoles={['super_admin', 'head_pastor', 'associate_pastor', 'care_leader', 'cbs_leader']}>
+            <CBSReportsPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/leadership"
+        element={
+          <ProtectedRoute allowedRoles={['super_admin', 'head_pastor']}>
+            <LeadershipDashboard />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/leadership/profiles"
+        element={
+          <ProtectedRoute allowedRoles={['super_admin', 'head_pastor']}>
+            <LeadershipProfilesPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/leadership/profiles/new"
+        element={
+          <ProtectedRoute allowedRoles={['super_admin', 'head_pastor']}>
+            <CreateProfilePage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/leadership/profiles/:profileId"
+        element={
+          <ProtectedRoute allowedRoles={['super_admin', 'head_pastor']}>
+            <ProfileDetailPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/leadership/succession"
+        element={
+          <ProtectedRoute allowedRoles={['super_admin', 'head_pastor']}>
+            <SuccessionPlanningPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/leadership/reports"
+        element={
+          <ProtectedRoute allowedRoles={['super_admin', 'head_pastor']}>
+            <LeadershipReportsPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/strategic"
+        element={
+          <ProtectedRoute allowedRoles={['super_admin', 'head_pastor']}>
+            <StrategicDashboard />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/strategic/plan"
+        element={
+          <ProtectedRoute allowedRoles={['super_admin', 'head_pastor']}>
+            <StrategicPlanPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/strategic/kpis"
+        element={
+          <ProtectedRoute allowedRoles={['super_admin', 'head_pastor']}>
+            <KPIsPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/strategic/kpis/new"
+        element={
+          <ProtectedRoute allowedRoles={['super_admin', 'head_pastor']}>
+            <CreateKPIPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/strategic/scorecard"
+        element={
+          <ProtectedRoute allowedRoles={['super_admin', 'head_pastor']}>
+            <BalancedScorecardPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/strategic/reports"
+        element={
+          <ProtectedRoute allowedRoles={['super_admin', 'head_pastor']}>
+            <StrategicReportsPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/audit"
+        element={
+          <ProtectedRoute allowedRoles={['super_admin', 'head_pastor']}>
+            <AuditLogPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/hq/family-ministry"
+        element={
+          <ProtectedRoute allowedRoles={['super_admin', 'head_pastor', 'associate_pastor', 'care_leader']}>
+            <FamilyMinistryDashboard />
+          </ProtectedRoute>
+        }
+      />
+      <Route
         path="/settings"
         element={
           <ProtectedRoute>
@@ -650,7 +899,7 @@ export default function App() {
       <Route path="/finance/budgets/:budgetId" element={<ProtectedRoute><BudgetDetailPage /></ProtectedRoute>} />
       <Route path="/finance/reports" element={<ProtectedRoute><ReportsPage /></ProtectedRoute>} />
       <Route path="/finance/reports/statement/:memberId" element={<ProtectedRoute><MemberStatementPage /></ProtectedRoute>} />
-      <Route path="/finance/audit" element={<ProtectedRoute><AuditLogPage /></ProtectedRoute>} />
+      <Route path="/finance/audit" element={<ProtectedRoute><FinanceAuditLogPage /></ProtectedRoute>} />
       <Route
         path="/superadmin/dashboard"
         element={

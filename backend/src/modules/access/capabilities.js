@@ -131,6 +131,56 @@ const capabilitySections = [
     groups: [{ key: 'history', actions: ['view'] }],
   },
   {
+    module: 'audit',
+    actions: ['view'],
+    groups: [
+      { key: 'suspicious', actions: ['view'] },
+      { key: 'exports', actions: ['view'] },
+    ],
+  },
+  {
+    module: 'ministry',
+    actions: ['view', 'create', 'modify', 'delete'],
+    groups: [
+      { key: 'members', actions: ['view', 'create', 'modify', 'delete', 'bulk'] },
+      { key: 'meetings', actions: ['view', 'create', 'modify', 'record_attendance'] },
+      { key: 'reports', actions: ['view'] },
+    ],
+  },
+  {
+    module: 'cbs',
+    actions: ['view', 'create', 'modify', 'delete'],
+    groups: [
+      { key: 'prospects', actions: ['view', 'create', 'modify', 'convert'] },
+      { key: 'sessions', actions: ['view', 'create', 'modify'] },
+      { key: 'reports', actions: ['view'] },
+    ],
+  },
+  {
+    module: 'leadership',
+    actions: ['view', 'create', 'modify', 'delete'],
+    groups: [
+      { key: 'candidates', actions: ['view', 'create', 'modify'] },
+      { key: 'succession', actions: ['view', 'create', 'modify'] },
+      { key: 'reports', actions: ['view'] },
+    ],
+  },
+  {
+    module: 'strategic',
+    actions: ['view', 'create', 'modify', 'delete'],
+    groups: [
+      { key: 'plans', actions: ['view', 'create', 'modify'] },
+      { key: 'kpis', actions: ['view', 'create', 'modify'] },
+      { key: 'initiatives', actions: ['view', 'create', 'modify'] },
+      { key: 'reports', actions: ['view'] },
+    ],
+  },
+  {
+    module: 'family',
+    actions: ['view'],
+    groups: [{ key: 'analytics', actions: ['view'] }],
+  },
+  {
     module: 'platform',
     actions: ['view'],
     groups: [
@@ -263,6 +313,14 @@ const analyticsLeadershipCapabilities = [
   'notifications.view',
   'manual.view',
 ];
+const phase11LeadershipCapabilities = [
+  ...getCapabilitiesForSection('audit', ['view']),
+  ...getCapabilitiesForSection('ministry', ['view', 'create', 'modify', 'delete', 'bulk', 'record_attendance']),
+  ...getCapabilitiesForSection('cbs', ['view', 'create', 'modify', 'delete', 'convert']),
+  ...getCapabilitiesForSection('leadership', ['view', 'create', 'modify']),
+  ...getCapabilitiesForSection('strategic', ['view', 'create', 'modify']),
+  ...getCapabilitiesForSection('family', ['view']),
+];
 export const defaultCapabilitiesByRole = {
   super_admin: [...supportedCapabilities],
   head_pastor: [...supportedCapabilities],
@@ -286,6 +344,7 @@ export const defaultCapabilitiesByRole = {
     ...getCapabilitiesForSection('volunteers', ['delete']),
     ...getCapabilitiesForSection('events', ['delete']),
     ...analyticsLeadershipCapabilities,
+    ...phase11LeadershipCapabilities,
   ],
   treasurer: [
     ...financeFullCapabilities,
@@ -293,6 +352,7 @@ export const defaultCapabilitiesByRole = {
     ...getCapabilitiesForSection('members', ['view']),
     ...getCapabilitiesForSection('analytics', ['view']),
     ...getCapabilitiesForSection('hq', ['view']),
+    ...getCapabilitiesForSection('strategic', ['view', 'create', 'modify']),
   ],
   finance_officer: [...financeRecordOnlyCapabilities, ...getCapabilitiesForSection('analytics', ['view'])],
   media_team: [...mediaCapabilities],
@@ -303,11 +363,15 @@ export const defaultCapabilitiesByRole = {
     ...volunteerEventViewCapabilities,
     ...getCapabilitiesForSection('insights', ['view']),
     ...getCapabilitiesForSection('ai', ['create', 'view']),
+    ...getCapabilitiesForSection('family', ['view']),
+    ...getCapabilitiesForSection('cbs', ['view', 'create', 'modify', 'convert']),
+    ...getCapabilitiesForSection('ministry', ['view']),
   ],
   volunteer_leader: [
     ...leadershipCapabilities,
     ...volunteerManagementCapabilities,
     ...getCapabilitiesForSection('insights', ['view']),
+    ...getCapabilitiesForSection('ministry', ['view', 'create', 'modify', 'record_attendance']),
   ],
   member: [...memberCapabilities],
 };

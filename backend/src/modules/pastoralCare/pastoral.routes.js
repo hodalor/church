@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import auth from '../../middleware/auth.js';
+import auditMiddleware from '../../middleware/auditMiddleware.js';
 import isSuperAdmin from '../../middleware/isSuperAdmin.js';
 import tenantScope from '../../middleware/tenantScope.js';
 import validate from '../../middleware/validate.js';
@@ -37,7 +38,7 @@ const adminPastoralRouter = Router();
 
 pastoralRouter.use(auth, tenantScope);
 
-pastoralRouter.post('/cases', createCaseValidation, validate, pastoralController.createCase);
+pastoralRouter.post('/cases', auditMiddleware('pastoral', 'CareCase'), createCaseValidation, validate, pastoralController.createCase);
 pastoralRouter.get('/cases', listCasesValidation, validate, pastoralController.getAllCases);
 pastoralRouter.get('/cases/stats', pastoralReportsValidation, validate, pastoralController.getCareStats);
 pastoralRouter.get('/cases/my', pastoralReportsValidation, validate, pastoralController.getMyCases);
@@ -49,10 +50,11 @@ pastoralRouter.get(
   pastoralController.getMemberCases,
 );
 pastoralRouter.get('/cases/:caseId', caseIdParamValidation, validate, pastoralController.getCaseById);
-pastoralRouter.patch('/cases/:caseId', updateCaseValidation, validate, pastoralController.updateCase);
-pastoralRouter.patch('/cases/:caseId/assign', assignCaseValidation, validate, pastoralController.assignCase);
+pastoralRouter.patch('/cases/:caseId', auditMiddleware('pastoral', 'CareCase'), updateCaseValidation, validate, pastoralController.updateCase);
+pastoralRouter.patch('/cases/:caseId/assign', auditMiddleware('pastoral', 'CareCase', { action: 'ASSIGN' }), assignCaseValidation, validate, pastoralController.assignCase);
 pastoralRouter.patch(
   '/cases/:caseId/status',
+  auditMiddleware('pastoral', 'CareCase', { action: 'STATUS_CHANGE' }),
   updateCaseStatusValidation,
   validate,
   pastoralController.updateCaseStatus,
@@ -90,6 +92,7 @@ pastoralRouter.patch(
 
 pastoralRouter.post(
   '/appointments',
+  auditMiddleware('pastoral', 'Appointment'),
   createAppointmentValidation,
   validate,
   pastoralController.createAppointment,
@@ -121,26 +124,29 @@ pastoralRouter.get(
 );
 pastoralRouter.patch(
   '/appointments/:appointmentId',
+  auditMiddleware('pastoral', 'Appointment'),
   updateAppointmentValidation,
   validate,
   pastoralController.updateAppointment,
 );
 pastoralRouter.patch(
   '/appointments/:appointmentId/status',
+  auditMiddleware('pastoral', 'Appointment', { action: 'STATUS_CHANGE' }),
   updateAppointmentStatusValidation,
   validate,
   pastoralController.updateAppointmentStatus,
 );
 pastoralRouter.delete(
   '/appointments/:appointmentId',
+  auditMiddleware('pastoral', 'Appointment'),
   cancelAppointmentValidation,
   validate,
   pastoralController.cancelAppointment,
 );
 
-pastoralRouter.post('/tracks', createTrackValidation, validate, pastoralController.createTrack);
+pastoralRouter.post('/tracks', auditMiddleware('pastoral', 'DiscipleshipTrack'), createTrackValidation, validate, pastoralController.createTrack);
 pastoralRouter.get('/tracks', listTracksValidation, validate, pastoralController.getAllTracks);
-pastoralRouter.patch('/tracks/:trackId', updateTrackValidation, validate, pastoralController.updateTrack);
+pastoralRouter.patch('/tracks/:trackId', auditMiddleware('pastoral', 'DiscipleshipTrack'), updateTrackValidation, validate, pastoralController.updateTrack);
 
 pastoralRouter.post('/discipleship/enroll', enrollMemberValidation, validate, pastoralController.enrollMember);
 pastoralRouter.get(

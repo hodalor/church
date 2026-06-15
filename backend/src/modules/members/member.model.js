@@ -23,6 +23,15 @@ const familyRelationshipSchema = new Schema(
   { _id: false },
 );
 
+const ministryMembershipSchema = new Schema(
+  {
+    ministryId: { type: String, trim: true },
+    ministryName: { type: String, trim: true },
+    role: { type: String, trim: true },
+  },
+  { _id: false },
+);
+
 const memberSchema = new Schema(
   {
     tenantId: { type: String, required: true, index: true, trim: true, lowercase: true },
@@ -68,6 +77,10 @@ const memberSchema = new Schema(
     familyGroupId: { type: String, trim: true },
     familyRelationships: {
       type: [familyRelationshipSchema],
+      default: () => [],
+    },
+    ministries: {
+      type: [ministryMembershipSchema],
       default: () => [],
     },
     occupation: { type: String, trim: true },

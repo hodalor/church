@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+
+import '../../../core/services/sync_service.dart';
 import '../../../core/utils/app_colors.dart';
 import '../../../core/utils/app_text_styles.dart';
 import '../providers/member_detail_provider.dart';
@@ -8,7 +11,6 @@ import '../widgets/member_avatar.dart';
 import '../widgets/member_bottom_navigation.dart';
 import '../widgets/qr_code_sheet.dart';
 import '../../volunteers/providers/volunteer_roster_provider.dart';
-import 'package:go_router/go_router.dart';
 
 class MyProfileScreen extends ConsumerWidget {
   const MyProfileScreen({super.key});
@@ -17,6 +19,7 @@ class MyProfileScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final profileAsync = ref.watch(myProfileProvider);
     final volunteerAsync = ref.watch(myVolunteerProfileProvider);
+    final sync = ref.watch(syncStatusProvider).valueOrNull ?? const SyncStatus();
 
     return Scaffold(
       backgroundColor: AppColors.surface,
@@ -121,6 +124,41 @@ class MyProfileScreen extends ConsumerWidget {
               ),
               const SizedBox(height: 16),
               HealthScoreCard(healthScore: member.healthScore),
+              const SizedBox(height: 16),
+              Container(
+                decoration: BoxDecoration(
+                  color: AppColors.card,
+                  borderRadius: BorderRadius.circular(24),
+                  border: Border.all(color: AppColors.inputBorder),
+                ),
+                child: ListTile(
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 20,
+                    vertical: 8,
+                  ),
+                  leading: CircleAvatar(
+                    backgroundColor: AppColors.primary.withValues(alpha: 0.1),
+                    child: const Icon(Icons.sync_rounded, color: AppColors.primary),
+                  ),
+                  title: const Text('Sync Status'),
+                  subtitle: Text(
+                    sync.pendingTotal > 0
+                        ? '${sync.pendingTotal} items pending sync'
+                        : sync.lastSyncAt == null
+                            ? 'No offline items pending'
+                            : 'Last synced recently',
+                  ),
+                  trailing: sync.pendingTotal > 0
+                      ? Badge(
+                          label: Text(
+                            sync.pendingTotal > 99 ? '99+' : '${sync.pendingTotal}',
+                          ),
+                          backgroundColor: AppColors.accent,
+                        )
+                      : const Icon(Icons.chevron_right_rounded),
+                  onTap: () => context.push('/settings/sync'),
+                ),
+              ),
             ],
           ),
         ),

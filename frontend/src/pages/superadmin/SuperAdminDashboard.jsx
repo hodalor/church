@@ -201,6 +201,63 @@ export default function SuperAdminDashboard() {
           </Card>
         </div>
 
+        <Card className="space-y-4">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <p className="text-sm uppercase tracking-[0.25em] text-white/55">Phase 11 Workspaces</p>
+              <h2 className="mt-2 text-2xl font-semibold text-white">Growth and intelligence modules</h2>
+            </div>
+            <Button variant="ghost" onClick={() => navigate('/strategic')}>
+              Open Strategic Plan
+            </Button>
+          </div>
+          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+            {[
+              {
+                title: 'Ministry Management',
+                description: 'Track ministry health, meetings, and unassigned members.',
+                to: '/ministry',
+              },
+              {
+                title: 'CBS Groups',
+                description: 'Manage study groups, prospects, pipeline movement, and conversion.',
+                to: '/cbs',
+              },
+              {
+                title: 'Leadership',
+                description: 'Review development readiness, succession risk, and leadership profiles.',
+                to: '/leadership',
+              },
+              {
+                title: 'Strategic Plan',
+                description: 'Monitor balanced scorecards, KPI health, and strategic execution.',
+                to: '/strategic',
+              },
+              {
+                title: 'Family Ministry',
+                description: 'See family segments, at-risk households, and care insights.',
+                to: '/hq/family-ministry',
+              },
+              {
+                title: 'Audit Trail',
+                description: 'Inspect suspicious activity, export history, and tenant audit logs.',
+                to: '/audit',
+              },
+            ].map((item) => (
+              <button
+                key={item.title}
+                type="button"
+                onClick={() => navigate(item.to)}
+                className="rounded-2xl border border-white/10 bg-[#101827] p-4 text-left transition hover:border-accent/30"
+              >
+                <p className="text-lg font-semibold text-white">{item.title}</p>
+                <p className="mt-2 text-sm leading-6 text-white/60">{item.description}</p>
+                <p className="mt-4 text-xs uppercase tracking-[0.18em] text-accent">Open workspace</p>
+              </button>
+            ))}
+          </div>
+        </Card>
+
         <div className="grid gap-6 xl:grid-cols-[1.15fr_0.85fr]">
           <Card className="space-y-4">
             <div className="flex items-center justify-between">

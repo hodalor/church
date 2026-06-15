@@ -18,6 +18,7 @@ class MemberRepository {
     int page = 1,
     int limit = 20,
     String? search,
+    bool? activeOnly,
   }) async {
     final response = await _dio.get<Map<String, dynamic>>(
       Endpoints.members,
@@ -25,6 +26,7 @@ class MemberRepository {
         'page': page,
         'limit': limit,
         if (search != null && search.trim().isNotEmpty) 'search': search.trim(),
+        if (activeOnly != null) 'isActive': activeOnly,
       },
     );
 
