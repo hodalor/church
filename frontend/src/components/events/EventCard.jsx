@@ -11,17 +11,17 @@ export default function EventCard({ event, to }) {
   return (
     <Link
       to={to || `/events/${event.eventId || event._id}`}
-      className="block overflow-hidden rounded-[22px] border border-white/10 bg-[#0d1320] shadow-[0_14px_32px_rgba(0,0,0,0.16)] transition hover:border-white/20"
+      className="block overflow-hidden rounded-[22px] border border-white/10 bg-[linear-gradient(135deg,rgba(34,211,238,0.1),rgba(13,19,32,0.98))] shadow-[0_14px_32px_rgba(0,0,0,0.16)] transition hover:border-cyan-300/25"
     >
       {event.bannerUrl ? (
         <img src={event.bannerUrl} alt={event.title} className="h-44 w-full object-cover" />
       ) : (
         <div className="h-44 bg-[linear-gradient(135deg,#1E2A4A_0%,rgba(201,168,76,0.7)_100%)]" />
       )}
-      <div className="space-y-4 p-4 text-white">
+      <div className="space-y-3.5 p-3.5 text-white">
         <div className="flex items-start justify-between gap-3">
           <div>
-            <p className="text-lg font-semibold">{event.title}</p>
+            <p className="text-base font-semibold">{event.title}</p>
             <p className="mt-1 text-sm text-white/55">
               {new Date(event.startDate).toLocaleDateString()} • {event.venue || event.branch || 'Venue TBD'}
             </p>

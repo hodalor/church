@@ -161,10 +161,22 @@ function Badge({ children, className = 'bg-white/10 text-white/75' }) {
 }
 
 function StatCard({ label, value, helper }) {
+  const tones = {
+    'Active Groups': 'bg-[linear-gradient(135deg,rgba(56,189,248,0.16),rgba(14,22,36,0.98))]',
+    'Total Prospects': 'bg-[linear-gradient(135deg,rgba(167,139,250,0.16),rgba(14,22,36,0.98))]',
+    'Baptisms This Month': 'bg-[linear-gradient(135deg,rgba(52,211,153,0.16),rgba(14,22,36,0.98))]',
+    'Conversion Rate': 'bg-[linear-gradient(135deg,rgba(244,201,93,0.18),rgba(14,22,36,0.98))]',
+    Prospects: 'bg-[linear-gradient(135deg,rgba(167,139,250,0.16),rgba(14,22,36,0.98))]',
+    Studying: 'bg-[linear-gradient(135deg,rgba(52,211,153,0.16),rgba(14,22,36,0.98))]',
+    Baptised: 'bg-[linear-gradient(135deg,rgba(244,201,93,0.18),rgba(14,22,36,0.98))]',
+    Groups: 'bg-[linear-gradient(135deg,rgba(56,189,248,0.16),rgba(14,22,36,0.98))]',
+    Converted: 'bg-[linear-gradient(135deg,rgba(52,211,153,0.16),rgba(14,22,36,0.98))]',
+    'Sessions This Month': 'bg-[linear-gradient(135deg,rgba(34,211,238,0.16),rgba(14,22,36,0.98))]',
+  };
   return (
-    <Card className="min-h-[110px] p-4">
-      <p className="text-[11px] uppercase tracking-[0.22em] text-white/55">{label}</p>
-      <p className="mt-3 font-serif text-4xl font-semibold leading-none text-white">{value}</p>
+    <Card className={`min-h-[102px] p-3.5 ${tones[label] || ''}`}>
+      <p className="inline-flex rounded-full border border-white/10 bg-white/8 px-2.5 py-1 text-[10px] uppercase tracking-[0.22em] text-white/75">{label}</p>
+      <p className="mt-3 font-serif text-[2rem] font-semibold leading-none text-white">{value}</p>
       {helper ? <p className="mt-2 text-xs text-white/40">{helper}</p> : null}
     </Card>
   );
@@ -173,7 +185,7 @@ function StatCard({ label, value, helper }) {
 function ProspectCard({ prospect, onView }) {
   const stage = getStage(prospect.studyStage);
   return (
-    <div className="rounded-3xl border border-white/10 bg-[#101827] p-4">
+    <div className="rounded-3xl border border-cyan-300/15 bg-[linear-gradient(135deg,rgba(34,211,238,0.12),rgba(13,19,32,0.98))] p-3.5">
       <div className="flex items-start justify-between gap-3">
         <div>
           <p className="font-semibold text-white">
@@ -203,7 +215,7 @@ function UserSelect({ label, value, onChange, users, required = false }) {
         value={value}
         onChange={(event) => onChange(event.target.value)}
         required={required}
-        className="w-full rounded-xl border border-white/10 bg-[#101827] px-3.5 py-2.5 text-sm text-white outline-none"
+        className="w-full rounded-xl border border-cyan-300/15 bg-cyan-400/10 px-3.5 py-2.5 text-sm text-white outline-none"
       >
         <option value="">Select user</option>
         {users.map((user) => (
@@ -284,7 +296,7 @@ export function CBSDashboard() {
                 const width = totalProspects ? (count / totalProspects) * 100 : 0;
                 return (
                   <Link key={stage} to={`/cbs/prospects/pipeline?stage=${stage}`} className="block">
-                    <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+                    <div className="rounded-2xl border border-cyan-300/15 bg-cyan-400/10 p-3.5">
                       <div className="mb-2 flex items-center justify-between gap-3">
                         <p className="font-medium text-white">{meta.label}</p>
                         <Badge className={meta.badgeClassName}>{count}</Badge>
@@ -306,7 +318,7 @@ export function CBSDashboard() {
             </div>
             <div className="space-y-3">
               {(baptismsQuery.data || []).map((item) => (
-                <div key={item.prospectId} className="rounded-3xl border border-amber-400/25 bg-amber-400/10 p-4">
+                <div key={item.prospectId} className="rounded-3xl border border-amber-400/25 bg-[linear-gradient(135deg,rgba(244,201,93,0.18),rgba(13,19,32,0.98))] p-3.5">
                   <p className="font-semibold text-white">🎉 {item.fullName}</p>
                   <p className="mt-1 text-sm text-white/70">
                     {item.groupName || 'CBS Group'} • {formatDate(item.baptismDate || item.updatedAt)}
@@ -385,7 +397,7 @@ export function CBSGroupsPage() {
           <div className="grid gap-4 lg:grid-cols-2 xl:grid-cols-3">
             {groups.map((group) => (
               <Link key={group.groupId} to={`/cbs/groups/${group.groupId}`}>
-                <div className="rounded-3xl border border-white/10 bg-[#101827] p-5 transition hover:border-accent/30">
+                  <div className="rounded-3xl border border-cyan-300/15 bg-[linear-gradient(135deg,rgba(34,211,238,0.12),rgba(13,19,32,0.98))] p-4 transition hover:border-accent/30">
                   <div className="flex items-start justify-between gap-3">
                     <div>
                       <p className="text-xs uppercase tracking-[0.18em] text-white/45">{group.zone || 'Zone TBD'}</p>
@@ -796,7 +808,7 @@ export function CBSGroupDetailPage() {
             </div>
             <div className="space-y-3">
               {sessions.map((session) => (
-                <div key={session.sessionId} className="rounded-3xl border border-white/10 bg-white/5 p-5">
+                <div key={session.sessionId} className="rounded-3xl border border-violet-300/15 bg-violet-400/10 p-4">
                   <div className="flex flex-wrap items-start justify-between gap-3">
                     <div>
                       <p className="text-lg font-semibold text-white">{session.studyTopic}</p>
@@ -831,13 +843,13 @@ export function CBSGroupDetailPage() {
                 <p className="text-[11px] uppercase tracking-[0.22em] text-accent">Attendance Trend</p>
                 <h2 className="mt-2 text-2xl font-semibold text-white">Sessions over time</h2>
               </div>
-              <div className="h-80">
+              <div className="h-64">
                 <ResponsiveContainer width="100%" height="100%">
                   <LineChart data={(report.sessions?.trend || []).map((item, index) => ({ label: `S${index + 1}`, attendanceCount: item.attendanceCount || 0 }))}>
                     <XAxis dataKey="label" stroke="#94a3b8" />
                     <YAxis stroke="#94a3b8" />
                     <Tooltip />
-                    <Line type="monotone" dataKey="attendanceCount" stroke="#C9A84C" strokeWidth={3} />
+                    <Line type="monotone" dataKey="attendanceCount" stroke="#A78BFA" strokeWidth={3} />
                   </LineChart>
                 </ResponsiveContainer>
               </div>

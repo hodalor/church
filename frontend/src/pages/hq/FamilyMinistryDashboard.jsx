@@ -42,13 +42,21 @@ function Badge({ children, className = 'bg-white/10 text-white/75' }) {
 }
 
 function StatCard({ label, value, icon: Icon, helper }) {
+  const tones = {
+    'Total Families': 'bg-[linear-gradient(135deg,rgba(56,189,248,0.16),rgba(14,22,36,0.98))]',
+    'Total Members': 'bg-[linear-gradient(135deg,rgba(167,139,250,0.16),rgba(14,22,36,0.98))]',
+    'Families With Children': 'bg-[linear-gradient(135deg,rgba(52,211,153,0.16),rgba(14,22,36,0.98))]',
+    Couples: 'bg-[linear-gradient(135deg,rgba(244,201,93,0.18),rgba(14,22,36,0.98))]',
+    'Single Parent Families': 'bg-[linear-gradient(135deg,rgba(251,146,60,0.16),rgba(14,22,36,0.98))]',
+    'At-Risk Families': 'bg-[linear-gradient(135deg,rgba(251,113,133,0.16),rgba(14,22,36,0.98))]',
+  };
   return (
-    <Card className="min-h-[116px] p-4">
+    <Card className={`min-h-[102px] p-3.5 ${tones[label] || ''}`}>
       <div className="flex items-center justify-between gap-3">
-        <p className="text-[11px] uppercase tracking-[0.22em] text-white/55">{label}</p>
+        <p className="inline-flex rounded-full border border-white/10 bg-white/8 px-2.5 py-1 text-[10px] uppercase tracking-[0.22em] text-white/75">{label}</p>
         <Icon className="h-5 w-5 text-accent" />
       </div>
-      <p className="mt-3 font-serif text-4xl font-semibold leading-none text-white">{value}</p>
+      <p className="mt-3 font-serif text-[2rem] font-semibold leading-none text-white">{value}</p>
       {helper ? <p className="mt-2 text-xs text-white/40">{helper}</p> : null}
     </Card>
   );
@@ -138,14 +146,14 @@ export default function FamilyMinistryDashboard() {
               <p className="text-[11px] uppercase tracking-[0.22em] text-accent">Family Segments</p>
               <h2 className="mt-2 text-2xl font-semibold text-white">Household size and children mix</h2>
             </div>
-            <div className="h-80">
+            <div className="h-64">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={segmentSizes}>
                   <XAxis dataKey="name" stroke="#94A3B8" hide />
                   <YAxis stroke="#94A3B8" />
                   <Tooltip />
-                  <Bar dataKey="memberCount" fill="#1E2A4A" radius={[8, 8, 0, 0]} />
-                  <Bar dataKey="children" fill="#C9A84C" radius={[8, 8, 0, 0]} />
+                  <Bar dataKey="memberCount" fill="#38BDF8" radius={[8, 8, 0, 0]} />
+                  <Bar dataKey="children" fill="#A78BFA" radius={[8, 8, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             </div>
@@ -157,7 +165,7 @@ export default function FamilyMinistryDashboard() {
               <h2 className="mt-2 text-2xl font-semibold text-white">Status distribution</h2>
             </div>
             {statusMix.length ? (
-              <div className="h-80">
+              <div className="h-64">
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
                     <Pie data={statusMix} dataKey="value" nameKey="name" innerRadius={60} outerRadius={90}>
@@ -227,7 +235,7 @@ export default function FamilyMinistryDashboard() {
             {segments.length ? (
               <div className="space-y-3">
                 {segments.slice(0, 8).map((segment, index) => (
-                  <div key={segment.familyGroupId || `segment-${index}`} className="rounded-2xl border border-white/10 bg-[#101827] px-4 py-3">
+                  <div key={segment.familyGroupId || `segment-${index}`} className="rounded-2xl border border-cyan-300/15 bg-cyan-400/10 px-4 py-3">
                     <div className="flex items-center justify-between gap-3">
                       <div>
                         <p className="font-medium text-white">{segment.familyGroupId || `Family ${index + 1}`}</p>
@@ -239,7 +247,7 @@ export default function FamilyMinistryDashboard() {
                     </div>
                     <div className="mt-3 flex flex-wrap gap-2">
                       {(segment.members || []).slice(0, 4).map((member) => (
-                        <span key={member.memberId || member.name} className="rounded-full border border-white/10 bg-[#0D1320] px-3 py-1 text-xs text-white/70">
+                        <span key={member.memberId || member.name} className="rounded-full border border-cyan-300/15 bg-cyan-900/30 px-3 py-1 text-xs text-white/70">
                           {member.name}
                         </span>
                       ))}

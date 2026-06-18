@@ -42,13 +42,19 @@ function Badge({ children, className = 'bg-white/10 text-white/75' }) {
 }
 
 function StatCard({ label, value, icon: Icon, helper }) {
+  const tones = {
+    'Audit Events': 'bg-[linear-gradient(135deg,rgba(56,189,248,0.16),rgba(14,22,36,0.98))]',
+    'Suspicious Events': 'bg-[linear-gradient(135deg,rgba(251,113,133,0.16),rgba(14,22,36,0.98))]',
+    'Login Events': 'bg-[linear-gradient(135deg,rgba(167,139,250,0.16),rgba(14,22,36,0.98))]',
+    Exports: 'bg-[linear-gradient(135deg,rgba(244,201,93,0.18),rgba(14,22,36,0.98))]',
+  };
   return (
-    <Card className="min-h-[116px] p-4">
+    <Card className={`min-h-[102px] p-3.5 ${tones[label] || ''}`}>
       <div className="flex items-center justify-between gap-3">
-        <p className="text-[11px] uppercase tracking-[0.22em] text-white/55">{label}</p>
+        <p className="inline-flex rounded-full border border-white/10 bg-white/8 px-2.5 py-1 text-[10px] uppercase tracking-[0.22em] text-white/75">{label}</p>
         <Icon className="h-5 w-5 text-accent" />
       </div>
-      <p className="mt-3 font-serif text-4xl font-semibold leading-none text-white">{value}</p>
+      <p className="mt-3 font-serif text-[2rem] font-semibold leading-none text-white">{value}</p>
       {helper ? <p className="mt-2 text-xs text-white/40">{helper}</p> : null}
     </Card>
   );
@@ -161,7 +167,7 @@ export default function AuditLogPage() {
             <Input label="Search" value={search} onChange={(event) => setSearch(event.target.value)} placeholder="User, entity, or description" />
             <label className="space-y-1.5">
               <span className="text-[13px] font-medium text-white/75">Module</span>
-              <select value={moduleFilter} onChange={(event) => setModuleFilter(event.target.value)} className="w-full rounded-xl border border-white/10 bg-[#101827] px-3.5 py-2.5 text-sm text-white outline-none">
+              <select value={moduleFilter} onChange={(event) => setModuleFilter(event.target.value)} className="w-full rounded-xl border border-cyan-300/15 bg-cyan-400/10 px-3.5 py-2.5 text-sm text-white outline-none">
                 <option value="">All modules</option>
                 {modules.map((item) => (
                   <option key={item} value={item}>
@@ -172,7 +178,7 @@ export default function AuditLogPage() {
             </label>
             <label className="space-y-1.5">
               <span className="text-[13px] font-medium text-white/75">Action</span>
-              <select value={actionFilter} onChange={(event) => setActionFilter(event.target.value)} className="w-full rounded-xl border border-white/10 bg-[#101827] px-3.5 py-2.5 text-sm text-white outline-none">
+              <select value={actionFilter} onChange={(event) => setActionFilter(event.target.value)} className="w-full rounded-xl border border-cyan-300/15 bg-cyan-400/10 px-3.5 py-2.5 text-sm text-white outline-none">
                 <option value="">All actions</option>
                 {actions.map((item) => (
                   <option key={item} value={item}>
@@ -256,7 +262,7 @@ export default function AuditLogPage() {
             <div className="space-y-3">
               {(summary.byModule || []).length ? (
                 summary.byModule.map((item) => (
-                  <div key={item.module} className="rounded-2xl border border-white/10 bg-[#101827] px-4 py-3">
+                  <div key={item.module} className="rounded-2xl border border-violet-300/15 bg-violet-400/10 px-4 py-3">
                     <div className="flex items-center justify-between gap-3">
                       <p className="font-medium text-white">{formatLabel(item.module)}</p>
                       <Badge>{item.count}</Badge>

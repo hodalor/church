@@ -16,6 +16,9 @@ import {
 import useVisitorsAccess from '../../hooks/useVisitorsAccess';
 import { getStageMeta } from '../../utils/visitors';
 
+const filterInputClass =
+  'w-full rounded-[16px] border border-white/10 bg-[linear-gradient(135deg,rgba(34,211,238,0.1),rgba(16,24,39,0.98))] px-3.5 py-2.5 text-sm text-white outline-none transition placeholder:text-white/35 focus:border-cyan-300/40';
+
 export default function PipelinePage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -163,7 +166,7 @@ export default function PipelinePage() {
           </div>
         </div>
 
-        <Card className="space-y-4">
+        <Card className="space-y-4 border-white/10 bg-[linear-gradient(135deg,rgba(34,211,238,0.12),rgba(13,19,32,0.98))]">
           <div className="grid gap-3 lg:grid-cols-4">
             <FilterSelect
               label="Branch"
@@ -192,7 +195,7 @@ export default function PipelinePage() {
                     <div
                       ref={provided.innerRef}
                       {...provided.droppableProps}
-                      className={`min-h-[520px] w-[320px] shrink-0 rounded-[24px] border p-4 ${meta.columnClassName}`}
+                      className={`min-h-[500px] w-[312px] shrink-0 rounded-[22px] border p-3.5 shadow-[0_14px_30px_rgba(0,0,0,0.14)] ${meta.columnClassName}`}
                     >
                       <div className="mb-4 flex items-center justify-between gap-3">
                         <div>
@@ -262,7 +265,7 @@ function FilterSelect({ label, value, onChange, options }) {
       <select
         value={value}
         onChange={(event) => onChange(event.target.value)}
-        className="w-full rounded-xl border border-white/10 bg-[#101827] px-3.5 py-2.5 text-sm text-white outline-none"
+        className={filterInputClass}
       >
         {options.map((option) => (
           <option key={`${label}-${option.value}`} value={option.value}>
@@ -282,7 +285,7 @@ function InputDate({ label, value, onChange }) {
         type="date"
         value={value}
         onChange={(event) => onChange(event.target.value)}
-        className="w-full rounded-xl border border-white/10 bg-[#101827] px-3.5 py-2.5 text-sm text-white outline-none"
+        className={filterInputClass}
       />
     </label>
   );

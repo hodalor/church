@@ -316,10 +316,21 @@ function Badge({ children, className = 'bg-white/10 text-white/75' }) {
 }
 
 function StatCard({ label, value, helper, action }) {
+  const tones = {
+    'On Track': 'bg-[linear-gradient(135deg,rgba(52,211,153,0.16),rgba(14,22,36,0.98))]',
+    'At Risk': 'bg-[linear-gradient(135deg,rgba(244,201,93,0.18),rgba(14,22,36,0.98))]',
+    'Off Track': 'bg-[linear-gradient(135deg,rgba(251,113,133,0.16),rgba(14,22,36,0.98))]',
+    Exceeded: 'bg-[linear-gradient(135deg,rgba(56,189,248,0.16),rgba(14,22,36,0.98))]',
+    Plans: 'bg-[linear-gradient(135deg,rgba(56,189,248,0.16),rgba(14,22,36,0.98))]',
+    'Active Plans': 'bg-[linear-gradient(135deg,rgba(52,211,153,0.16),rgba(14,22,36,0.98))]',
+    'Total KPIs': 'bg-[linear-gradient(135deg,rgba(167,139,250,0.16),rgba(14,22,36,0.98))]',
+    'Blocked Initiatives': 'bg-[linear-gradient(135deg,rgba(251,113,133,0.16),rgba(14,22,36,0.98))]',
+    Initiatives: 'bg-[linear-gradient(135deg,rgba(167,139,250,0.16),rgba(14,22,36,0.98))]',
+  };
   return (
-    <Card className="min-h-[116px] p-4">
-      <p className="text-[11px] uppercase tracking-[0.22em] text-white/55">{label}</p>
-      <p className="mt-3 font-serif text-4xl font-semibold leading-none text-white">{value}</p>
+    <Card className={`min-h-[102px] p-3.5 ${tones[label] || ''}`}>
+      <p className="inline-flex rounded-full border border-white/10 bg-white/8 px-2.5 py-1 text-[10px] uppercase tracking-[0.22em] text-white/75">{label}</p>
+      <p className="mt-3 font-serif text-[2rem] font-semibold leading-none text-white">{value}</p>
       {helper ? <p className="mt-2 text-xs text-white/40">{helper}</p> : null}
       {action ? <div className="mt-3">{action}</div> : null}
     </Card>
@@ -384,7 +395,7 @@ function TextareaField({ label, value, onChange, rows = 4, placeholder = '' }) {
         value={value}
         onChange={(event) => onChange(event.target.value)}
         placeholder={placeholder}
-        className="w-full rounded-xl border border-white/10 bg-[#101827] px-3.5 py-2.5 text-sm text-white outline-none placeholder:text-white/28"
+        className="w-full rounded-xl border border-violet-300/15 bg-violet-400/10 px-3.5 py-2.5 text-sm text-white outline-none placeholder:text-white/28"
       />
     </label>
   );
@@ -395,7 +406,7 @@ function UserSelect({ value, onChange, users }) {
     <select
       value={value}
       onChange={(event) => onChange(event.target.value)}
-      className="w-full rounded-xl border border-white/10 bg-[#101827] px-3.5 py-2.5 text-sm text-white outline-none"
+      className="w-full rounded-xl border border-violet-300/15 bg-violet-400/10 px-3.5 py-2.5 text-sm text-white outline-none"
     >
       <option value="">Select owner</option>
       {users.map((user) => (
@@ -519,7 +530,7 @@ function PlanBlueprintBuilder({ pillars, setPillars }) {
       </div>
 
       {pillars.map((pillar, pillarIndex) => (
-        <Card key={pillar.id} className="space-y-4 border-white/10 bg-[#101827]">
+        <Card key={pillar.id} className="space-y-4 border-violet-300/15 bg-[linear-gradient(135deg,rgba(167,139,250,0.14),rgba(13,19,32,0.98))]">
           <div className="flex items-center justify-between gap-3">
             <div className="flex items-center gap-3">
               <div className="h-4 w-4 rounded-full" style={{ backgroundColor: pillar.color }} />
@@ -544,7 +555,7 @@ function PlanBlueprintBuilder({ pillars, setPillars }) {
                 type="color"
                 value={pillar.color}
                 onChange={(event) => updatePillar(pillar.id, { color: event.target.value })}
-                className="h-11 w-full rounded-xl border border-white/10 bg-[#101827] px-2 py-1"
+                className="h-11 w-full rounded-xl border border-violet-300/15 bg-violet-400/10 px-2 py-1"
               />
             </label>
             <label className="block space-y-1.5">
@@ -552,7 +563,7 @@ function PlanBlueprintBuilder({ pillars, setPillars }) {
               <select
                 value={pillar.icon}
                 onChange={(event) => updatePillar(pillar.id, { icon: event.target.value })}
-                className="w-full rounded-xl border border-white/10 bg-[#101827] px-3.5 py-2.5 text-sm text-white outline-none"
+                className="w-full rounded-xl border border-violet-300/15 bg-violet-400/10 px-3.5 py-2.5 text-sm text-white outline-none"
               >
                 {iconOptions.map((icon) => (
                   <option key={icon} value={icon}>
@@ -571,7 +582,7 @@ function PlanBlueprintBuilder({ pillars, setPillars }) {
 
           <div className="space-y-4">
             {(pillar.focusAreas || []).map((area, areaIndex) => (
-              <div key={area.id} className="rounded-2xl border border-white/10 bg-[#0D1320] p-4">
+              <div key={area.id} className="rounded-2xl border border-violet-300/15 bg-violet-950/35 p-4">
                 <div className="flex items-center justify-between gap-3">
                   <Input
                     label={`Focus Area ${areaIndex + 1}`}
@@ -1030,11 +1041,11 @@ export function StrategicPlanPage() {
                 </Button>
               </div>
               <div className="grid gap-4 md:grid-cols-2">
-                <Card className="border-white/10 bg-[#101827]">
+                <Card className="border-violet-300/15 bg-violet-400/10">
                   <p className="text-[11px] uppercase tracking-[0.18em] text-white/45">Vision</p>
                   <p className="mt-3 text-sm leading-6 text-white/70">{String(plan.vision || '').split('\n\nMission:\n')[0] || 'Not provided'}</p>
                 </Card>
-                <Card className="border-white/10 bg-[#101827]">
+                <Card className="border-violet-300/15 bg-violet-400/10">
                   <p className="text-[11px] uppercase tracking-[0.18em] text-white/45">Mission</p>
                   <p className="mt-3 text-sm leading-6 text-white/70">{String(plan.vision || '').split('\n\nMission:\n')[1] || 'Not provided'}</p>
                 </Card>
@@ -1058,11 +1069,11 @@ export function StrategicPlanPage() {
                   </div>
                   <div className="grid gap-4 md:grid-cols-2">
                     {pillar.focusAreas.map((area) => (
-                      <div key={area.id} className="rounded-2xl border border-white/10 bg-[#101827] p-4">
+                      <div key={area.id} className="rounded-2xl border border-violet-300/15 bg-violet-400/10 p-4">
                         <p className="text-sm font-semibold text-white">{area.name}</p>
                         <div className="mt-3 space-y-2">
                           {area.objectives.map((objective) => (
-                            <div key={objective.id} className="rounded-xl border border-white/8 bg-[#0D1320] px-3 py-2 text-sm text-white/70">
+                            <div key={objective.id} className="rounded-xl border border-violet-300/12 bg-violet-950/35 px-3 py-2 text-sm text-white/70">
                               {objective.value}
                             </div>
                           ))}
@@ -1751,14 +1762,14 @@ export function StrategicReportsPage() {
                   <p className="text-[11px] uppercase tracking-[0.22em] text-accent">Performance</p>
                   <h2 className="mt-2 text-2xl font-semibold text-white">Current vs target</h2>
                 </div>
-                <div className="h-80">
+            <div className="h-64">
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart data={trendRows}>
                       <XAxis dataKey="name" stroke="#94A3B8" hide />
                       <YAxis stroke="#94A3B8" />
                       <Tooltip />
-                      <Bar dataKey="target" fill="#445A8B" radius={[8, 8, 0, 0]} />
-                      <Bar dataKey="current" fill="#C9A84C" radius={[8, 8, 0, 0]} />
+                    <Bar dataKey="target" fill="#38BDF8" radius={[8, 8, 0, 0]} />
+                    <Bar dataKey="current" fill="#C9A84C" radius={[8, 8, 0, 0]} />
                     </BarChart>
                   </ResponsiveContainer>
                 </div>
@@ -1768,7 +1779,7 @@ export function StrategicReportsPage() {
                   <p className="text-[11px] uppercase tracking-[0.22em] text-accent">Pillar Mix</p>
                   <h2 className="mt-2 text-2xl font-semibold text-white">Score distribution</h2>
                 </div>
-                <div className="h-80">
+            <div className="h-64">
                   <ResponsiveContainer width="100%" height="100%">
                     <PieChart>
                       <Pie data={pillarRows} dataKey="score" nameKey="name" innerRadius={60} outerRadius={90}>
@@ -1792,13 +1803,13 @@ export function StrategicReportsPage() {
                 <p className="text-[11px] uppercase tracking-[0.22em] text-accent">Quarterly View</p>
                 <h2 className="mt-2 text-2xl font-semibold text-white">Pillar score trend</h2>
               </div>
-              <div className="h-80">
+              <div className="h-64">
                 <ResponsiveContainer width="100%" height="100%">
                   <LineChart data={pillarRows}>
                     <XAxis dataKey="name" stroke="#94A3B8" />
                     <YAxis stroke="#94A3B8" />
                     <Tooltip />
-                    <Line dataKey="score" stroke="#C9A84C" strokeWidth={3} />
+                    <Line dataKey="score" stroke="#A78BFA" strokeWidth={3} />
                     <Line dataKey="offTrack" stroke="#EF4444" strokeWidth={2} />
                   </LineChart>
                 </ResponsiveContainer>
@@ -1812,7 +1823,7 @@ export function StrategicReportsPage() {
               {dueRows.length ? (
                 <div className="space-y-3">
                   {dueRows.map((item) => (
-                    <div key={`${item.name}-${item.dueDate}`} className="rounded-2xl border border-white/10 bg-[#101827] px-4 py-3">
+                    <div key={`${item.name}-${item.dueDate}`} className="rounded-2xl border border-cyan-300/15 bg-cyan-400/10 px-4 py-3">
                       <p className="font-medium text-white">{item.name}</p>
                       <p className="mt-1 text-sm text-white/55">
                         Due {item.dueDate} • Owner {item.owner}

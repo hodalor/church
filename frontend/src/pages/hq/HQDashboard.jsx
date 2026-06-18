@@ -316,7 +316,7 @@ export default function HQDashboard() {
           </div>
         }
       >
-        <div className="grid gap-3 xl:grid-cols-[1fr_auto_auto]">
+        <div className="grid items-start gap-3 xl:grid-cols-[minmax(0,1fr)_220px_220px]">
           <CardSkeleton className="xl:hidden" />
           <div className="rounded-[22px] border border-white/8 bg-[#0d1320] p-4 text-white xl:col-span-1">
             <p className="text-sm text-white/60">{workspaceName}</p>
@@ -326,7 +326,7 @@ export default function HQDashboard() {
           <select
             value={period}
             onChange={(event) => setPeriod(event.target.value)}
-            className="rounded-[22px] border border-white/10 bg-[#0d1320] px-4 py-3 text-white"
+            className="w-full rounded-[22px] border border-white/10 bg-[#0d1320] px-4 py-3 text-white"
           >
             {PERIOD_OPTIONS.map((option) => (
               <option key={option.value} value={option.value}>
@@ -337,7 +337,7 @@ export default function HQDashboard() {
           <select
             value={branchId}
             onChange={(event) => setBranchId(event.target.value)}
-            className="rounded-[22px] border border-white/10 bg-[#0d1320] px-4 py-3 text-white"
+            className="w-full rounded-[22px] border border-white/10 bg-[#0d1320] px-4 py-3 text-white"
           >
             <option value="">All Branches</option>
             {branches.map((branch) => (
@@ -372,13 +372,13 @@ export default function HQDashboard() {
         )}
 
         {isLoading ? (
-          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+          <div className="grid items-start gap-4 md:grid-cols-2 xl:grid-cols-4">
             {Array.from({ length: 8 }).map((_, index) => (
               <CardSkeleton key={index} />
             ))}
           </div>
         ) : (
-          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+          <div className="grid items-start gap-4 md:grid-cols-2 xl:grid-cols-4">
             {metrics.map((metric) => (
               <KpiCard key={metric.label} {...metric} />
             ))}
@@ -403,15 +403,15 @@ export default function HQDashboard() {
             <TableRowSkeleton columns={7} rows={6} />
           ) : matrixView === 'table' ? (
             <div className="overflow-x-auto">
-              <table className="min-w-full text-left text-sm text-white/75">
+              <table className="w-full min-w-[860px] text-left text-sm text-white/75">
                 <thead className="text-[11px] uppercase tracking-[0.22em] text-white/40">
                   <tr>
-                    <th className="pb-3">Branch</th>
-                    <th className="pb-3">Members</th>
-                    <th className="pb-3">Attendance</th>
-                    <th className="pb-3">Income</th>
-                    <th className="pb-3">Health</th>
-                    <th className="pb-3">Grade</th>
+                    <th className="pb-3 pr-4">Branch</th>
+                    <th className="pb-3 pr-4">Members</th>
+                    <th className="pb-3 pr-4">Attendance</th>
+                    <th className="pb-3 pr-4">Income</th>
+                    <th className="pb-3 pr-4">Health</th>
+                    <th className="pb-3 pr-4">Grade</th>
                     <th className="pb-3">Trend</th>
                   </tr>
                 </thead>
@@ -421,16 +421,16 @@ export default function HQDashboard() {
                     return (
                       <tr
                         key={branch.branchId}
-                        className="cursor-pointer border-t border-white/8 transition hover:bg-white/[0.03]"
+                        className="cursor-pointer border-t border-white/8 align-top transition hover:bg-white/[0.03]"
                         onClick={() => navigate(`/hq/branches/${branch.branchId}`)}
                       >
-                        <td className="py-3 font-medium text-white">{branch.branchName}</td>
-                        <td>{formatAnalyticsNumber(branch.members?.total || 0)}</td>
-                        <td>{formatAnalyticsNumber(branch.attendance?.avg || 0)}</td>
-                        <td>{formatAnalyticsCurrency(branch.finance?.income || 0, currencyCode, currencySymbol)}</td>
-                        <td>{formatAnalyticsNumber(branch.health?.score || 0)}</td>
-                        <td><HealthBadge grade={branch.health?.grade} /></td>
-                        <td className={trend.color}>{trend.icon}</td>
+                        <td className="py-3 pr-4 font-medium text-white">{branch.branchName}</td>
+                        <td className="py-3 pr-4">{formatAnalyticsNumber(branch.members?.total || 0)}</td>
+                        <td className="py-3 pr-4">{formatAnalyticsNumber(branch.attendance?.avg || 0)}</td>
+                        <td className="py-3 pr-4">{formatAnalyticsCurrency(branch.finance?.income || 0, currencyCode, currencySymbol)}</td>
+                        <td className="py-3 pr-4">{formatAnalyticsNumber(branch.health?.score || 0)}</td>
+                        <td className="py-3 pr-4"><HealthBadge grade={branch.health?.grade} /></td>
+                        <td className={`py-3 ${trend.color}`}>{trend.icon}</td>
                       </tr>
                     );
                   })}
@@ -460,7 +460,7 @@ export default function HQDashboard() {
           )}
         </AnalyticsSection>
 
-        <div className="grid gap-4 xl:grid-cols-[1.5fr_1fr_0.9fr]">
+        <div className="grid items-start gap-4 xl:grid-cols-[1.5fr_1fr_0.9fr]">
           <ChartPanel title="12-Month Growth Trend" subtitle="Members, attendance, and income across the selected scope.">
             {growthQuery.isLoading ? (
               <ChartSkeleton />
@@ -534,12 +534,12 @@ export default function HQDashboard() {
           </ChartPanel>
         </div>
 
-        <div className="grid gap-4 xl:grid-cols-[1.2fr_0.8fr]">
+        <div className="grid items-start gap-4 xl:grid-cols-[1.2fr_0.8fr]">
           <AnalyticsSection
             title="Operational Health"
             subtitle="Volunteer coverage, pastoral load, communication cadence, and event readiness."
           >
-            <div className="grid gap-4 md:grid-cols-2">
+            <div className="grid items-start gap-4 md:grid-cols-2">
               <KpiCard
                 label="Volunteers"
                 value={`${Number(operationalHealth.volunteers?.coverageRate || 0).toFixed(1)}%`}

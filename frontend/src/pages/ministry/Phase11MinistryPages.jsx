@@ -159,10 +159,24 @@ const exportMembers = (ministry, members) => {
 };
 
 function StatCard({ label, value, helper }) {
+  const tones = {
+    'Total Ministries': 'bg-[linear-gradient(135deg,rgba(56,189,248,0.16),rgba(14,22,36,0.98))]',
+    Active: 'bg-[linear-gradient(135deg,rgba(52,211,153,0.16),rgba(14,22,36,0.98))]',
+    'Members in Ministries': 'bg-[linear-gradient(135deg,rgba(167,139,250,0.16),rgba(14,22,36,0.98))]',
+    'Members in No Ministry': 'bg-[linear-gradient(135deg,rgba(244,201,93,0.18),rgba(14,22,36,0.98))]',
+    'Meetings This Month': 'bg-[linear-gradient(135deg,rgba(34,211,238,0.16),rgba(14,22,36,0.98))]',
+    Leader: 'bg-[linear-gradient(135deg,rgba(34,211,238,0.16),rgba(14,22,36,0.98))]',
+    'Member Count': 'bg-[linear-gradient(135deg,rgba(56,189,248,0.16),rgba(14,22,36,0.98))]',
+    'Avg Attendance': 'bg-[linear-gradient(135deg,rgba(167,139,250,0.16),rgba(14,22,36,0.98))]',
+    'Action Points': 'bg-[linear-gradient(135deg,rgba(244,201,93,0.18),rgba(14,22,36,0.98))]',
+    'Total Meetings': 'bg-[linear-gradient(135deg,rgba(56,189,248,0.16),rgba(14,22,36,0.98))]',
+    Completed: 'bg-[linear-gradient(135deg,rgba(52,211,153,0.16),rgba(14,22,36,0.98))]',
+    'Top Attendees': 'bg-[linear-gradient(135deg,rgba(167,139,250,0.16),rgba(14,22,36,0.98))]',
+  };
   return (
-    <Card className="min-h-[110px] p-4">
-      <p className="text-[11px] uppercase tracking-[0.22em] text-white/55">{label}</p>
-      <p className="mt-3 font-serif text-4xl font-semibold leading-none text-white">{value}</p>
+    <Card className={`min-h-[102px] p-3.5 ${tones[label] || ''}`}>
+      <p className="inline-flex rounded-full border border-white/10 bg-white/8 px-2.5 py-1 text-[10px] uppercase tracking-[0.22em] text-white/75">{label}</p>
+      <p className="mt-3 font-serif text-[2rem] font-semibold leading-none text-white">{value}</p>
       {helper ? <p className="mt-2 text-xs text-white/40">{helper}</p> : null}
     </Card>
   );
@@ -183,7 +197,7 @@ function UserSelect({ label, value, onChange, options }) {
       <select
         value={value}
         onChange={(event) => onChange(event.target.value)}
-        className="w-full rounded-xl border border-white/10 bg-[#101827] px-3.5 py-2.5 text-sm text-white outline-none"
+      className="w-full rounded-xl border border-cyan-300/15 bg-cyan-400/10 px-3.5 py-2.5 text-sm text-white outline-none"
       >
         <option value="">Select user</option>
         {options.map((user) => (
@@ -251,7 +265,7 @@ export function MinistryDashboard() {
                 const health = getHealth(item.health);
                 return (
                   <Link key={item.ministryId} to={`/ministry/${item.ministryId}`}>
-                    <div className="rounded-3xl border border-white/10 bg-[#101827] p-5 transition hover:border-accent/30">
+                    <div className="rounded-3xl border border-cyan-300/15 bg-[linear-gradient(135deg,rgba(34,211,238,0.12),rgba(13,19,32,0.98))] p-4 transition hover:border-accent/30">
                       <div className="flex items-start justify-between gap-3">
                         <div>
                           <p className="text-xs uppercase tracking-[0.18em] text-white/45">{formatLabel(item.type)}</p>
@@ -288,7 +302,7 @@ export function MinistryDashboard() {
             </div>
             <div className="space-y-3">
               {(stats.upcomingMeetings || []).map((meeting) => (
-                <div key={meeting.meetingId} className="rounded-2xl border border-white/10 bg-white/5 px-4 py-4">
+                <div key={meeting.meetingId} className="rounded-2xl border border-cyan-300/15 bg-cyan-400/10 px-4 py-3">
                   <div className="flex flex-wrap items-center justify-between gap-3">
                     <div>
                       <p className="font-semibold text-white">{meeting.ministryName || meeting.title}</p>
@@ -384,7 +398,7 @@ export function MinistriesListPage() {
         <Card className="grid gap-4 lg:grid-cols-3">
           <label className="space-y-1.5">
             <span className="text-[13px] font-medium text-white/75">Type</span>
-            <select value={type} onChange={(event) => setType(event.target.value)} className="w-full rounded-xl border border-white/10 bg-[#101827] px-3.5 py-2.5 text-sm text-white">
+              <select value={type} onChange={(event) => setType(event.target.value)} className="w-full rounded-xl border border-cyan-300/15 bg-cyan-400/10 px-3.5 py-2.5 text-sm text-white">
               <option value="">All types</option>
               {ministryTypes.map((option) => (
                 <option key={option.value} value={option.value}>{option.label}</option>
@@ -393,7 +407,7 @@ export function MinistriesListPage() {
           </label>
           <label className="space-y-1.5">
             <span className="text-[13px] font-medium text-white/75">Branch</span>
-            <select value={branch} onChange={(event) => setBranch(event.target.value)} className="w-full rounded-xl border border-white/10 bg-[#101827] px-3.5 py-2.5 text-sm text-white">
+              <select value={branch} onChange={(event) => setBranch(event.target.value)} className="w-full rounded-xl border border-cyan-300/15 bg-cyan-400/10 px-3.5 py-2.5 text-sm text-white">
               <option value="">All branches</option>
               {branchOptions.map((option) => (
                 <option key={option} value={option}>{option}</option>
@@ -402,7 +416,7 @@ export function MinistriesListPage() {
           </label>
           <label className="space-y-1.5">
             <span className="text-[13px] font-medium text-white/75">Status</span>
-            <select value={status} onChange={(event) => setStatus(event.target.value)} className="w-full rounded-xl border border-white/10 bg-[#101827] px-3.5 py-2.5 text-sm text-white">
+              <select value={status} onChange={(event) => setStatus(event.target.value)} className="w-full rounded-xl border border-cyan-300/15 bg-cyan-400/10 px-3.5 py-2.5 text-sm text-white">
               <option value="all">Active & inactive</option>
               <option value="active">Active</option>
               <option value="inactive">Inactive</option>
@@ -416,7 +430,7 @@ export function MinistriesListPage() {
               const health = getHealth(item.health);
               return (
                 <Link key={item.ministryId} to={`/ministry/${item.ministryId}`}>
-                  <div className="rounded-3xl border border-white/10 bg-[#101827] p-5 transition hover:border-accent/30">
+                  <div className="rounded-3xl border border-cyan-300/15 bg-[linear-gradient(135deg,rgba(34,211,238,0.12),rgba(13,19,32,0.98))] p-4 transition hover:border-accent/30">
                     <div className="flex items-center justify-between gap-3">
                       <div>
                         <p className="text-xs uppercase tracking-[0.18em] text-white/45">{formatLabel(item.type)}</p>

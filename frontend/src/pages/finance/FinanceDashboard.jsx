@@ -42,6 +42,10 @@ const periods = [
 ];
 
 const pieColors = ['#C9A84C', '#1E2A4A', '#8B5CF6', '#10B981', '#F97316', '#06B6D4'];
+const filterInputClass =
+  'w-full rounded-[16px] border border-white/10 bg-[linear-gradient(135deg,rgba(34,211,238,0.12),rgba(16,24,39,0.98))] px-4 py-3 text-sm text-white';
+const panelClass =
+  'border-white/10 bg-[linear-gradient(135deg,rgba(15,23,42,0.94),rgba(8,13,24,0.98))]';
 
 export default function FinanceDashboard() {
   const navigate = useNavigate();
@@ -153,7 +157,7 @@ export default function FinanceDashboard() {
             <select
               value={period}
               onChange={(event) => setPeriod(event.target.value)}
-              className="w-full rounded-2xl border border-white/10 bg-[#101827] px-4 py-3 text-sm text-white"
+              className={filterInputClass}
             >
               {periods.map((item) => (
                 <option key={item.value} value={item.value}>
@@ -168,7 +172,7 @@ export default function FinanceDashboard() {
               type="date"
               value={from}
               onChange={(event) => setFrom(event.target.value)}
-              className="w-full rounded-2xl border border-white/10 bg-[#101827] px-4 py-3 text-sm text-white"
+              className={filterInputClass}
             />
           </label>
           <label className="space-y-2">
@@ -177,7 +181,7 @@ export default function FinanceDashboard() {
               type="date"
               value={to}
               onChange={(event) => setTo(event.target.value)}
-              className="w-full rounded-2xl border border-white/10 bg-[#101827] px-4 py-3 text-sm text-white"
+              className={filterInputClass}
             />
           </label>
           <label className="space-y-2">
@@ -185,7 +189,7 @@ export default function FinanceDashboard() {
             <select
               value={incomeTypeFilter}
               onChange={(event) => setIncomeTypeFilter(event.target.value)}
-              className="w-full rounded-2xl border border-white/10 bg-[#101827] px-4 py-3 text-sm text-white"
+              className={filterInputClass}
             >
               <option value="">All income types</option>
               {incomeTypeOptions.map((option) => (
@@ -223,12 +227,14 @@ export default function FinanceDashboard() {
             helper="Count in selected filter"
           />
           <Card
-            className="cursor-pointer space-y-3"
+            className="cursor-pointer space-y-3 border-amber-300/18 bg-[linear-gradient(135deg,rgba(244,201,93,0.18),rgba(13,19,32,0.98))] p-3.5"
             onClick={() => navigate('/finance/expenses?status=pending')}
           >
-            <p className="text-sm uppercase tracking-[0.22em] text-white/55">Pending Approvals</p>
+            <p className="inline-flex rounded-full border border-white/10 bg-white/8 px-2.5 py-1 text-[10px] uppercase tracking-[0.22em] text-white/72">
+              Pending Approvals
+            </p>
             <div className="flex items-center gap-3">
-              <p className="text-5xl font-semibold text-white">{summary.pendingExpenseApprovals || 0}</p>
+              <p className="text-[2.15rem] font-semibold leading-none text-white">{summary.pendingExpenseApprovals || 0}</p>
               <span className="rounded-full bg-amber-500/15 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-amber-300">
                 Pending
               </span>
@@ -239,7 +245,7 @@ export default function FinanceDashboard() {
 
         {canSeeSmartInsights ? <SmartInsightBanner insights={intelligenceQuery.data} /> : null}
 
-        <Card className="space-y-5">
+        <Card className={`space-y-5 ${panelClass}`}>
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div className="flex flex-wrap gap-2">
               {[
@@ -255,7 +261,7 @@ export default function FinanceDashboard() {
                   className={`rounded-full px-4 py-2 text-sm font-semibold ${
                     dataTab === tab.value
                       ? 'bg-accent text-primary'
-                      : 'border border-white/10 bg-[#101827] text-white/65'
+                      : 'border border-white/10 bg-white/6 text-white/65'
                   }`}
                 >
                   {tab.label}
@@ -270,7 +276,7 @@ export default function FinanceDashboard() {
           </div>
 
           {dataTab === 'performance' ? (
-            <div className="h-[420px]">
+            <div className="h-[320px]">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={monthlyChartData}>
                   <XAxis dataKey="label" stroke="#94a3b8" />
@@ -286,7 +292,7 @@ export default function FinanceDashboard() {
 
           {dataTab === 'types' ? (
             <div className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
-              <div className="h-[420px]">
+              <div className="h-[320px]">
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
                     <Pie data={incomeTypeData} dataKey="value" nameKey="name" outerRadius={128} innerRadius={64}>
@@ -308,7 +314,7 @@ export default function FinanceDashboard() {
                 {incomeTypeData.map((item, index) => (
                   <div
                     key={item.name}
-                    className="flex items-center justify-between rounded-2xl border border-white/10 bg-[#101827] px-4 py-4"
+                    className="flex items-center justify-between rounded-[18px] border border-violet-400/14 bg-[linear-gradient(135deg,rgba(167,139,250,0.14),rgba(16,24,39,0.98))] px-3.5 py-3"
                   >
                     <div className="flex items-center gap-3">
                       <span
@@ -325,7 +331,7 @@ export default function FinanceDashboard() {
           ) : null}
 
           {dataTab === 'transactions' ? (
-            <div className="overflow-x-auto rounded-[24px] border border-white/8 bg-[#0b101a]">
+            <div className="overflow-x-auto rounded-[22px] border border-white/8 bg-[linear-gradient(135deg,rgba(8,15,28,0.96),rgba(15,23,42,0.96))]">
               <table className="min-w-full divide-y divide-white/10 text-left text-sm">
                 <thead className="bg-white/[0.02] text-[11px] uppercase tracking-[0.24em] text-white/35">
                   <tr>
@@ -382,7 +388,7 @@ export default function FinanceDashboard() {
           {dataTab === 'approvals' && canApproveFinance ? (
             <div className="space-y-3">
               {pendingExpenses.map((expense) => (
-                <div key={expense.expenseId} className="rounded-[24px] border border-white/8 bg-[#101827] p-5">
+                <div key={expense.expenseId} className="rounded-[22px] border border-rose-400/14 bg-[linear-gradient(135deg,rgba(244,114,182,0.12),rgba(16,24,39,0.98))] p-4">
                   <div className="flex items-start justify-between gap-3">
                     <div>
                       <p className="font-semibold text-white">{expense.description}</p>
@@ -412,7 +418,7 @@ export default function FinanceDashboard() {
                 </div>
               ))}
               {!pendingExpenses.length ? (
-                <p className="rounded-2xl border border-white/10 bg-[#101827] px-4 py-6 text-sm text-white/55">
+                <p className="rounded-[18px] border border-white/10 bg-[linear-gradient(135deg,rgba(34,211,238,0.1),rgba(16,24,39,0.98))] px-4 py-6 text-sm text-white/55">
                   No pending approvals right now.
                 </p>
               ) : null}

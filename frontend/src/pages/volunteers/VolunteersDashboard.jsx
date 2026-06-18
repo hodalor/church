@@ -19,6 +19,16 @@ import { getUpcomingRosters } from '../../api/endpoints/rosters';
 import { getVolunteerStats } from '../../api/endpoints/volunteers';
 import useVolunteersAccess from '../../hooks/useVolunteersAccess';
 
+const statTones = [
+  'border-cyan-400/18 bg-[linear-gradient(135deg,rgba(34,211,238,0.14),rgba(13,19,32,0.98))]',
+  'border-emerald-400/18 bg-[linear-gradient(135deg,rgba(16,185,129,0.15),rgba(13,19,32,0.98))]',
+  'border-violet-400/18 bg-[linear-gradient(135deg,rgba(167,139,250,0.16),rgba(13,19,32,0.98))]',
+  'border-amber-300/20 bg-[linear-gradient(135deg,rgba(244,201,93,0.18),rgba(13,19,32,0.98))]',
+];
+
+const panelClass =
+  'border-white/10 bg-[linear-gradient(135deg,rgba(15,23,42,0.94),rgba(8,13,24,0.98))]';
+
 export default function VolunteersDashboard() {
   const { canViewVolunteers, canCreateVolunteers, canCreateRosters } = useVolunteersAccess();
   const statsQuery = useQuery({
@@ -91,10 +101,12 @@ export default function VolunteersDashboard() {
         />
 
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-          {kpis.map((item) => (
-            <Card key={item.label}>
-              <p className="text-[11px] uppercase tracking-[0.24em] text-white/45">{item.label}</p>
-              <h2 className="mt-3 text-3xl font-semibold text-white">{item.value}</h2>
+          {kpis.map((item, index) => (
+            <Card key={item.label} className={`min-h-[102px] p-3.5 ${statTones[index] || ''}`}>
+              <p className="inline-flex rounded-full border border-white/10 bg-white/8 px-2.5 py-1 text-[10px] uppercase tracking-[0.22em] text-white/72">
+                {item.label}
+              </p>
+              <h2 className="mt-3 text-[1.95rem] font-semibold leading-none text-white">{item.value}</h2>
             </Card>
           ))}
         </div>
@@ -109,7 +121,7 @@ export default function VolunteersDashboard() {
         ) : null}
 
         <div className="grid gap-6 xl:grid-cols-[1.2fr_0.8fr]">
-          <Card className="space-y-4">
+          <Card className={`space-y-4 ${panelClass}`}>
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm uppercase tracking-[0.25em] text-white/55">Department Breakdown</p>
@@ -119,7 +131,7 @@ export default function VolunteersDashboard() {
                 <Button variant="subtle">View All</Button>
               </Link>
             </div>
-            <div className="h-80">
+            <div className="h-[300px]">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={chartData} layout="vertical">
                   <XAxis type="number" stroke="#94a3b8" />
@@ -135,7 +147,7 @@ export default function VolunteersDashboard() {
             </div>
           </Card>
 
-          <Card className="space-y-4">
+          <Card className={`space-y-4 ${panelClass}`}>
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm uppercase tracking-[0.25em] text-white/55">Top Volunteers</p>
@@ -149,7 +161,7 @@ export default function VolunteersDashboard() {
               {topVolunteers.map((volunteer) => (
                 <div
                   key={volunteer._id || volunteer.id}
-                  className="flex items-center justify-between rounded-2xl border border-white/10 bg-[#101827] px-4 py-3"
+                  className="flex items-center justify-between rounded-[18px] border border-cyan-400/12 bg-[linear-gradient(135deg,rgba(34,211,238,0.12),rgba(16,24,39,0.98))] px-3.5 py-3"
                 >
                   <div className="min-w-0">
                     <p className="truncate font-semibold text-white">{volunteer.memberName}</p>
@@ -169,7 +181,7 @@ export default function VolunteersDashboard() {
         </div>
 
         <div className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
-          <Card className="space-y-4">
+          <Card className={`space-y-4 ${panelClass}`}>
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm uppercase tracking-[0.25em] text-white/55">Upcoming Rosters</p>
@@ -184,7 +196,7 @@ export default function VolunteersDashboard() {
                 <Link
                   key={roster.rosterId || roster._id}
                   to={`/volunteers/rosters/${roster.rosterId || roster._id}`}
-                  className="flex items-center justify-between rounded-2xl border border-white/10 bg-[#101827] px-4 py-3"
+                  className="flex items-center justify-between rounded-[18px] border border-violet-400/14 bg-[linear-gradient(135deg,rgba(167,139,250,0.14),rgba(16,24,39,0.98))] px-3.5 py-3"
                 >
                   <div>
                     <p className="font-semibold text-white">{roster.title}</p>
@@ -206,7 +218,7 @@ export default function VolunteersDashboard() {
             </div>
           </Card>
 
-          <Card className="space-y-4">
+          <Card className={`space-y-4 ${panelClass}`}>
             <div>
               <p className="text-sm uppercase tracking-[0.25em] text-white/55">Quick Actions</p>
               <h2 className="mt-2 text-2xl font-semibold text-white">Move faster</h2>

@@ -14,6 +14,13 @@ import { formatDate } from '../../utils/formatDate';
 import { useAuth } from '../../hooks/useAuth';
 import { useCapabilities } from '../../hooks/useCapabilities';
 
+const statTones = [
+  'border-cyan-400/18 bg-[linear-gradient(135deg,rgba(34,211,238,0.14),rgba(13,19,32,0.98))]',
+  'border-emerald-400/18 bg-[linear-gradient(135deg,rgba(16,185,129,0.15),rgba(13,19,32,0.98))]',
+  'border-violet-400/18 bg-[linear-gradient(135deg,rgba(167,139,250,0.16),rgba(13,19,32,0.98))]',
+  'border-amber-300/20 bg-[linear-gradient(135deg,rgba(244,201,93,0.18),rgba(13,19,32,0.98))]',
+];
+
 export default function UsersPage() {
   const queryClient = useQueryClient();
   const { tenantId } = useAuth();
@@ -154,17 +161,19 @@ export default function UsersPage() {
         />
 
         <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-          {stats.map((item) => (
-            <Card key={item.label} className="min-h-[104px] p-4">
-              <p className="text-[11px] uppercase tracking-[0.22em] text-white/55">{item.label}</p>
-              <p className="mt-3 font-serif text-4xl font-semibold leading-none text-white">{item.value}</p>
-              <p className="mt-2 text-xs text-white/40">{item.helper}</p>
+          {stats.map((item, index) => (
+            <Card key={item.label} className={`min-h-[102px] p-3.5 ${statTones[index] || ''}`}>
+              <p className="inline-flex rounded-full border border-white/10 bg-white/8 px-2.5 py-1 text-[10px] uppercase tracking-[0.22em] text-white/72">
+                {item.label}
+              </p>
+              <p className="mt-3 font-serif text-[2rem] font-semibold leading-none text-white">{item.value}</p>
+              <p className="mt-2 text-xs text-white/48">{item.helper}</p>
             </Card>
           ))}
         </div>
 
-        <Card className="space-y-5">
-          <div className="rounded-2xl border border-white/10 bg-[#101827] px-4 py-3 text-sm text-white/60">
+        <Card className="space-y-5 border-white/10 bg-[linear-gradient(135deg,rgba(15,23,42,0.94),rgba(8,13,24,0.98))]">
+          <div className="rounded-[18px] border border-cyan-400/14 bg-[linear-gradient(135deg,rgba(34,211,238,0.1),rgba(16,24,39,0.98))] px-4 py-3 text-sm text-white/60">
             You can assign up to {capabilities.length} permissions based on your current access scope.
           </div>
 

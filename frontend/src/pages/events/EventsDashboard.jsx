@@ -12,6 +12,16 @@ import { getAllEvents, getEventStats, getUpcomingEvents } from '../../api/endpoi
 import useEventsAccess from '../../hooks/useEventsAccess';
 import useCurrency from '../../hooks/useCurrency';
 
+const statTones = [
+  'border-cyan-400/18 bg-[linear-gradient(135deg,rgba(34,211,238,0.14),rgba(13,19,32,0.98))]',
+  'border-violet-400/18 bg-[linear-gradient(135deg,rgba(167,139,250,0.16),rgba(13,19,32,0.98))]',
+  'border-emerald-400/18 bg-[linear-gradient(135deg,rgba(16,185,129,0.15),rgba(13,19,32,0.98))]',
+  'border-amber-300/20 bg-[linear-gradient(135deg,rgba(244,201,93,0.18),rgba(13,19,32,0.98))]',
+];
+
+const panelClass =
+  'border-white/10 bg-[linear-gradient(135deg,rgba(15,23,42,0.94),rgba(8,13,24,0.98))]';
+
 export default function EventsDashboard() {
   const { canViewEvents, canCreateEvents } = useEventsAccess();
   const { formatCurrency } = useCurrency();
@@ -98,15 +108,17 @@ export default function EventsDashboard() {
         />
 
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-          {statsCards.map((card) => (
-            <Card key={card.label}>
-              <p className="text-[11px] uppercase tracking-[0.24em] text-white/45">{card.label}</p>
-              <h2 className="mt-3 text-3xl font-semibold text-white">{card.value}</h2>
+          {statsCards.map((card, index) => (
+            <Card key={card.label} className={`min-h-[102px] p-3.5 ${statTones[index] || ''}`}>
+              <p className="inline-flex rounded-full border border-white/10 bg-white/8 px-2.5 py-1 text-[10px] uppercase tracking-[0.22em] text-white/72">
+                {card.label}
+              </p>
+              <h2 className="mt-3 text-[1.95rem] font-semibold leading-none text-white">{card.value}</h2>
             </Card>
           ))}
         </div>
 
-        <Card className="space-y-4">
+        <Card className={`space-y-4 ${panelClass}`}>
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm uppercase tracking-[0.25em] text-white/55">Upcoming Events</p>
@@ -124,7 +136,7 @@ export default function EventsDashboard() {
         </Card>
 
         <div className="grid gap-6 xl:grid-cols-[1fr_1fr]">
-          <Card className="space-y-4">
+          <Card className={`space-y-4 ${panelClass}`}>
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm uppercase tracking-[0.25em] text-white/55">Calendar</p>
@@ -152,7 +164,7 @@ export default function EventsDashboard() {
                 return (
                   <div
                     key={key}
-                    className="min-h-[90px] rounded-2xl border border-white/10 bg-[#101827] p-2"
+                    className="min-h-[84px] rounded-[18px] border border-cyan-400/12 bg-[linear-gradient(135deg,rgba(34,211,238,0.12),rgba(16,24,39,0.98))] p-2.5"
                   >
                     <div className="text-sm font-semibold text-white">{format(day, 'd')}</div>
                     <div className="mt-2 space-y-1">
@@ -172,12 +184,12 @@ export default function EventsDashboard() {
             </div>
           </Card>
 
-          <Card className="space-y-4">
+          <Card className={`space-y-4 ${panelClass}`}>
             <div>
               <p className="text-sm uppercase tracking-[0.25em] text-white/55">Revenue Chart</p>
               <h2 className="mt-2 text-2xl font-semibold text-white">Revenue per recent event</h2>
             </div>
-            <div className="h-[430px]">
+            <div className="h-[320px]">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={chartData}>
                   <XAxis dataKey="name" stroke="#94a3b8" hide />

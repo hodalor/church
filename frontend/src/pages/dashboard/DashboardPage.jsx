@@ -785,7 +785,7 @@ export default function DashboardPage() {
   return (
     <div className="space-y-6">
       <Card className="overflow-hidden bg-gradient-to-br from-white via-white to-accent/10">
-        <div className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
+        <div className="grid items-start gap-6 xl:grid-cols-[1.1fr_0.9fr]">
           <div>
             <p className="text-sm uppercase tracking-[0.3em] text-accent">{primaryContextText}</p>
             <h1 className="mt-3 text-3xl font-semibold text-primary">
@@ -806,7 +806,7 @@ export default function DashboardPage() {
               </Link>
             </div>
           </div>
-          <div className="grid gap-3 sm:grid-cols-2">
+          <div className="grid items-start gap-3 sm:grid-cols-2">
             {kpis.map((item) => (
               <div
                 key={item.label}
@@ -836,7 +836,7 @@ export default function DashboardPage() {
         </div>
       ) : null}
 
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+      <div className="grid items-start gap-4 md:grid-cols-2 xl:grid-cols-4">
         {quickActions.map((action) => (
           <QuickActionCard
             key={action.label}
@@ -847,13 +847,13 @@ export default function DashboardPage() {
         ))}
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+      <div className="grid items-start gap-4 md:grid-cols-2 xl:grid-cols-4">
         {moduleCards.map((card) => (
           <ModuleCard key={card.title} {...card} />
         ))}
       </div>
 
-      <div className="grid gap-6 xl:grid-cols-[1.2fr_0.8fr]">
+      <div className="grid items-start gap-6 xl:grid-cols-[1.2fr_0.8fr]">
         <Card className="space-y-4">
           <div>
             <p className="text-sm uppercase tracking-[0.25em] text-accent">Momentum</p>
@@ -898,7 +898,7 @@ export default function DashboardPage() {
                   <Link
                     key={item.id}
                     to={item.to}
-                    className="flex items-start gap-3 rounded-2xl border border-white/10 bg-[#101827] px-4 py-3 transition hover:bg-[#132038]"
+                    className="flex items-start gap-3 rounded-2xl border border-white/10 bg-[linear-gradient(135deg,rgba(34,211,238,0.1),rgba(16,24,39,0.98))] px-4 py-3 transition hover:bg-[linear-gradient(135deg,rgba(48,220,241,0.14),rgba(19,31,53,0.98))]"
                   >
                     <div className="mt-0.5 rounded-xl bg-accent/10 p-2 text-accent">
                       <Icon className="h-4 w-4" />

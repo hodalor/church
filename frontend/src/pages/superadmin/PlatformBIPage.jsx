@@ -127,13 +127,13 @@ export default function PlatformBIPage() {
         }
       >
         {overviewQuery.isLoading ? (
-          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+          <div className="grid items-start gap-4 md:grid-cols-2 xl:grid-cols-4">
             {Array.from({ length: 6 }).map((_, index) => (
               <ChartSkeleton key={index} />
             ))}
           </div>
         ) : (
-          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-6">
+          <div className="grid items-start gap-4 md:grid-cols-2 xl:grid-cols-6">
             {[
               ['Total Tenants', formatAnalyticsNumber(overview.summary?.totalTenants || 0)],
               ['Total Members', formatAnalyticsNumber(overview.summary?.totalMembers || 0)],
@@ -147,7 +147,7 @@ export default function PlatformBIPage() {
           </div>
         )}
 
-        <div className="grid gap-4 xl:grid-cols-[1.4fr_0.8fr]">
+        <div className="grid items-start gap-4 xl:grid-cols-[1.4fr_0.8fr]">
           <div className={panelClass}>
             <h3 className="text-lg font-semibold text-white">Platform growth chart</h3>
             {growthQuery.isLoading ? (
@@ -235,30 +235,30 @@ export default function PlatformBIPage() {
             <TableRowSkeleton columns={8} rows={6} />
           ) : (
             <div className="mt-4 overflow-x-auto">
-              <table className="min-w-full text-left text-sm text-white/75">
+              <table className="w-full min-w-[980px] text-left text-sm text-white/75">
                 <thead className="text-[11px] uppercase tracking-[0.2em] text-white/40">
                   <tr>
-                    <th className="pb-3">Church</th>
-                    <th className="pb-3">Members</th>
-                    <th className="pb-3">Attendance</th>
-                    <th className="pb-3">Income</th>
-                    <th className="pb-3">Health</th>
-                    <th className="pb-3">Branches</th>
-                    <th className="pb-3">Top Branch</th>
+                    <th className="pb-3 pr-4">Church</th>
+                    <th className="pb-3 pr-4">Members</th>
+                    <th className="pb-3 pr-4">Attendance</th>
+                    <th className="pb-3 pr-4">Income</th>
+                    <th className="pb-3 pr-4">Health</th>
+                    <th className="pb-3 pr-4">Branches</th>
+                    <th className="pb-3 pr-4">Top Branch</th>
                     <th className="pb-3">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
                   {tenantRows.map((tenant) => (
-                    <tr key={tenant.tenantId} className="border-t border-white/8">
-                      <td className="py-3 font-medium text-white">{tenant.churchName}</td>
-                      <td>{formatAnalyticsNumber(tenant.members || 0)}</td>
-                      <td>{formatAnalyticsNumber(tenant.attendance || 0)}</td>
-                      <td>{formatAnalyticsCurrency(tenant.income || 0)}</td>
-                      <td><HealthBadge grade={tenant.healthScore >= 85 ? 'A' : tenant.healthScore >= 70 ? 'B' : tenant.healthScore >= 55 ? 'C' : tenant.healthScore >= 40 ? 'D' : 'F'} score={tenant.healthScore} /></td>
-                      <td>{formatAnalyticsNumber(tenant.branches || 0)}</td>
-                      <td>{tenant.topBranch || '-'}</td>
-                      <td>
+                    <tr key={tenant.tenantId} className="border-t border-white/8 align-top">
+                      <td className="py-3 pr-4 font-medium text-white">{tenant.churchName}</td>
+                      <td className="py-3 pr-4">{formatAnalyticsNumber(tenant.members || 0)}</td>
+                      <td className="py-3 pr-4">{formatAnalyticsNumber(tenant.attendance || 0)}</td>
+                      <td className="py-3 pr-4">{formatAnalyticsCurrency(tenant.income || 0)}</td>
+                      <td className="py-3 pr-4"><HealthBadge grade={tenant.healthScore >= 85 ? 'A' : tenant.healthScore >= 70 ? 'B' : tenant.healthScore >= 55 ? 'C' : tenant.healthScore >= 40 ? 'D' : 'F'} score={tenant.healthScore} /></td>
+                      <td className="py-3 pr-4">{formatAnalyticsNumber(tenant.branches || 0)}</td>
+                      <td className="py-3 pr-4">{tenant.topBranch || '-'}</td>
+                      <td className="py-3">
                         <Button variant="ghost" className="text-xs" onClick={() => (window.location.href = `/superadmin/tenants/${tenant.tenantId}`)}>
                           View Tenant
                         </Button>

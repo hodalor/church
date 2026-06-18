@@ -98,7 +98,7 @@ export default function SuperAdminDashboard() {
           }
         />
 
-        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-6">
+        <div className="grid items-start gap-4 md:grid-cols-2 xl:grid-cols-6">
           {[
             ['Total Tenants', formatAnalyticsNumber(summary.totalTenants || 0)],
             ['Total Members', formatAnalyticsNumber(summary.totalMembers || 0)],
@@ -151,7 +151,7 @@ export default function SuperAdminDashboard() {
           </Card>
         </div>
 
-        <div className="grid gap-6 xl:grid-cols-3">
+        <div className="grid items-start gap-6 xl:grid-cols-3">
           <Card className="space-y-4 xl:col-span-2 bg-[linear-gradient(135deg,rgba(167,139,250,0.14),rgba(13,19,32,0.98))]">
             <div className="flex items-center justify-between">
               <div>
@@ -222,7 +222,7 @@ export default function SuperAdminDashboard() {
               Open Strategic Plan
             </Button>
           </div>
-          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+          <div className="grid items-start gap-4 md:grid-cols-2 xl:grid-cols-3">
             {[
               {
                 title: 'Ministry Management',
@@ -269,53 +269,13 @@ export default function SuperAdminDashboard() {
           </div>
         </Card>
 
-        <div className="grid gap-6 xl:grid-cols-[1.15fr_0.85fr]">
-          <Card className="space-y-4 bg-[linear-gradient(135deg,rgba(56,189,248,0.08),rgba(13,19,32,0.98))]">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm uppercase tracking-[0.25em] text-white/55">Tenant Snapshot</p>
-                <h2 className="mt-2 text-2xl font-semibold text-white">Recent comparison table</h2>
-              </div>
-              <Button variant="ghost" onClick={() => navigate('/superadmin/platform/tenants')}>
-                View all
-              </Button>
-            </div>
-            <div className="overflow-x-auto">
-              <table className="min-w-full text-left text-sm text-white/75">
-                <thead className="text-[11px] uppercase tracking-[0.2em] text-white/40">
-                  <tr>
-                    <th className="pb-3">Church</th>
-                    <th className="pb-3">Plan</th>
-                    <th className="pb-3">Members</th>
-                    <th className="pb-3">Attendance</th>
-                    <th className="pb-3">Health</th>
-                    <th className="pb-3">Growth</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {tenantRows.slice(0, 6).map((tenant) => (
-                    <tr key={tenant.tenantId} className="border-t border-white/8">
-                      <td className="py-3 font-medium text-white">{tenant.churchName}</td>
-                      <td>{tenant.subscriptionPlan || tenant.plan || '-'}</td>
-                      <td>{formatAnalyticsNumber(tenant.members || 0)}</td>
-                      <td>{formatAnalyticsNumber(tenant.attendance || 0)}</td>
-                      <td>{Math.round(Number(tenant.healthScore || 0))}%</td>
-                      <td className={Number(tenant.growth || 0) >= 0 ? 'text-emerald-300' : 'text-rose-300'}>
-                        {Number(tenant.growth || 0).toFixed(1)}%
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </Card>
-
+        <div className="space-y-4">
           <Card className="space-y-4 bg-[linear-gradient(135deg,rgba(251,113,133,0.1),rgba(13,19,32,0.98))]">
             <div>
               <p className="text-sm uppercase tracking-[0.25em] text-white/55">Alert Tenants</p>
               <h2 className="mt-2 text-2xl font-semibold text-white">Needs attention now</h2>
             </div>
-            <div className="space-y-3">
+            <div className="grid items-start gap-3 md:grid-cols-2 xl:grid-cols-3">
               {alertTenants.length ? (
                 alertTenants.map((tenant) => (
                   <div
@@ -344,6 +304,46 @@ export default function SuperAdminDashboard() {
                   message="Critical platform issues will surface here automatically."
                 />
               )}
+            </div>
+          </Card>
+
+          <Card className="space-y-4 bg-[linear-gradient(135deg,rgba(56,189,248,0.08),rgba(13,19,32,0.98))]">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm uppercase tracking-[0.25em] text-white/55">Tenant Snapshot</p>
+                <h2 className="mt-2 text-2xl font-semibold text-white">Recent comparison table</h2>
+              </div>
+              <Button variant="ghost" onClick={() => navigate('/superadmin/platform/tenants')}>
+                View all
+              </Button>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[860px] text-left text-sm text-white/75">
+                <thead className="text-[11px] uppercase tracking-[0.2em] text-white/40">
+                  <tr>
+                    <th className="pb-3 pr-4">Church</th>
+                    <th className="pb-3 pr-4">Plan</th>
+                    <th className="pb-3 pr-4">Members</th>
+                    <th className="pb-3 pr-4">Attendance</th>
+                    <th className="pb-3 pr-4">Health</th>
+                    <th className="pb-3">Growth</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {tenantRows.slice(0, 6).map((tenant) => (
+                    <tr key={tenant.tenantId} className="border-t border-white/8 align-top">
+                      <td className="py-3 pr-4 font-medium text-white">{tenant.churchName}</td>
+                      <td className="py-3 pr-4">{tenant.subscriptionPlan || tenant.plan || '-'}</td>
+                      <td className="py-3 pr-4">{formatAnalyticsNumber(tenant.members || 0)}</td>
+                      <td className="py-3 pr-4">{formatAnalyticsNumber(tenant.attendance || 0)}</td>
+                      <td className="py-3 pr-4">{Math.round(Number(tenant.healthScore || 0))}%</td>
+                      <td className={`py-3 ${Number(tenant.growth || 0) >= 0 ? 'text-emerald-300' : 'text-rose-300'}`}>
+                        {Number(tenant.growth || 0).toFixed(1)}%
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
           </Card>
         </div>

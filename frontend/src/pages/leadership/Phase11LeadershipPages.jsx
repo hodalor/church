@@ -123,10 +123,19 @@ function Badge({ children, className = 'bg-white/10 text-white/75' }) {
 }
 
 function StatCard({ label, value, helper, action }) {
+  const tones = {
+    'Total Leaders': 'bg-[linear-gradient(135deg,rgba(56,189,248,0.16),rgba(14,22,36,0.98))]',
+    'Ready for Promotion': 'bg-[linear-gradient(135deg,rgba(52,211,153,0.16),rgba(14,22,36,0.98))]',
+    'In Development': 'bg-[linear-gradient(135deg,rgba(167,139,250,0.16),rgba(14,22,36,0.98))]',
+    'Succession Coverage': 'bg-[linear-gradient(135deg,rgba(244,201,93,0.18),rgba(14,22,36,0.98))]',
+    'Roles Covered': 'bg-[linear-gradient(135deg,rgba(52,211,153,0.16),rgba(14,22,36,0.98))]',
+    'Roles Uncovered': 'bg-[linear-gradient(135deg,rgba(251,113,133,0.16),rgba(14,22,36,0.98))]',
+    'Overall Risk Level': 'bg-[linear-gradient(135deg,rgba(244,201,93,0.18),rgba(14,22,36,0.98))]',
+  };
   return (
-    <Card className="min-h-[110px] p-4">
-      <p className="text-[11px] uppercase tracking-[0.22em] text-white/55">{label}</p>
-      <p className="mt-3 font-serif text-4xl font-semibold leading-none text-white">{value}</p>
+    <Card className={`min-h-[102px] p-3.5 ${tones[label] || ''}`}>
+      <p className="inline-flex rounded-full border border-white/10 bg-white/8 px-2.5 py-1 text-[10px] uppercase tracking-[0.22em] text-white/75">{label}</p>
+      <p className="mt-3 font-serif text-[2rem] font-semibold leading-none text-white">{value}</p>
       {helper ? <p className="mt-2 text-xs text-white/40">{helper}</p> : null}
       {action ? <div className="mt-3">{action}</div> : null}
     </Card>
@@ -251,12 +260,12 @@ export function LeadershipDashboard() {
         </div>
 
         {uncovered.length ? (
-          <div className="rounded-3xl border border-rose-500/25 bg-rose-500/10 px-5 py-4 text-white">
+        <div className="rounded-3xl border border-rose-500/25 bg-[linear-gradient(135deg,rgba(251,113,133,0.16),rgba(13,19,32,0.98))] px-4 py-3.5 text-white">
             <p className="font-semibold">{uncovered.length} key roles have no identified successor.</p>
           </div>
         ) : null}
         {!uncovered.length && highRisk.length ? (
-          <div className="rounded-3xl border border-amber-500/25 bg-amber-500/10 px-5 py-4 text-white">
+          <div className="rounded-3xl border border-amber-500/25 bg-[linear-gradient(135deg,rgba(244,201,93,0.18),rgba(13,19,32,0.98))] px-4 py-3.5 text-white">
             <p className="font-semibold">High risk roles: {highRisk.map((item) => item.roleName).join(', ')}</p>
           </div>
         ) : null}
@@ -274,7 +283,7 @@ export function LeadershipDashboard() {
             </div>
             <div className="grid gap-4 xl:grid-cols-5">
               {pipelinePreview.map((column) => (
-                <div key={column.status} className="rounded-2xl border border-white/10 bg-white/5 p-4">
+                <div key={column.status} className="rounded-2xl border border-violet-300/15 bg-violet-400/10 p-3.5">
                   <div className="flex items-center justify-between gap-2">
                     <p className="font-medium text-white">{column.label}</p>
                     <Badge className={getStatus(column.status).badgeClassName}>{column.items.length}</Badge>
@@ -317,7 +326,7 @@ export function LeadershipDashboard() {
           </div>
           <div className="space-y-3">
             {dueAssessments.slice(0, 5).map((profile) => (
-              <div key={profile.candidateId} className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-white/10 bg-white/5 px-4 py-4">
+              <div key={profile.candidateId} className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-cyan-300/15 bg-cyan-400/10 px-4 py-3">
                 <div>
                   <p className="font-medium text-white">{profile.memberName}</p>
                   <p className="text-sm text-white/55">{profile.currentRole || 'Role pending'} • last touched {formatDate(profile.updatedAt || profile.createdAt)}</p>

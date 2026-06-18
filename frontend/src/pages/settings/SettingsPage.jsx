@@ -46,9 +46,18 @@ const emptyCountryDraft = {
   currencySymbol: '',
 };
 
+const shellPanelClass =
+  'border-white/10 bg-[linear-gradient(135deg,rgba(15,23,42,0.94),rgba(8,13,24,0.98))] p-[18px] text-white shadow-[0_14px_30px_rgba(0,0,0,0.16)]';
+const innerPanelClass =
+  'rounded-[20px] border border-white/10 bg-[linear-gradient(135deg,rgba(34,211,238,0.1),rgba(16,24,39,0.98))]';
+const violetPanelClass =
+  'rounded-[20px] border border-white/10 bg-[linear-gradient(135deg,rgba(167,139,250,0.12),rgba(16,24,39,0.98))]';
+const inputClass =
+  'w-full rounded-[16px] border border-white/10 bg-[linear-gradient(135deg,rgba(34,211,238,0.1),rgba(16,24,39,0.98))] px-4 py-3 text-sm text-white outline-none placeholder:text-white/35 focus:border-cyan-300/35';
+
 function BrandPreview({ name, logoUrl, caption }) {
   return (
-    <div className="flex items-center gap-4 rounded-3xl border border-white/10 bg-[#0f1524] p-5 text-white">
+    <div className={`flex items-center gap-4 p-4 text-white ${violetPanelClass}`}>
       {logoUrl ? (
         <img src={logoUrl} alt={name} className="h-14 w-14 rounded-2xl object-cover" />
       ) : (
@@ -78,7 +87,7 @@ function ArrayEditor({ title, hint, values, onChange, placeholder }) {
   };
 
   return (
-    <div className="space-y-3 rounded-3xl border border-white/10 bg-[#101827] p-4">
+    <div className={`space-y-3 p-4 ${innerPanelClass}`}>
       <div>
         <h3 className="text-base font-semibold text-white">{title}</h3>
         <p className="mt-1 text-sm text-white/50">{hint}</p>
@@ -116,7 +125,7 @@ function ArrayEditor({ title, hint, values, onChange, placeholder }) {
 
 function CountryConfigEditor({ countries, draft, onDraftChange, onAdd, onRemove }) {
   return (
-    <div className="space-y-4 rounded-3xl border border-white/10 bg-[#101827] p-4">
+    <div className={`space-y-4 p-4 ${innerPanelClass}`}>
       <div>
         <h3 className="text-base font-semibold text-white">Eligible Countries</h3>
         <p className="mt-1 text-sm text-white/50">
@@ -504,7 +513,7 @@ export default function SettingsPage() {
 
         {activeTab === 'config' ? (
           <div className="grid gap-5 xl:grid-cols-[1.1fr_0.9fr]">
-            <Card className="border-white/10 bg-[#111827] p-5 text-white shadow-2xl shadow-black/20">
+            <Card className={shellPanelClass}>
               <div className="space-y-5">
                 <div>
                   <p className="text-[11px] uppercase tracking-[0.28em] text-accent/80">Universal Identity</p>
@@ -537,7 +546,7 @@ export default function SettingsPage() {
                     accept="image/*"
                     disabled={!canEditConfig}
                     onChange={(event) => handleBrandUpload(event, 'global')}
-                    className="w-full rounded-2xl border border-white/10 bg-[#101827] px-4 py-3 text-sm text-white"
+                    className={inputClass}
                   />
                 </label>
                 <Input
@@ -549,7 +558,7 @@ export default function SettingsPage() {
                   }
                 />
 
-                <div className="flex items-center justify-between rounded-2xl border border-white/10 bg-[#101827] px-4 py-3 text-sm text-white/60">
+                <div className={`flex items-center justify-between px-4 py-3 text-sm text-white/60 ${innerPanelClass}`}>
                   <span>{canEditConfig ? 'Changes apply to all workspaces.' : 'Read only in tenant mode.'}</span>
                   <Button variant={canEditConfig ? 'secondary' : 'subtle'} onClick={handleSaveGlobal} disabled={!canEditConfig}>
                     Save config
@@ -566,7 +575,7 @@ export default function SettingsPage() {
               </div>
             </Card>
 
-            <Card className="border-white/10 bg-[#111827] p-5 text-white shadow-2xl shadow-black/20">
+            <Card className={shellPanelClass}>
               <div className="space-y-5">
                 <div>
                   <p className="text-[11px] uppercase tracking-[0.28em] text-accent/80">Preview</p>
@@ -583,13 +592,13 @@ export default function SettingsPage() {
         ) : activeTab === 'branding' ? (
           <div className="space-y-5">
             {isSuperAdmin ? (
-              <Card className="border-white/10 bg-[#111827] p-5 text-white shadow-2xl shadow-black/20">
+              <Card className={shellPanelClass}>
                 <label className="block space-y-2">
                   <span className="text-sm font-medium text-white/80">Church Tenant</span>
                   <select
                     value={selectedTenantId}
                     onChange={(event) => setSelectedTenantId(event.target.value)}
-                    className="w-full rounded-2xl border border-white/10 bg-[#101827] px-4 py-3 text-sm text-white outline-none focus:border-accent"
+                    className={inputClass}
                   >
                     <option value="">Select a church tenant</option>
                     {(tenantsQuery.data?.tenants || []).map((tenant) => (
@@ -602,7 +611,7 @@ export default function SettingsPage() {
               </Card>
             ) : null}
             <div className="grid gap-5 xl:grid-cols-[1.1fr_0.9fr]">
-            <Card className="border-white/10 bg-[#111827] p-5 text-white shadow-2xl shadow-black/20">
+            <Card className={shellPanelClass}>
               <div className="space-y-5">
                 <div>
                   <p className="text-[11px] uppercase tracking-[0.28em] text-accent/80">Tenant Identity</p>
@@ -635,7 +644,7 @@ export default function SettingsPage() {
                     accept="image/*"
                     disabled={!canEditTenantBranding}
                     onChange={(event) => handleBrandUpload(event, 'tenant')}
-                    className="w-full rounded-2xl border border-white/10 bg-[#101827] px-4 py-3 text-sm text-white"
+                    className={inputClass}
                   />
                 </label>
                 <Input
@@ -647,7 +656,7 @@ export default function SettingsPage() {
                   }
                 />
 
-                <div className="flex items-center justify-between rounded-2xl border border-white/10 bg-[#101827] px-4 py-3 text-sm text-white/60">
+                <div className={`flex items-center justify-between px-4 py-3 text-sm text-white/60 ${innerPanelClass}`}>
                   <span>
                     {isSuperAdmin && !selectedTenantId
                       ? 'Select a church tenant to manage client branding.'
@@ -670,7 +679,7 @@ export default function SettingsPage() {
               </div>
             </Card>
 
-            <Card className="border-white/10 bg-[#111827] p-5 text-white shadow-2xl shadow-black/20">
+            <Card className={shellPanelClass}>
               <div className="space-y-5">
                 <div>
                   <p className="text-[11px] uppercase tracking-[0.28em] text-accent/80">Preview</p>
@@ -688,13 +697,13 @@ export default function SettingsPage() {
         ) : (
           <div className="space-y-5">
             {isSuperAdmin ? (
-              <Card className="border-white/10 bg-[#111827] p-5 text-white shadow-2xl shadow-black/20">
+              <Card className={shellPanelClass}>
                 <label className="block space-y-2">
                   <span className="text-sm font-medium text-white/80">Church Tenant</span>
                   <select
                     value={selectedTenantId}
                     onChange={(event) => setSelectedTenantId(event.target.value)}
-                    className="w-full rounded-2xl border border-white/10 bg-[#101827] px-4 py-3 text-sm text-white outline-none focus:border-accent"
+                    className={inputClass}
                   >
                     <option value="">Select a church tenant</option>
                     {(tenantsQuery.data?.tenants || []).map((tenant) => (
@@ -706,7 +715,7 @@ export default function SettingsPage() {
                 </label>
               </Card>
             ) : null}
-            <Card className="border-white/10 bg-[#111827] p-5 text-white shadow-2xl shadow-black/20">
+            <Card className={shellPanelClass}>
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div>
                   <p className="text-[11px] uppercase tracking-[0.28em] text-accent/80">
@@ -760,7 +769,7 @@ export default function SettingsPage() {
               />
             </div>
 
-            <Card className="space-y-5 border-white/10 bg-[#111827] p-5 text-white shadow-2xl shadow-black/20">
+            <Card className={`space-y-5 ${shellPanelClass}`}>
               <div>
                 <p className="text-[11px] uppercase tracking-[0.28em] text-accent/80">
                   Grouping Tree
@@ -788,7 +797,7 @@ export default function SettingsPage() {
                     onChange={(event) =>
                       setGroupingDraft((current) => ({ ...current, parentId: event.target.value }))
                     }
-                    className="w-full rounded-2xl border border-white/10 bg-[#101827] px-4 py-3 text-sm text-white outline-none focus:border-accent"
+                    className={inputClass}
                   >
                     <option value="">Top level after branch</option>
                     {groupingTreeRows.map((grouping) => (
@@ -824,7 +833,7 @@ export default function SettingsPage() {
                     }))
                   }
                   rows={2}
-                  className="w-full rounded-2xl border border-white/10 bg-[#101827] px-4 py-3 text-sm text-white outline-none placeholder:text-white/35 focus:border-accent"
+                  className={inputClass}
                   placeholder="Optional note for this grouping level"
                 />
               </label>
@@ -837,7 +846,7 @@ export default function SettingsPage() {
                     return (
                       <div
                         key={grouping.id}
-                        className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-white/10 bg-[#101827] px-4 py-3"
+                        className={`flex flex-wrap items-center justify-between gap-3 px-4 py-3 ${violetPanelClass}`}
                       >
                         <div className="min-w-0" style={{ paddingLeft: `${grouping.depth * 18}px` }}>
                           <p className="font-semibold text-white">{grouping.name}</p>

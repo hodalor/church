@@ -15,6 +15,9 @@ const tabs = [
   { label: 'All', value: 'all' },
 ];
 
+const filterInputClass =
+  'w-full rounded-[16px] border border-white/10 bg-[linear-gradient(135deg,rgba(56,189,248,0.12),rgba(16,24,39,0.98))] px-3.5 py-2.5 text-sm text-white placeholder:text-white/35';
+
 export default function ServicesPage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -110,14 +113,14 @@ export default function ServicesPage() {
           ))}
         </div>
 
-        <Card className="space-y-4">
+        <Card className="space-y-4 border-white/10 bg-[linear-gradient(135deg,rgba(56,189,248,0.12),rgba(13,19,32,0.98))]">
           <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
             <label className="space-y-1.5">
               <span className="text-[13px] font-medium text-white/75">Service Type</span>
               <input
                 value={type}
                 onChange={(event) => updateParam('type', event.target.value)}
-                className="w-full rounded-xl border border-white/10 bg-[#101827] px-3.5 py-2.5 text-sm text-white"
+                className={filterInputClass}
                 placeholder="Sunday Service"
               />
             </label>
@@ -126,7 +129,7 @@ export default function ServicesPage() {
               <input
                 value={branch}
                 onChange={(event) => updateParam('branch', event.target.value)}
-                className="w-full rounded-xl border border-white/10 bg-[#101827] px-3.5 py-2.5 text-sm text-white"
+                className={filterInputClass}
                 placeholder="Main branch"
               />
             </label>
@@ -136,7 +139,7 @@ export default function ServicesPage() {
                 type="date"
                 value={from}
                 onChange={(event) => updateParam('from', event.target.value)}
-                className="w-full rounded-xl border border-white/10 bg-[#101827] px-3.5 py-2.5 text-sm text-white"
+                className={filterInputClass}
               />
             </label>
             <label className="space-y-1.5">
@@ -145,7 +148,7 @@ export default function ServicesPage() {
                 type="date"
                 value={to}
                 onChange={(event) => updateParam('to', event.target.value)}
-                className="w-full rounded-xl border border-white/10 bg-[#101827] px-3.5 py-2.5 text-sm text-white"
+                className={filterInputClass}
               />
             </label>
           </div>
@@ -172,7 +175,7 @@ export default function ServicesPage() {
             ))}
           </div>
         ) : (
-          <Card className="p-8 text-center">
+          <Card className="border-white/10 bg-[linear-gradient(135deg,rgba(167,139,250,0.14),rgba(13,19,32,0.98))] p-8 text-center">
             <p className="text-lg font-semibold text-white">No services found</p>
             <p className="mt-2 text-sm text-white/55">
               Adjust your filters or create a new service to begin attendance tracking.
