@@ -435,65 +435,245 @@ export const capabilitySections = [
     ],
   },
   {
-    module: 'ministry_management',
-    label: 'Ministry Management',
-    description: 'Manage ministries, membership assignment, meetings, goals, and ministry reports.',
+    module: 'audit',
+    label: 'Audit Trail',
+    description: 'Review audit activity, suspicious events, and export history.',
+    actions: [{ key: 'view', label: 'Open Audit Workspace' }],
+    groups: [
+      {
+        key: 'suspicious',
+        label: 'Suspicious Events',
+        description: 'Review suspicious platform and tenant activity.',
+        actions: [{ key: 'view', label: 'Open Suspicious Events' }],
+      },
+      {
+        key: 'exports',
+        label: 'Exports',
+        description: 'Review audit exports and export history.',
+        actions: [{ key: 'view', label: 'Open Export History' }],
+      },
+    ],
+  },
+  {
+    module: 'ministry',
+    label: 'Ministry',
+    description: 'Manage ministries, members, meetings, and ministry reporting.',
     actions: [
       { key: 'view', label: 'Open Ministry Workspace' },
-      { key: 'create', label: 'Create Ministries' },
-      { key: 'modify', label: 'Modify Ministries' },
-      { key: 'export', label: 'Export Ministry Data' },
+      { key: 'create', label: 'Create Ministry Records' },
+      { key: 'modify', label: 'Modify Ministry Records' },
+      { key: 'delete', label: 'Delete Ministry Records' },
+    ],
+    groups: [
+      {
+        key: 'members',
+        label: 'Members',
+        description: 'Assign ministry members and manage ministry rosters.',
+        actions: [
+          { key: 'view', label: 'Open Ministry Members' },
+          { key: 'create', label: 'Add Ministry Members' },
+          { key: 'modify', label: 'Edit Ministry Members' },
+          { key: 'delete', label: 'Remove Ministry Members' },
+          { key: 'bulk', label: 'Bulk Update Ministry Members' },
+        ],
+      },
+      {
+        key: 'meetings',
+        label: 'Meetings',
+        description: 'Create meetings and capture ministry attendance.',
+        actions: [
+          { key: 'view', label: 'Open Meetings' },
+          { key: 'create', label: 'Create Meetings' },
+          { key: 'modify', label: 'Edit Meetings' },
+          { key: 'record_attendance', label: 'Record Meeting Attendance' },
+        ],
+      },
+      {
+        key: 'reports',
+        label: 'Reports',
+        description: 'View ministry insights and reporting.',
+        actions: [{ key: 'view', label: 'Open Ministry Reports' }],
+      },
     ],
   },
   {
     module: 'cbs',
     label: 'CBS Groups',
-    description: 'Manage CBS groups, prospects, sessions, pipeline movement, and reports.',
+    description: 'Manage CBS prospects, sessions, conversions, and reporting.',
     actions: [
       { key: 'view', label: 'Open CBS Workspace' },
       { key: 'create', label: 'Create CBS Records' },
       { key: 'modify', label: 'Modify CBS Records' },
-      { key: 'export', label: 'Export CBS Data' },
+      { key: 'delete', label: 'Delete CBS Records' },
+    ],
+    groups: [
+      {
+        key: 'prospects',
+        label: 'Prospects',
+        description: 'Manage CBS prospects and conversions.',
+        actions: [
+          { key: 'view', label: 'Open Prospects' },
+          { key: 'create', label: 'Create Prospects' },
+          { key: 'modify', label: 'Edit Prospects' },
+          { key: 'convert', label: 'Convert Prospects' },
+        ],
+      },
+      {
+        key: 'sessions',
+        label: 'Sessions',
+        description: 'Manage CBS sessions and session updates.',
+        actions: [
+          { key: 'view', label: 'Open Sessions' },
+          { key: 'create', label: 'Create Sessions' },
+          { key: 'modify', label: 'Edit Sessions' },
+        ],
+      },
+      {
+        key: 'reports',
+        label: 'Reports',
+        description: 'View CBS reporting and summaries.',
+        actions: [{ key: 'view', label: 'Open CBS Reports' }],
+      },
     ],
   },
   {
-    module: 'leadership_development',
+    module: 'leadership',
     label: 'Leadership Development',
-    description: 'Review leadership profiles, readiness, succession plans, and development reporting.',
+    description: 'Review leadership candidates, succession, and leadership reports.',
     actions: [
       { key: 'view', label: 'Open Leadership Workspace' },
       { key: 'create', label: 'Create Leadership Records' },
       { key: 'modify', label: 'Modify Leadership Records' },
-      { key: 'export', label: 'Export Leadership Data' },
+      { key: 'delete', label: 'Delete Leadership Records' },
+    ],
+    groups: [
+      {
+        key: 'candidates',
+        label: 'Candidates',
+        description: 'Manage leadership candidates and readiness profiles.',
+        actions: [
+          { key: 'view', label: 'Open Candidates' },
+          { key: 'create', label: 'Create Candidates' },
+          { key: 'modify', label: 'Edit Candidates' },
+        ],
+      },
+      {
+        key: 'succession',
+        label: 'Succession',
+        description: 'Manage succession planning and successor pathways.',
+        actions: [
+          { key: 'view', label: 'Open Succession' },
+          { key: 'create', label: 'Create Succession Plans' },
+          { key: 'modify', label: 'Edit Succession Plans' },
+        ],
+      },
+      {
+        key: 'reports',
+        label: 'Reports',
+        description: 'View leadership development reporting.',
+        actions: [{ key: 'view', label: 'Open Leadership Reports' }],
+      },
     ],
   },
   {
-    module: 'strategic_planning',
+    module: 'strategic',
     label: 'Strategic Planning',
-    description: 'Manage strategic plans, balanced scorecards, KPIs, and strategic reporting.',
+    description: 'Manage strategic plans, KPIs, initiatives, and strategic reports.',
     actions: [
       { key: 'view', label: 'Open Strategic Workspace' },
       { key: 'create', label: 'Create Strategic Records' },
       { key: 'modify', label: 'Modify Strategic Records' },
-      { key: 'export', label: 'Export Strategic Data' },
+      { key: 'delete', label: 'Delete Strategic Records' },
+    ],
+    groups: [
+      {
+        key: 'plans',
+        label: 'Plans',
+        description: 'Manage strategic plans and plan structure.',
+        actions: [
+          { key: 'view', label: 'Open Plans' },
+          { key: 'create', label: 'Create Plans' },
+          { key: 'modify', label: 'Edit Plans' },
+        ],
+      },
+      {
+        key: 'kpis',
+        label: 'KPIs',
+        description: 'Manage KPI definitions and scorecard data.',
+        actions: [
+          { key: 'view', label: 'Open KPIs' },
+          { key: 'create', label: 'Create KPIs' },
+          { key: 'modify', label: 'Edit KPIs' },
+        ],
+      },
+      {
+        key: 'initiatives',
+        label: 'Initiatives',
+        description: 'Manage initiatives and execution tracking.',
+        actions: [
+          { key: 'view', label: 'Open Initiatives' },
+          { key: 'create', label: 'Create Initiatives' },
+          { key: 'modify', label: 'Edit Initiatives' },
+        ],
+      },
+      {
+        key: 'reports',
+        label: 'Reports',
+        description: 'View strategic reports and summaries.',
+        actions: [{ key: 'view', label: 'Open Strategic Reports' }],
+      },
     ],
   },
   {
-    module: 'family_ministry',
+    module: 'family',
     label: 'Family Ministry',
-    description: 'Access family analytics, at-risk households, and family ministry dashboards.',
-    actions: [
-      { key: 'view', label: 'Open Family Ministry Workspace' },
-      { key: 'export', label: 'Export Family Ministry Data' },
+    description: 'Access family analytics and family ministry dashboards.',
+    actions: [{ key: 'view', label: 'Open Family Workspace' }],
+    groups: [
+      {
+        key: 'analytics',
+        label: 'Analytics',
+        description: 'View family ministry analytics and at-risk snapshots.',
+        actions: [{ key: 'view', label: 'Open Family Analytics' }],
+      },
     ],
   },
   {
-    module: 'audit_trail',
-    label: 'Audit Trail',
-    description: 'Review system-wide audit activity, suspicious events, logins, and export history.',
-    actions: [
-      { key: 'view', label: 'Open Audit Trail Workspace' },
-      { key: 'export', label: 'Export Audit Trail Data' },
+    module: 'platform',
+    label: 'Platform BI',
+    description: 'Access platform-wide dashboards and tenant comparison insights.',
+    actions: [{ key: 'view', label: 'Open Platform Workspace' }],
+    groups: [
+      {
+        key: 'overview',
+        label: 'Overview',
+        description: 'Platform overview and summary cards.',
+        actions: [{ key: 'view', label: 'Open Platform Overview' }],
+      },
+      {
+        key: 'growth',
+        label: 'Growth',
+        description: 'Platform growth trends and forecasts.',
+        actions: [{ key: 'view', label: 'Open Platform Growth' }],
+      },
+      {
+        key: 'health',
+        label: 'Health',
+        description: 'Platform health monitoring and health scoring.',
+        actions: [{ key: 'view', label: 'Open Platform Health' }],
+      },
+      {
+        key: 'revenue',
+        label: 'Revenue',
+        description: 'Platform revenue and monetization views.',
+        actions: [{ key: 'view', label: 'Open Platform Revenue' }],
+      },
+      {
+        key: 'comparison',
+        label: 'Comparison',
+        description: 'Tenant comparison tables and rankings.',
+        actions: [{ key: 'view', label: 'Open Platform Comparison' }],
+      },
     ],
   },
   {
@@ -798,9 +978,35 @@ const aiAssistantCapabilities = [
     capability.startsWith('ai.history.'),
   ),
 ];
-const ministryManagementCapabilities = getCapabilitiesForSection('ministry_management', ['view', 'create', 'modify', 'export']);
-const cbsCapabilities = getCapabilitiesForSection('cbs', ['view', 'create', 'modify', 'export']);
-const familyMinistryCapabilities = getCapabilitiesForSection('family_ministry', ['view', 'export']);
+const ministryManagementCapabilities = getCapabilitiesForSection('ministry', [
+  'view',
+  'create',
+  'modify',
+  'delete',
+  'bulk',
+  'record_attendance',
+]);
+const cbsCapabilities = getCapabilitiesForSection('cbs', [
+  'view',
+  'create',
+  'modify',
+  'delete',
+  'convert',
+]);
+const familyMinistryCapabilities = getCapabilitiesForSection('family', ['view']);
+const leadershipDevelopmentCapabilities = getCapabilitiesForSection('leadership', [
+  'view',
+  'create',
+  'modify',
+  'delete',
+]);
+const strategicPlanningCapabilities = getCapabilitiesForSection('strategic', [
+  'view',
+  'create',
+  'modify',
+  'delete',
+]);
+const auditCapabilities = getCapabilitiesForSection('audit', ['view']);
 
 export const defaultCapabilitiesByRole = {
   super_admin: [...allCapabilities],
@@ -824,9 +1030,12 @@ export const defaultCapabilitiesByRole = {
     ...getCapabilitiesForSection('finance', ['view', 'export']),
     ...getCapabilitiesForSection('volunteers', ['delete']),
     ...getCapabilitiesForSection('events', ['delete']),
+    ...leadershipDevelopmentCapabilities,
+    ...strategicPlanningCapabilities,
     ...ministryManagementCapabilities,
     ...cbsCapabilities,
     ...familyMinistryCapabilities,
+    ...auditCapabilities,
     ...branchAnalyticsViewCapabilities,
     ...aiAssistantCapabilities,
   ],
@@ -843,6 +1052,7 @@ export const defaultCapabilitiesByRole = {
     ...getCapabilitiesForSection('pastoral', ['delete']),
     ...cbsCapabilities,
     ...familyMinistryCapabilities,
+    ...getCapabilitiesForSection('ministry', ['view']),
     ...volunteerEventViewCapabilities,
   ],
   volunteer_leader: [...leadershipCapabilities, ...volunteerManagementCapabilities, ...ministryManagementCapabilities],
