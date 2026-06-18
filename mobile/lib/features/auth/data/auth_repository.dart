@@ -45,8 +45,14 @@ class AuthRepository {
     return TokenPair.fromJson(payload);
   }
 
-  Future<void> logout() async {
-    await _dio.post<void>(Endpoints.logout);
+  Future<void> logout({String? refreshToken}) async {
+    await _dio.post<void>(
+      Endpoints.logout,
+      data: <String, dynamic>{
+        if (refreshToken != null && refreshToken.isNotEmpty)
+          'refreshToken': refreshToken,
+      },
+    );
   }
 
   Future<UserProfile> getMe() async {

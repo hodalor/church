@@ -28,6 +28,10 @@ import useAnalyticsAccess from '../../hooks/useAnalyticsAccess';
 import { formatAnalyticsCurrency, formatAnalyticsNumber } from '../../utils/analytics';
 
 const grades = ['all', 'A', 'B', 'C', 'D', 'F'];
+const kpiTones = ['gold', 'blue', 'emerald', 'violet', 'cyan', 'rose'];
+const chartPalette = ['#F4C95D', '#38BDF8', '#34D399', '#A78BFA', '#FB7185', '#22D3EE'];
+const panelClass =
+  'rounded-[20px] border border-white/8 bg-[linear-gradient(135deg,rgba(13,19,32,0.94),rgba(17,24,39,0.98))] p-4 text-white shadow-[0_16px_32px_rgba(0,0,0,0.18)]';
 
 export default function PlatformBIPage() {
   const { canViewPlatformBI } = useAnalyticsAccess();
@@ -130,30 +134,34 @@ export default function PlatformBIPage() {
           </div>
         ) : (
           <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-6">
-            <KpiCard label="Total Tenants" value={formatAnalyticsNumber(overview.summary?.totalTenants || 0)} />
-            <KpiCard label="Total Members" value={formatAnalyticsNumber(overview.summary?.totalMembers || 0)} />
-            <KpiCard label="Platform Attendance" value={formatAnalyticsNumber(overview.summary?.totalAttendance || 0)} />
-            <KpiCard label="Platform Revenue" value={formatAnalyticsCurrency(overview.summary?.totalIncome || 0)} />
-            <KpiCard label="Total Branches" value={formatAnalyticsNumber(overview.summary?.totalBranches || 0)} />
-            <KpiCard label="Critical Insights" value={formatAnalyticsNumber(overview.summary?.criticalInsights || 0)} />
+            {[
+              ['Total Tenants', formatAnalyticsNumber(overview.summary?.totalTenants || 0)],
+              ['Total Members', formatAnalyticsNumber(overview.summary?.totalMembers || 0)],
+              ['Platform Attendance', formatAnalyticsNumber(overview.summary?.totalAttendance || 0)],
+              ['Platform Revenue', formatAnalyticsCurrency(overview.summary?.totalIncome || 0)],
+              ['Total Branches', formatAnalyticsNumber(overview.summary?.totalBranches || 0)],
+              ['Critical Insights', formatAnalyticsNumber(overview.summary?.criticalInsights || 0)],
+            ].map(([label, value], index) => (
+              <KpiCard key={label} label={label} value={value} tone={kpiTones[index]} compact />
+            ))}
           </div>
         )}
 
         <div className="grid gap-4 xl:grid-cols-[1.4fr_0.8fr]">
-          <div className="rounded-[22px] border border-white/8 bg-[#0d1320] p-4 text-white">
+          <div className={panelClass}>
             <h3 className="text-lg font-semibold text-white">Platform growth chart</h3>
             {growthQuery.isLoading ? (
               <ChartSkeleton />
             ) : (
-              <div className="mt-4 h-[360px]">
+              <div className="mt-4 h-[280px]">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={growth}>
                     <XAxis dataKey="month" stroke="#94A3B8" />
                     <YAxis stroke="#94A3B8" />
                     <Tooltip />
-                    <Bar dataKey="income" fill="#445A8B" radius={[8, 8, 0, 0]} />
-                    <Line type="monotone" dataKey="members" stroke="#1E2A4A" strokeWidth={3} />
-                    <Line type="monotone" dataKey="attendance" stroke="#C9A84C" strokeWidth={3} />
+                    <Bar dataKey="income" fill="#38BDF8" radius={[8, 8, 0, 0]} />
+                    <Line type="monotone" dataKey="members" stroke="#A78BFA" strokeWidth={3} />
+                    <Line type="monotone" dataKey="attendance" stroke="#F4C95D" strokeWidth={3} />
                   </BarChart>
                 </ResponsiveContainer>
               </div>
@@ -161,12 +169,12 @@ export default function PlatformBIPage() {
           </div>
 
           <div className="space-y-4">
-            <div className="rounded-[22px] border border-white/8 bg-[#0d1320] p-4 text-white">
+            <div className={panelClass}>
               <h3 className="text-lg font-semibold text-white">Plan distribution</h3>
-              <div className="mt-4 h-[220px]">
+              <div className="mt-4 h-[190px]">
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
-                    <Pie data={planData} dataKey="value" nameKey="name" outerRadius={80}>
+                    <Pie data={planData} dataKey="value" nameKey="name" outerRadius={70}>
                       {planData.map((item) => (
                         <Cell key={item.name} fill={item.fill} />
                       ))}
@@ -176,15 +184,19 @@ export default function PlatformBIPage() {
                 </ResponsiveContainer>
               </div>
             </div>
-            <div className="rounded-[22px] border border-white/8 bg-[#0d1320] p-4 text-white">
+            <div className={panelClass}>
               <h3 className="text-lg font-semibold text-white">Revenue by month</h3>
-              <div className="mt-4 h-[220px]">
+              <div className="mt-4 h-[190px]">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={revenue.monthly || []}>
                     <XAxis dataKey="month" stroke="#94A3B8" />
                     <YAxis stroke="#94A3B8" />
                     <Tooltip />
-                    <Bar dataKey="income" fill="#C9A84C" radius={[8, 8, 0, 0]} />
+                    <Bar dataKey="income" radius={[8, 8, 0, 0]}>
+                      {(revenue.monthly || []).map((item, index) => (
+                        <Cell key={`${item.month}-${index}`} fill={chartPalette[index % chartPalette.length]} />
+                      ))}
+                    </Bar>
                   </BarChart>
                 </ResponsiveContainer>
               </div>
@@ -192,7 +204,7 @@ export default function PlatformBIPage() {
           </div>
         </div>
 
-        <div className="rounded-[22px] border border-white/8 bg-[#0d1320] p-4 text-white">
+        <div className={panelClass}>
           <div className="flex items-center justify-between gap-3">
             <h3 className="text-lg font-semibold text-white">Health score distribution</h3>
             <FilterTabs
@@ -201,19 +213,23 @@ export default function PlatformBIPage() {
               onChange={setGradeFilter}
             />
           </div>
-          <div className="mt-4 h-[260px]">
+          <div className="mt-4 h-[220px]">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={gradeCounts}>
                 <XAxis dataKey="name" stroke="#94A3B8" />
                 <YAxis stroke="#94A3B8" />
                 <Tooltip />
-                <Bar dataKey="value" fill="#C9A84C" radius={[8, 8, 0, 0]} />
+                <Bar dataKey="value" radius={[8, 8, 0, 0]}>
+                  {gradeCounts.map((item, index) => (
+                    <Cell key={item.name} fill={chartPalette[index % chartPalette.length]} />
+                  ))}
+                </Bar>
               </BarChart>
             </ResponsiveContainer>
           </div>
         </div>
 
-        <div className="rounded-[22px] border border-white/8 bg-[#0d1320] p-4 text-white">
+        <div className={panelClass}>
           <h3 className="text-lg font-semibold text-white">Tenant comparison</h3>
           {tenantsQuery.isLoading ? (
             <TableRowSkeleton columns={8} rows={6} />

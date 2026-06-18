@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
-import { Bar, BarChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
+import { Bar, BarChart, Cell, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import {
   getPlatformGrowthTrends,
   getPlatformHealthScores,
@@ -16,6 +16,9 @@ import Card from '../../components/ui/Card';
 import EmptyState from '../../components/ui/EmptyState';
 import PageHeader from '../../components/ui/PageHeader';
 import { formatAnalyticsCurrency, formatAnalyticsNumber } from '../../utils/analytics';
+
+const kpiTones = ['gold', 'blue', 'emerald', 'violet', 'cyan', 'rose'];
+const chartPalette = ['#F4C95D', '#38BDF8', '#34D399', '#A78BFA', '#FB7185'];
 
 export default function SuperAdminDashboard() {
   const navigate = useNavigate();
@@ -96,44 +99,52 @@ export default function SuperAdminDashboard() {
         />
 
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-6">
-          <KpiCard label="Total Tenants" value={formatAnalyticsNumber(summary.totalTenants || 0)} />
-          <KpiCard label="Total Members" value={formatAnalyticsNumber(summary.totalMembers || 0)} />
-          <KpiCard label="Attendance" value={formatAnalyticsNumber(summary.totalAttendance || 0)} />
-          <KpiCard label="Revenue" value={formatAnalyticsCurrency(summary.totalIncome || 0)} />
-          <KpiCard label="Branches" value={formatAnalyticsNumber(summary.totalBranches || 0)} />
-          <KpiCard label="Critical Insights" value={formatAnalyticsNumber(summary.criticalInsights || 0)} />
+          {[
+            ['Total Tenants', formatAnalyticsNumber(summary.totalTenants || 0)],
+            ['Total Members', formatAnalyticsNumber(summary.totalMembers || 0)],
+            ['Attendance', formatAnalyticsNumber(summary.totalAttendance || 0)],
+            ['Revenue', formatAnalyticsCurrency(summary.totalIncome || 0)],
+            ['Branches', formatAnalyticsNumber(summary.totalBranches || 0)],
+            ['Critical Insights', formatAnalyticsNumber(summary.criticalInsights || 0)],
+          ].map(([label, value], index) => (
+            <KpiCard key={label} label={label} value={value} tone={kpiTones[index]} compact />
+          ))}
         </div>
 
         <div className="grid gap-6 xl:grid-cols-[1.2fr_0.8fr]">
-          <Card className="space-y-4">
+          <Card className="space-y-4 bg-[linear-gradient(135deg,rgba(56,189,248,0.12),rgba(13,19,32,0.98))]">
             <div>
               <p className="text-sm uppercase tracking-[0.25em] text-white/55">Platform Growth</p>
               <h2 className="mt-2 text-2xl font-semibold text-white">Tenant growth momentum</h2>
             </div>
-            <div className="h-80">
+            <div className="h-64">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={growthItems}>
                   <XAxis dataKey="month" stroke="#94a3b8" />
                   <YAxis stroke="#94a3b8" />
                   <Tooltip />
-                  <Bar dataKey="income" fill="#C9A84C" radius={[8, 8, 0, 0]} />
+                  <Bar dataKey="income" fill="#38BDF8" radius={[8, 8, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             </div>
           </Card>
 
-          <Card className="space-y-4">
+          <Card className="space-y-4 bg-[linear-gradient(135deg,rgba(244,201,93,0.16),rgba(13,19,32,0.98))]">
             <div>
               <p className="text-sm uppercase tracking-[0.25em] text-white/55">Platform Health</p>
               <h2 className="mt-2 text-2xl font-semibold text-white">Church health distribution</h2>
             </div>
-            <div className="h-80">
+            <div className="h-64">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={healthDistribution}>
                   <XAxis dataKey="name" stroke="#94a3b8" />
                   <YAxis stroke="#94a3b8" />
                   <Tooltip />
-                  <Bar dataKey="value" fill="#C9A84C" radius={[8, 8, 0, 0]} />
+                  <Bar dataKey="value" radius={[8, 8, 0, 0]}>
+                    {healthDistribution.map((item, index) => (
+                      <Cell key={item.name} fill={chartPalette[index % chartPalette.length]} />
+                    ))}
+                  </Bar>
                 </BarChart>
               </ResponsiveContainer>
             </div>
@@ -141,7 +152,7 @@ export default function SuperAdminDashboard() {
         </div>
 
         <div className="grid gap-6 xl:grid-cols-3">
-          <Card className="space-y-4 xl:col-span-2">
+          <Card className="space-y-4 xl:col-span-2 bg-[linear-gradient(135deg,rgba(167,139,250,0.14),rgba(13,19,32,0.98))]">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm uppercase tracking-[0.25em] text-white/55">Revenue</p>
@@ -151,19 +162,19 @@ export default function SuperAdminDashboard() {
                 Open BI
               </Button>
             </div>
-            <div className="h-72">
+            <div className="h-56">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={revenueItems}>
                   <XAxis dataKey="month" stroke="#94a3b8" />
                   <YAxis stroke="#94a3b8" />
                   <Tooltip />
-                  <Bar dataKey="income" fill="#C9A84C" radius={[8, 8, 0, 0]} />
+                  <Bar dataKey="income" fill="#A78BFA" radius={[8, 8, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             </div>
           </Card>
 
-          <Card className="space-y-4">
+          <Card className="space-y-4 bg-[linear-gradient(135deg,rgba(52,211,153,0.14),rgba(13,19,32,0.98))]">
             <div>
               <p className="text-sm uppercase tracking-[0.25em] text-white/55">Fastest Growing Churches</p>
               <h2 className="mt-2 text-2xl font-semibold text-white">Leaderboard</h2>
@@ -175,7 +186,7 @@ export default function SuperAdminDashboard() {
                     key={tenant.tenantId}
                     type="button"
                     onClick={() => navigate(`/superadmin/tenants/${tenant.tenantId}`)}
-                    className="flex w-full items-center justify-between rounded-2xl border border-white/10 bg-[#101827] px-4 py-3 text-left"
+                    className="flex w-full items-center justify-between rounded-2xl border border-emerald-400/20 bg-emerald-400/10 px-4 py-2.5 text-left"
                   >
                     <div>
                       <p className="font-medium text-white">
@@ -201,7 +212,7 @@ export default function SuperAdminDashboard() {
           </Card>
         </div>
 
-        <Card className="space-y-4">
+        <Card className="space-y-4 bg-[linear-gradient(135deg,rgba(34,211,238,0.1),rgba(13,19,32,0.98))]">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
               <p className="text-sm uppercase tracking-[0.25em] text-white/55">Phase 11 Workspaces</p>
@@ -248,7 +259,7 @@ export default function SuperAdminDashboard() {
                 key={item.title}
                 type="button"
                 onClick={() => navigate(item.to)}
-                className="rounded-2xl border border-white/10 bg-[#101827] p-4 text-left transition hover:border-accent/30"
+                className="rounded-2xl border border-white/10 bg-[linear-gradient(135deg,rgba(30,42,74,0.72),rgba(12,17,28,0.98))] p-3.5 text-left transition hover:border-accent/30"
               >
                 <p className="text-lg font-semibold text-white">{item.title}</p>
                 <p className="mt-2 text-sm leading-6 text-white/60">{item.description}</p>
@@ -259,7 +270,7 @@ export default function SuperAdminDashboard() {
         </Card>
 
         <div className="grid gap-6 xl:grid-cols-[1.15fr_0.85fr]">
-          <Card className="space-y-4">
+          <Card className="space-y-4 bg-[linear-gradient(135deg,rgba(56,189,248,0.08),rgba(13,19,32,0.98))]">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm uppercase tracking-[0.25em] text-white/55">Tenant Snapshot</p>
@@ -299,7 +310,7 @@ export default function SuperAdminDashboard() {
             </div>
           </Card>
 
-          <Card className="space-y-4">
+          <Card className="space-y-4 bg-[linear-gradient(135deg,rgba(251,113,133,0.1),rgba(13,19,32,0.98))]">
             <div>
               <p className="text-sm uppercase tracking-[0.25em] text-white/55">Alert Tenants</p>
               <h2 className="mt-2 text-2xl font-semibold text-white">Needs attention now</h2>

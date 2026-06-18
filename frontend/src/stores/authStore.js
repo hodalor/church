@@ -68,9 +68,13 @@ export const useAuthStore = create(
         const state = useAuthStore.getState();
 
         try {
-          if (state.accessToken) {
+          if (state.accessToken || state.refreshToken) {
             const { logoutUser } = await import('../api/endpoints/auth');
-            await logoutUser();
+            await logoutUser(
+              state.refreshToken
+                ? { refreshToken: state.refreshToken }
+                : {},
+            );
           }
         } catch {
           // Ignore logout request failures and clear local session anyway.

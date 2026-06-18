@@ -26,6 +26,58 @@ import {
   toTitleCase,
 } from '../../utils/analytics';
 
+const KPI_CARD_THEMES = {
+  default: {
+    shell:
+      'border-white/8 bg-[linear-gradient(135deg,rgba(17,26,42,0.98),rgba(10,15,26,0.94))] hover:border-accent/25 hover:bg-[linear-gradient(135deg,rgba(22,33,55,0.98),rgba(12,18,30,0.94))]',
+    glow: 'bg-accent/20',
+    chip: 'border-white/10 bg-white/6 text-white/65',
+    value: 'text-white',
+  },
+  gold: {
+    shell:
+      'border-[#f0c96a]/30 bg-[linear-gradient(135deg,rgba(201,168,76,0.22),rgba(17,24,39,0.96))] hover:border-[#f0c96a]/55',
+    glow: 'bg-[#f0c96a]/30',
+    chip: 'border-[#f0c96a]/30 bg-[#f0c96a]/12 text-[#f4d98c]',
+    value: 'text-[#fff0bf]',
+  },
+  blue: {
+    shell:
+      'border-sky-400/25 bg-[linear-gradient(135deg,rgba(56,189,248,0.16),rgba(12,20,36,0.96))] hover:border-sky-300/50',
+    glow: 'bg-sky-400/30',
+    chip: 'border-sky-400/25 bg-sky-400/10 text-sky-200',
+    value: 'text-sky-100',
+  },
+  emerald: {
+    shell:
+      'border-emerald-400/25 bg-[linear-gradient(135deg,rgba(52,211,153,0.16),rgba(10,22,24,0.96))] hover:border-emerald-300/50',
+    glow: 'bg-emerald-400/30',
+    chip: 'border-emerald-400/25 bg-emerald-400/10 text-emerald-200',
+    value: 'text-emerald-100',
+  },
+  violet: {
+    shell:
+      'border-violet-400/25 bg-[linear-gradient(135deg,rgba(167,139,250,0.18),rgba(18,14,32,0.96))] hover:border-violet-300/50',
+    glow: 'bg-violet-400/30',
+    chip: 'border-violet-400/25 bg-violet-400/10 text-violet-200',
+    value: 'text-violet-100',
+  },
+  rose: {
+    shell:
+      'border-rose-400/25 bg-[linear-gradient(135deg,rgba(251,113,133,0.16),rgba(28,12,20,0.96))] hover:border-rose-300/50',
+    glow: 'bg-rose-400/30',
+    chip: 'border-rose-400/25 bg-rose-400/10 text-rose-200',
+    value: 'text-rose-100',
+  },
+  cyan: {
+    shell:
+      'border-cyan-400/25 bg-[linear-gradient(135deg,rgba(34,211,238,0.15),rgba(8,22,28,0.96))] hover:border-cyan-300/50',
+    glow: 'bg-cyan-400/30',
+    chip: 'border-cyan-400/25 bg-cyan-400/10 text-cyan-200',
+    value: 'text-cyan-100',
+  },
+};
+
 export function AnalyticsPage({ title, subtitle, action, children }) {
   return (
     <div className="space-y-6">
@@ -69,15 +121,25 @@ export function TrendPill({ trend = 'stable', value = 0 }) {
   );
 }
 
-export function KpiCard({ label, value, change, helper, to }) {
+export function KpiCard({ label, value, change, helper, to, tone = 'default', compact = false }) {
+  const theme = KPI_CARD_THEMES[tone] || KPI_CARD_THEMES.default;
   const content = (
-    <div className="rounded-[22px] border border-white/8 bg-[#0d1320] p-4 transition hover:border-accent/25 hover:bg-[#111a2a]">
-      <p className="text-[11px] uppercase tracking-[0.24em] text-white/45">{label}</p>
-      <div className="mt-4 flex items-start justify-between gap-3">
-        <h3 className="text-3xl font-semibold text-white">{value}</h3>
-        {change ? <TrendPill trend={change.trend} value={change.percent} /> : null}
+    <div
+      className={`relative overflow-hidden rounded-[20px] border transition ${compact ? 'p-3.5' : 'p-4'} ${theme.shell}`}
+    >
+      <div className={`absolute right-[-20px] top-[-26px] h-20 w-20 rounded-full blur-2xl ${theme.glow}`} />
+      <div className="relative">
+        <div className="flex items-start justify-between gap-3">
+          <p className={`inline-flex rounded-full border px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.24em] ${theme.chip}`}>
+            {label}
+          </p>
+          {change ? <TrendPill trend={change.trend} value={change.percent} /> : null}
+        </div>
+        <div className={`${compact ? 'mt-3' : 'mt-4'} flex items-end justify-between gap-3`}>
+          <h3 className={`${compact ? 'text-[1.6rem]' : 'text-3xl'} font-semibold ${theme.value}`}>{value}</h3>
+        </div>
       </div>
-      {helper ? <p className="mt-3 text-sm text-white/55">{helper}</p> : null}
+      {helper ? <p className={`${compact ? 'mt-2.5' : 'mt-3'} text-sm text-white/62`}>{helper}</p> : null}
     </div>
   );
 

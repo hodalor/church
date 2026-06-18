@@ -83,18 +83,26 @@ const serializeRegistration = (registrationDocument) => {
 };
 
 const createNotifications = async (notifications = []) => {
-  if (!notifications.length) {
+  const docs = notifications.filter(
+    (notification) => notification && notification.message && notification.tenantId,
+  );
+
+  if (!docs.length) {
     return;
   }
 
-  await NotificationLog.insertMany(
-    notifications.map((notification) => ({
-      ...notification,
-      isRead: notification.isRead ?? false,
-      createdAt: notification.createdAt || new Date(),
-    })),
-    { ordered: false },
-  );
+  try {
+    await NotificationLog.insertMany(
+      docs.map((notification) => ({
+        ...notification,
+        isRead: notification.isRead ?? false,
+        createdAt: notification.createdAt || new Date(),
+      })),
+      { ordered: false },
+    );
+  } catch (error) {
+    console.error('Event notification delivery failed:', error.message);
+  }
 };
 
 const getEventOrThrow = async (tenantId, eventId) => {

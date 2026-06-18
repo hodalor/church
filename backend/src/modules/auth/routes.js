@@ -36,7 +36,12 @@ router.post(
   validate,
   authController.refreshSession,
 );
-router.post('/logout', auth, authController.logout);
+router.post(
+  '/logout',
+  [body('refreshToken').optional({ nullable: true }).isString().withMessage('Refresh token must be a string.')],
+  validate,
+  authController.logout,
+);
 router.get('/me', auth, authController.getMe);
 router.patch(
   '/fcm-token',

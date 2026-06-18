@@ -37,6 +37,16 @@ const tabs = [
   { label: 'Growth', value: 'growth' },
   { label: 'Operations', value: 'operations' },
 ];
+const panelClass =
+  'rounded-[18px] border p-3.5 shadow-[0_12px_28px_rgba(0,0,0,0.18)]';
+const financePanel =
+  `${panelClass} border-sky-400/18 bg-[linear-gradient(135deg,rgba(56,189,248,0.14),rgba(13,19,32,0.98))]`;
+const goldPanel =
+  `${panelClass} border-amber-400/18 bg-[linear-gradient(135deg,rgba(244,201,93,0.16),rgba(13,19,32,0.98))]`;
+const emeraldPanel =
+  `${panelClass} border-emerald-400/18 bg-[linear-gradient(135deg,rgba(52,211,153,0.14),rgba(13,19,32,0.98))]`;
+const violetPanel =
+  `${panelClass} border-violet-400/18 bg-[linear-gradient(135deg,rgba(167,139,250,0.16),rgba(13,19,32,0.98))]`;
 
 export default function IntelligencePage() {
   const { canViewIntelligence } = useAnalyticsAccess();
@@ -124,27 +134,27 @@ export default function IntelligencePage() {
         return (
           <div className="space-y-4">
             <div className="grid gap-4 md:grid-cols-3">
-              <KpiCard label="Total Income" value={formatAnalyticsCurrency(financeData.consolidated?.totalIncome || 0, currencyCode, currencySymbol)} />
-              <KpiCard label="Total Expenses" value={formatAnalyticsCurrency(financeData.consolidated?.totalExpenses || 0, currencyCode, currencySymbol)} />
-              <KpiCard label="Net Balance" value={formatAnalyticsCurrency(financeData.consolidated?.netBalance || 0, currencyCode, currencySymbol)} />
+              <KpiCard label="Total Income" value={formatAnalyticsCurrency(financeData.consolidated?.totalIncome || 0, currencyCode, currencySymbol)} tone="blue" compact />
+              <KpiCard label="Total Expenses" value={formatAnalyticsCurrency(financeData.consolidated?.totalExpenses || 0, currencyCode, currencySymbol)} tone="rose" compact />
+              <KpiCard label="Net Balance" value={formatAnalyticsCurrency(financeData.consolidated?.netBalance || 0, currencyCode, currencySymbol)} tone="emerald" compact />
             </div>
             <div className="grid gap-4 xl:grid-cols-[1fr_0.9fr]">
-              <div className="rounded-[22px] border border-white/8 bg-[#0d1320] p-4">
+              <div className={financePanel}>
                 <h3 className="text-lg font-semibold text-white">Income per member by branch</h3>
-                <div className="mt-4 h-[320px]">
+                <div className="mt-4 h-[260px]">
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart data={financeData.byBranch || []} layout="vertical">
                       <XAxis type="number" stroke="#94A3B8" />
                       <YAxis type="category" dataKey="branchName" stroke="#94A3B8" width={110} />
                       <Tooltip />
                       <ReferenceLine x={financeBenchmark} stroke="#C9A84C" strokeDasharray="4 4" />
-                      <Bar dataKey="incomePerMember" fill="#1E2A4A" radius={[0, 8, 8, 0]} />
+                      <Bar dataKey="incomePerMember" fill="#38BDF8" radius={[0, 8, 8, 0]} />
                     </BarChart>
                   </ResponsiveContainer>
                 </div>
               </div>
               <div className="space-y-4">
-                <div className="rounded-[22px] border border-white/8 bg-[#0d1320] p-4">
+                <div className={goldPanel}>
                   <h3 className="text-lg font-semibold text-white">Forecast</h3>
                   <p className="mt-3 text-3xl font-semibold text-white">
                     {formatAnalyticsCurrency(financeData.forecast?.nextMonthIncome || 0, currencyCode, currencySymbol)}
@@ -152,7 +162,7 @@ export default function IntelligencePage() {
                   <p className="mt-2 text-sm text-white/55">
                     Confidence {Number(financeData.forecast?.confidence || 0).toFixed(1)}% • {financeData.forecast?.basis || 'Based on the last 12 months'}
                   </p>
-                  <div className="mt-4 h-[180px]">
+                  <div className="mt-4 h-[150px]">
                     <ResponsiveContainer width="100%" height="100%">
                       <LineChart data={financeData.forecast?.series || []}>
                         <XAxis dataKey="month" stroke="#94A3B8" />
@@ -163,13 +173,13 @@ export default function IntelligencePage() {
                     </ResponsiveContainer>
                   </div>
                 </div>
-                <div className="rounded-[22px] border border-white/8 bg-[#0d1320] p-4">
+                <div className={violetPanel}>
                   <h3 className="text-lg font-semibold text-white">Financial anomalies</h3>
                   <div className="mt-4 space-y-3">
                     <SummaryList
                       items={financeData.anomalies || []}
                       formatter={(item) => (
-                        <div className="rounded-2xl border border-white/8 bg-white/[0.03] px-4 py-3">
+                        <div className="rounded-2xl border border-violet-300/15 bg-violet-400/10 px-4 py-3">
                           <p className="font-medium text-white">{item.branchName}</p>
                           <p className="mt-1 text-sm text-white/55">
                             {item.month} • {item.type} • {Number(item.percent || 0).toFixed(1)}%
@@ -188,14 +198,14 @@ export default function IntelligencePage() {
         return (
           <div className="space-y-4">
             <div className="grid gap-4 md:grid-cols-4">
-              <KpiCard label="Members" value={`${Number(growthData.memberGrowthRate || 0).toFixed(1)}%`} />
-              <KpiCard label="Attendance" value={`${Number(growthData.attendanceGrowthRate || 0).toFixed(1)}%`} />
-              <KpiCard label="Income" value={`${Number(growthData.incomeGrowthRate || 0).toFixed(1)}%`} />
-              <KpiCard label="Projected 3M" value={formatAnalyticsNumber(growthData.projections?.length || 0)} helper="Forecast periods ready" />
+              <KpiCard label="Members" value={`${Number(growthData.memberGrowthRate || 0).toFixed(1)}%`} tone="emerald" compact />
+              <KpiCard label="Attendance" value={`${Number(growthData.attendanceGrowthRate || 0).toFixed(1)}%`} tone="blue" compact />
+              <KpiCard label="Income" value={`${Number(growthData.incomeGrowthRate || 0).toFixed(1)}%`} tone="gold" compact />
+              <KpiCard label="Projected 3M" value={formatAnalyticsNumber(growthData.projections?.length || 0)} helper="Forecast periods ready" tone="violet" compact />
             </div>
-            <div className="rounded-[22px] border border-white/8 bg-[#0d1320] p-4">
+            <div className={emeraldPanel}>
               <h3 className="text-lg font-semibold text-white">Historical and forecast trend</h3>
-              <div className="mt-4 h-[360px]">
+              <div className="mt-4 h-[280px]">
                 <ResponsiveContainer width="100%" height="100%">
                   <LineChart data={forecastSeries}>
                     <XAxis dataKey="month" stroke="#94A3B8" />
@@ -212,7 +222,7 @@ export default function IntelligencePage() {
         return (
           <div className="grid gap-4 xl:grid-cols-[0.9fr_1.1fr]">
             <div className="space-y-4">
-              <div className="rounded-[22px] border border-white/8 bg-[#0d1320] p-4">
+              <div className={violetPanel}>
                 <h3 className="text-lg font-semibold text-white">Volunteer gaps calendar</h3>
                 <div className="mt-4 space-y-3">
                   <SummaryList

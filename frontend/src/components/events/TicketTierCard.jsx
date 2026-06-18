@@ -5,7 +5,7 @@ export default function TicketTierCard({ tier, onRegister, compact = false }) {
   const remaining = Math.max(Number(tier.quantity || 0) - Number(tier.sold || 0), 0);
 
   return (
-    <div className="rounded-2xl border border-white/10 bg-[#101827] p-4">
+    <div className="rounded-2xl border border-emerald-400/20 bg-[linear-gradient(135deg,rgba(52,211,153,0.14),rgba(13,19,32,0.98))] p-3.5">
       <div className={`flex ${compact ? 'items-center justify-between gap-3' : 'flex-col gap-3'}`}>
         <div>
           <p className="text-lg font-semibold text-white">{tier.name}</p>

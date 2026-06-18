@@ -13,11 +13,12 @@ import {
   updateEventStatus,
 } from '../../api/endpoints/events';
 import { useAuthStore } from '../../stores/authStore';
+import { useTenantStore } from '../../stores/tenantStore';
 import useCurrency from '../../hooks/useCurrency';
 import useEventsAccess from '../../hooks/useEventsAccess';
 import { eventTypes, formatEventType } from '../../utils/events';
 import { supabaseUpload } from '../../utils/supabaseUpload';
-import { showErrorToast } from '../../utils/toast';
+import { showErrorToast, showInfoToast, showSuccessToast } from '../../utils/toast';
 import Button from '../ui/Button';
 import Card from '../ui/Card';
 import Input from '../ui/Input';
@@ -119,7 +120,7 @@ const mapEventToForm = (event, fallbackCurrency) => ({
   currency: event.currency || fallbackCurrency,
 });
 
-const buildPayload = (form) => ({
+const buildPayload = (form, options = {}) => ({
   title: form.title,
   type: form.type,
   description: form.description,
@@ -163,11 +164,13 @@ const buildPayload = (form) => ({
   estimatedBudget: form.estimatedBudget !== '' ? Number(form.estimatedBudget || 0) : undefined,
   actualCost: form.actualCost !== '' ? Number(form.actualCost || 0) : undefined,
   currency: form.currency || undefined,
+  tenantId: options.tenantId || undefined,
 });
 
 export default function EventFormWizard({ eventId = null, fallbackPath = '/events' }) {
   const navigate = useNavigate();
   const authUser = useAuthStore((state) => state.user);
+  const tenantId = useTenantStore((state) => state.tenantId);
   const { currencyCode, formatCurrency } = useCurrency();
   const { canCreateEvents, canModifyEvents, canPublishEvents } = useEventsAccess();
   const [activeStep, setActiveStep] = useState(1);
@@ -195,14 +198,15 @@ export default function EventFormWizard({ eventId = null, fallbackPath = '/event
   });
 
   useEffect(() => {
-    if (authUser?._id && !isEdit) {
+    const organizerId = authUser?.userId || authUser?._id;
+    if (organizerId && !isEdit) {
       setForm((current) => ({
         ...current,
-        organizerUserId: current.organizerUserId || authUser._id,
+        organizerUserId: current.organizerUserId || organizerId,
         currency: current.currency || currencyCode,
       }));
     }
-  }, [authUser?._id, currencyCode, isEdit]);
+  }, [authUser?._id, authUser?.userId, currencyCode, isEdit]);
 
   useEffect(() => {
     if (!eventQuery.data) {
@@ -319,20 +323,55 @@ export default function EventFormWizard({ eventId = null, fallbackPath = '/event
   };
 
   const handleSave = async (mode) => {
-    const payload = buildPayload(form);
-    const saved = await saveMutation.mutateAsync(payload);
-    const savedId = saved.eventId || saved._id || saved.id || eventId;
+    try {
+      const payload = buildPayload(
+        {
+          ...form,
+          organizerUserId: form.organizerUserId || authUser?.userId || authUser?._id || '',
+        },
+        {
+          tenantId: authUser?.role === 'super_admin' ? tenantId : undefined,
+        },
+      );
+      const saved = await saveMutation.mutateAsync(payload);
+      const savedId = saved.eventId || saved._id || saved.id || eventId;
 
-    if (mode === 'publish' && canPublishEvents) {
-      await publishMutation.mutateAsync(savedId);
+      if (!savedId) {
+        throw new Error('Event was saved, but no event identifier was returned.');
+      }
+
+      let followUpWarning = '';
+
+      try {
+        if (mode === 'publish' && canPublishEvents) {
+          await publishMutation.mutateAsync(savedId);
+        }
+
+        if (mode === 'open-registration' && canPublishEvents) {
+          await publishMutation.mutateAsync(savedId);
+          await statusMutation.mutateAsync({ id: savedId, status: 'registration_open' });
+        }
+      } catch (error) {
+        followUpWarning =
+          error.response?.data?.message || error.message || 'The event was created, but follow-up publishing failed.';
+      }
+
+      if (followUpWarning) {
+        showInfoToast(`Event created. ${followUpWarning}`);
+      } else {
+        showSuccessToast(
+          mode === 'draft'
+            ? 'Event saved as draft.'
+            : mode === 'open-registration'
+              ? 'Event created and registration opened.'
+              : 'Event created successfully.',
+        );
+      }
+
+      navigate(`/events/${savedId}`);
+    } catch (error) {
+      showErrorToast(error.response?.data?.message || error.message || 'Unable to save event right now.');
     }
-
-    if (mode === 'open-registration' && canPublishEvents) {
-      await publishMutation.mutateAsync(savedId);
-      await statusMutation.mutateAsync({ id: savedId, status: 'registration_open' });
-    }
-
-    navigate(`/events/${savedId}`);
   };
 
   if (!canSave) {

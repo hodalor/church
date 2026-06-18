@@ -69,8 +69,9 @@ class ApiClient {
           final statusCode = error.response?.statusCode;
           final isUnauthorized = statusCode == 401;
           final isRefreshRequest = request.path.contains(Endpoints.refresh);
+          final isLogoutRequest = request.path.contains(Endpoints.logout);
 
-          if (!isUnauthorized || isRefreshRequest || request.extra['retried'] == true) {
+          if (!isUnauthorized || isRefreshRequest || isLogoutRequest || request.extra['retried'] == true) {
             return handler.next(error);
           }
 

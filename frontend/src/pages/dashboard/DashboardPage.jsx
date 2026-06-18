@@ -58,11 +58,11 @@ function QuickActionCard({ label, description, to }) {
   return (
     <Link
       to={to}
-      className="rounded-[22px] border border-white/8 bg-[#0d1320] p-4 transition hover:border-accent/30 hover:bg-[#111a2a]"
+      className="rounded-[18px] border border-cyan-400/18 bg-[linear-gradient(135deg,rgba(34,211,238,0.14),rgba(13,19,32,0.98))] p-3.5 transition hover:border-accent/30 hover:bg-[linear-gradient(135deg,rgba(55,215,239,0.18),rgba(17,26,42,0.98))]"
     >
       <div className="flex items-center justify-between gap-3">
         <div>
-          <h3 className="text-lg font-semibold text-white">{label}</h3>
+          <h3 className="text-base font-semibold text-white">{label}</h3>
           <p className="mt-2 text-sm text-white/58">{description}</p>
         </div>
         <ArrowRight className="h-5 w-5 text-accent" />
@@ -96,24 +96,39 @@ function AlertBanner({ tone, icon: Icon, children, onDismiss }) {
 }
 
 function ModuleCard({ title, metric, helper, to, chart, tone = 'line' }) {
+  const palette = {
+    line: {
+      shell:
+        'border-violet-400/18 bg-[linear-gradient(135deg,rgba(167,139,250,0.16),rgba(13,19,32,0.98))] hover:bg-[linear-gradient(135deg,rgba(184,163,255,0.18),rgba(17,24,39,0.98))]',
+      chart: '#A78BFA',
+    },
+    bar: {
+      shell:
+        'border-amber-400/18 bg-[linear-gradient(135deg,rgba(244,201,93,0.16),rgba(13,19,32,0.98))] hover:bg-[linear-gradient(135deg,rgba(248,211,110,0.18),rgba(17,24,39,0.98))]',
+      chart: '#F4C95D',
+    },
+  };
+  const theme = palette[tone] || palette.line;
   return (
     <Link
       to={to}
-      className="block rounded-[22px] border border-white/8 bg-[#0d1320] p-4 transition hover:border-accent/30 hover:bg-[#111a2a]"
+      className={`block rounded-[18px] border p-3.5 transition hover:border-accent/30 ${theme.shell}`}
     >
       <div className="flex items-start justify-between gap-3">
         <div>
-          <p className="text-[11px] uppercase tracking-[0.2em] text-white/45">{title}</p>
-          <h3 className="mt-3 text-2xl font-semibold text-white">{metric}</h3>
+          <p className="inline-flex rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-[10px] uppercase tracking-[0.2em] text-white/70">
+            {title}
+          </p>
+          <h3 className="mt-3 text-[1.65rem] font-semibold text-white">{metric}</h3>
           <p className="mt-2 text-sm text-white/55">{helper}</p>
         </div>
         <ArrowRight className="mt-1 h-4 w-4 text-accent" />
       </div>
       <div className="mt-4">
         {tone === 'bar' ? (
-          <MiniBar data={chart} color="#C9A84C" />
+          <MiniBar data={chart} color={theme.chart} />
         ) : (
-          <MiniLine data={chart} stroke="#C9A84C" />
+          <MiniLine data={chart} stroke={theme.chart} />
         )}
       </div>
     </Link>

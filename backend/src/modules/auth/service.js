@@ -272,16 +272,69 @@ export const refreshTokenService = async ({ refreshToken }) => {
   };
 };
 
-export const logoutService = async ({ userId, tenantId, username, role }, req) => {
-  await RefreshToken.deleteMany({ userId });
+const resolveLogoutIdentity = async ({ authUser, refreshToken }) => {
+  if (authUser?.userId) {
+    return authUser;
+  }
+
+  if (!refreshToken) {
+    return null;
+  }
+
+  const decoded = jwt.decode(refreshToken);
+  if (!decoded?.userId || !decoded?.tenantId) {
+    return null;
+  }
+
+  const storedTokens = await RefreshToken.find({
+    userId: decoded.userId,
+    tenantId: decoded.tenantId,
+  }).sort({ createdAt: -1 });
+
+  const matchingToken = await (async () => {
+    for (const storedToken of storedTokens) {
+      const matches = await bcrypt.compare(refreshToken, storedToken.token);
+      if (matches) {
+        return storedToken;
+      }
+    }
+    return null;
+  })();
+
+  if (!matchingToken) {
+    return null;
+  }
+
+  return {
+    userId: decoded.userId,
+    tenantId: decoded.tenantId,
+    username: decoded.username,
+    role: decoded.role,
+  };
+};
+
+export const logoutService = async (authUser, { refreshToken } = {}, req) => {
+  const identity = await resolveLogoutIdentity({
+    authUser,
+    refreshToken: typeof refreshToken === 'string' ? refreshToken : '',
+  });
+
+  if (!identity?.userId) {
+    return { success: true };
+  }
+
+  await RefreshToken.deleteMany({
+    userId: identity.userId,
+    tenantId: identity.tenantId,
+  });
 
   logAuthAudit({
-    tenantId,
-    userId,
-    userName: username,
-    userRole: role,
+    tenantId: identity.tenantId,
+    userId: identity.userId,
+    userName: identity.username,
+    userRole: identity.role,
     action: 'LOGOUT',
-    description: `${username || 'User'} logged out`,
+    description: `${identity.username || 'User'} logged out`,
     req,
     statusCode: 200,
   });

@@ -10,8 +10,8 @@ export const refreshToken = async (payload) => {
   return response.data?.data || response.data;
 };
 
-export const logoutUser = async () => {
-  const response = await api.post('/auth/logout');
+export const logoutUser = async (payload = {}) => {
+  const response = await api.post('/auth/logout', payload);
   return response.data?.data || response.data;
 };
 

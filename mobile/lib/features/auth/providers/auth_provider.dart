@@ -172,7 +172,8 @@ class AuthNotifier extends StateNotifier<AuthState> {
 
   Future<void> logout() async {
     try {
-      await _repository.logout();
+      final refreshToken = await _storage.getRefreshToken();
+      await _repository.logout(refreshToken: refreshToken);
     } catch (_) {
       // The local session should still be cleared even if the API call fails.
     } finally {

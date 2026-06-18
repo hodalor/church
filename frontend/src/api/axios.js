@@ -82,8 +82,9 @@ api.interceptors.response.use(
     const originalRequest = error.config;
     const isUnauthorized = error.response?.status === 401;
     const isRefreshRequest = originalRequest?.url?.includes('/auth/refresh');
+    const isLogoutRequest = originalRequest?.url?.includes('/auth/logout');
 
-    if (!isUnauthorized || !originalRequest || isRefreshRequest) {
+    if (!isUnauthorized || !originalRequest || isRefreshRequest || isLogoutRequest) {
       return Promise.reject(error);
     }
 

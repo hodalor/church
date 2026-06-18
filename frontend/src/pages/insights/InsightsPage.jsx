@@ -22,6 +22,8 @@ const tabs = [
   { label: 'Info', value: 'info' },
   { label: 'Actioned', value: 'actioned' },
 ];
+const panelClass =
+  'rounded-[18px] border border-violet-400/18 bg-[linear-gradient(135deg,rgba(167,139,250,0.16),rgba(13,19,32,0.98))] p-3.5 text-white shadow-[0_12px_28px_rgba(0,0,0,0.18)]';
 
 export default function InsightsPage() {
   const queryClient = useQueryClient();
@@ -144,15 +146,15 @@ export default function InsightsPage() {
             )}
           </div>
 
-          <div className="rounded-[22px] border border-white/8 bg-[#0d1320] p-4 text-white">
+          <div className={panelClass}>
             <h3 className="text-lg font-semibold text-white">Insight type breakdown</h3>
-            <div className="mt-4 h-[240px]">
+            <div className="mt-4 h-[210px]">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={chartData} layout="vertical">
                   <XAxis type="number" stroke="#94A3B8" />
                   <YAxis dataKey="name" type="category" stroke="#94A3B8" width={80} />
                   <Tooltip />
-                  <Bar dataKey="value" fill="#C9A84C" radius={[0, 8, 8, 0]} />
+                  <Bar dataKey="value" fill="#A78BFA" radius={[0, 8, 8, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             </div>
@@ -164,7 +166,7 @@ export default function InsightsPage() {
                 </div>
               ))}
             </div>
-            <div className="mt-6 rounded-2xl border border-white/8 bg-white/[0.03] p-4">
+            <div className="mt-5 rounded-2xl border border-violet-300/15 bg-violet-400/10 p-3.5">
               <h4 className="font-medium text-white">Team sharing</h4>
               <p className="mt-2 text-sm text-white/58">
                 Share any insight with your team from the card actions. Team notification wiring can reuse the existing notification and communication flows.

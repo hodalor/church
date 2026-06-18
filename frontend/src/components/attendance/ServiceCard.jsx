@@ -18,10 +18,10 @@ export default function ServiceCard({
   const stats = service.stats || {};
 
   return (
-    <Card className="space-y-4 p-4">
+    <Card className="space-y-3 bg-[linear-gradient(135deg,rgba(56,189,248,0.12),rgba(14,22,36,0.98))] p-3.5">
       <div className="flex items-start justify-between gap-3">
         <div>
-          <p className="text-3xl font-semibold leading-none text-white">{dateBits.day}</p>
+          <p className="text-2xl font-semibold leading-none text-white">{dateBits.day}</p>
           <p className="mt-1 text-[11px] uppercase tracking-[0.18em] text-white/45">
             {dateBits.weekday}
           </p>
@@ -51,7 +51,7 @@ export default function ServiceCard({
       </div>
 
       {stats.total || stats.firstTimers ? (
-        <div className="grid grid-cols-2 gap-3 rounded-[18px] border border-white/8 bg-[#101827] p-3 text-sm">
+        <div className="grid grid-cols-2 gap-3 rounded-[16px] border border-sky-400/15 bg-sky-400/10 p-2.5 text-sm">
           <div>
             <p className="text-[11px] uppercase tracking-[0.18em] text-white/35">Count</p>
             <p className="mt-1 text-xl font-semibold text-white">{stats.total || 0}</p>
