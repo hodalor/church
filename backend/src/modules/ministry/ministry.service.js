@@ -1,6 +1,7 @@
 import AttendanceRecord from '../attendance/attendanceRecord.model.js';
 import Member from '../members/member.model.js';
 import NotificationLog from '../notifications/notification.model.js';
+import Tenant from '../tenants/model.js';
 import Ministry from './models/ministry.model.js';
 import MinistryMeeting from './models/ministryMeeting.model.js';
 import MinistryMember from './models/ministryMember.model.js';
@@ -18,6 +19,29 @@ import {
 } from '../../utils/phase11Helpers.js';
 
 const ACTIVE_MEMBER_STATUSES = ['active', 'pending_approval', 'on_leave'];
+
+const syncTenantMinistryContent = async (tenantId, previousName, nextName) => {
+  const tenant = await Tenant.findOne({ tenantId });
+  if (!tenant) {
+    return;
+  }
+
+  const existingMinistries = Array.isArray(tenant.content?.ministries)
+    ? tenant.content.ministries
+    : [];
+  const updatedMinistries = [
+    ...existingMinistries.filter(
+      (ministry) => ministry && ministry !== previousName && ministry !== nextName,
+    ),
+    nextName,
+  ];
+
+  tenant.content = {
+    ...(tenant.content || {}),
+    ministries: updatedMinistries,
+  };
+  await tenant.save();
+};
 
 const normalizeSchedule = (schedule = {}) =>
   compactObject({
@@ -178,6 +202,8 @@ export const createMinistry = async (tenantId, data, createdBy) => {
     updatedBy: createdBy,
   });
 
+  await syncTenantMinistryContent(tenantId, null, ministry.name);
+
   if (ministry.leaderId) {
     await notifyUser({
       tenantId,
@@ -229,6 +255,7 @@ export const getMinistryById = async (tenantId, ministryId) => findMinistryOrThr
 
 export const updateMinistry = async (tenantId, ministryId, data, updatedBy) => {
   const ministry = await findMinistryOrThrow(tenantId, ministryId);
+  const previousName = ministry.name;
   const payload = buildMinistryPayload(data);
 
   Object.assign(ministry, payload, {
@@ -237,6 +264,9 @@ export const updateMinistry = async (tenantId, ministryId, data, updatedBy) => {
   });
 
   await ministry.save();
+  if (ministry.name && ministry.name !== previousName) {
+    await syncTenantMinistryContent(tenantId, previousName, ministry.name);
+  }
   return ministry;
 };
 

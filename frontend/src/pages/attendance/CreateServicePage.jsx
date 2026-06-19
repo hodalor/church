@@ -5,6 +5,7 @@ import RouteModal from '../../components/ui/RouteModal';
 import Button from '../../components/ui/Button';
 import Card from '../../components/ui/Card';
 import Input from '../../components/ui/Input';
+import useBranchOptions from '../../hooks/useBranchOptions';
 import {
   createService,
   getServiceById,
@@ -31,6 +32,7 @@ export default function CreateServicePage() {
   const [searchParams] = useSearchParams();
   const serviceId = searchParams.get('serviceId');
   const [form, setForm] = useState(createInitialForm());
+  const { branchOptions } = useBranchOptions({ includeCurrent: form.branch });
 
   const serviceQuery = useQuery({
     queryKey: ['attendance-service-edit', serviceId],
@@ -141,12 +143,21 @@ export default function CreateServicePage() {
               value={form.date}
               onChange={(event) => setField('date', event.target.value)}
             />
-            <Input
-              label="Branch"
-              value={form.branch}
-              onChange={(event) => setField('branch', event.target.value)}
-              placeholder="Main branch"
-            />
+            <label className="space-y-1.5">
+              <span className="text-[13px] font-medium text-white/75">Branch</span>
+              <select
+                value={form.branch}
+                onChange={(event) => setField('branch', event.target.value)}
+                className="w-full rounded-xl border border-white/10 bg-[#101827] px-3.5 py-2.5 text-sm text-white"
+              >
+                <option value="">Select branch</option>
+                {branchOptions.map((branch) => (
+                  <option key={branch} value={branch}>
+                    {branch}
+                  </option>
+                ))}
+              </select>
+            </label>
             <Input
               label="Start Time"
               type="time"

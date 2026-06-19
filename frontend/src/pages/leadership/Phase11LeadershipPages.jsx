@@ -15,6 +15,7 @@ import Input from '../../components/ui/Input';
 import Modal from '../../components/ui/Modal';
 import PageHeader from '../../components/ui/PageHeader';
 import SearchInput from '../../components/ui/SearchInput';
+import useBranchOptions from '../../hooks/useBranchOptions';
 import {
   addAssessment,
   addMilestone,
@@ -529,6 +530,7 @@ export function CreateProfilePage() {
   });
   const [selectedMember, setSelectedMember] = useState(null);
   const users = usersQuery.data?.users || usersQuery.data?.items || [];
+  const { branchOptions } = useBranchOptions({ includeCurrent: form.watch('branch') });
 
   const form = useForm({
     resolver: zodResolver(profileSchema),
@@ -606,7 +608,15 @@ export function CreateProfilePage() {
             </div>
             <Input label="Current Role" error={form.formState.errors.currentRole?.message} {...form.register('currentRole')} />
             <Input label="Target Role" {...form.register('targetRole')} />
-            <Input label="Branch" {...form.register('branch')} />
+            <label className="space-y-1.5">
+              <span className="text-[13px] font-medium text-white/75">Branch</span>
+              <select {...form.register('branch')} className="w-full rounded-xl border border-white/10 bg-[#101827] px-3.5 py-2.5 text-sm text-white">
+                <option value="">Select branch</option>
+                {branchOptions.map((branch) => (
+                  <option key={branch} value={branch}>{branch}</option>
+                ))}
+              </select>
+            </label>
             <label className="space-y-1.5">
               <span className="text-[13px] font-medium text-white/75">Tier</span>
               <select {...form.register('tier')} className="w-full rounded-xl border border-white/10 bg-[#101827] px-3.5 py-2.5 text-sm text-white">

@@ -1,4 +1,5 @@
 import { createHttpError } from '../../utils/httpError.js';
+import Tenant from '../tenants/model.js';
 import AnalyticsSnapshot from './models/analyticsSnapshot.model.js';
 import BranchProfile from './models/branchProfile.model.js';
 import {
@@ -23,6 +24,25 @@ const normalizeString = (value) => {
 };
 
 const normalizeTenantId = (value) => String(value || '').trim().toLowerCase();
+
+const syncTenantBranchContent = async (tenantId, previousName, nextName) => {
+  const tenant = await Tenant.findOne({ tenantId });
+  if (!tenant) {
+    return;
+  }
+
+  const existingBranches = Array.isArray(tenant.content?.branches) ? tenant.content.branches : [];
+  const updatedBranches = [
+    ...existingBranches.filter((branch) => branch && branch !== previousName && branch !== nextName),
+    nextName,
+  ];
+
+  tenant.content = {
+    ...(tenant.content || {}),
+    branches: updatedBranches,
+  };
+  await tenant.save();
+};
 
 export const createBranch = async (tenantId, payload = {}, actor = {}) => {
   const normalizedTenantId = normalizeTenantId(tenantId);
@@ -74,6 +94,7 @@ export const createBranch = async (tenantId, payload = {}, actor = {}) => {
     createdBy: actor.userId || actor.name || 'system',
   });
 
+  await syncTenantBranchContent(normalizedTenantId, null, branchName);
   await refreshBranchCache(branchProfile);
   return serializeBranchProfile(await BranchProfile.findById(branchProfile._id));
 };
@@ -122,6 +143,7 @@ export const getBranchById = async (tenantId, branchId, actor = {}) => {
 
 export const updateBranch = async (tenantId, branchId, payload = {}, actor = {}) => {
   const profile = await resolveBranchProfileById({ tenantId, branchId, actor });
+  const previousBranchName = profile.branchName;
   const nextBranchName = normalizeString(payload.branchName) || profile.branchName;
   const nextBranchCode = normalizeString(payload.branchCode);
 
@@ -164,6 +186,9 @@ export const updateBranch = async (tenantId, branchId, payload = {}, actor = {})
   profile.updatedAt = new Date();
 
   await profile.save();
+  if (nextBranchName !== previousBranchName) {
+    await syncTenantBranchContent(profile.tenantId, previousBranchName, nextBranchName);
+  }
   return serializeBranchProfile(await refreshBranchCache(profile));
 };
 

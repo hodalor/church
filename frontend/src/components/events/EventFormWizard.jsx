@@ -3,7 +3,7 @@ import { useMutation, useQuery } from '@tanstack/react-query';
 import ReactQuill from 'react-quill';
 import 'react-quill/dist/quill.snow.css';
 import { useNavigate } from 'react-router-dom';
-import { getCurrentTenant } from '../../api/endpoints/tenants';
+import { getAllBranches } from '../../api/endpoints/branches';
 import { getUsers } from '../../api/endpoints/users';
 import {
   createEvent,
@@ -181,10 +181,13 @@ export default function EventFormWizard({ eventId = null, fallbackPath = '/event
 
   const canSave = isEdit ? canModifyEvents : canCreateEvents;
 
-  const tenantQuery = useQuery({
-    queryKey: ['event-form-tenant'],
-    queryFn: getCurrentTenant,
-    enabled: canSave,
+  const branchesQuery = useQuery({
+    queryKey: ['event-form-branches', authUser?.role === 'super_admin' ? tenantId : 'tenant'],
+    queryFn: () =>
+      getAllBranches(
+        authUser?.role === 'super_admin' ? { tenantId, limit: 200 } : { limit: 200 },
+      ),
+    enabled: canSave && (authUser?.role !== 'super_admin' || Boolean(tenantId)),
   });
   const usersQuery = useQuery({
     queryKey: ['event-form-users'],
@@ -227,8 +230,10 @@ export default function EventFormWizard({ eventId = null, fallbackPath = '/event
   });
 
   const users = usersQuery.data || [];
-  const content = tenantQuery.data?.content || {};
-  const branches = content.branches || [];
+  const branches = useMemo(() => {
+    const liveBranchNames = (branchesQuery.data?.items || []).map((item) => item.branchName).filter(Boolean);
+    return [...new Set(form.branch ? [form.branch, ...liveBranchNames] : liveBranchNames)];
+  }, [branchesQuery.data?.items, form.branch]);
   const coOrganizerOptions = users.filter((user) => (user._id || user.id) !== form.organizerUserId);
   const selectedOrganizer = users.find((user) => (user._id || user.id) === form.organizerUserId);
 

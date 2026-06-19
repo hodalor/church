@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { FolderTree, Shield, Store } from 'lucide-react';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import AppShell from '../../components/layout/AppShell';
@@ -197,6 +198,35 @@ function CountryConfigEditor({ countries, draft, onDraftChange, onAdd, onRemove 
           </tbody>
         </table>
       </div>
+    </div>
+  );
+}
+
+function SourceOfTruthCard({ eyebrow, title, description, tags = [], to, actionLabel }) {
+  return (
+    <div className={`space-y-4 p-4 ${innerPanelClass}`}>
+      <div>
+        <p className="text-[11px] uppercase tracking-[0.22em] text-accent/80">{eyebrow}</p>
+        <h3 className="mt-2 text-lg font-semibold text-white">{title}</h3>
+        <p className="mt-2 text-sm text-white/55">{description}</p>
+      </div>
+      {tags.length ? (
+        <div className="flex flex-wrap gap-2">
+          {tags.map((tag) => (
+            <span
+              key={tag}
+              className="rounded-full border border-accent/25 bg-accent/10 px-3 py-1 text-xs text-accent"
+            >
+              {tag}
+            </span>
+          ))}
+        </div>
+      ) : null}
+      {to ? (
+        <Link to={to} className="inline-flex rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm font-semibold text-white/80 transition hover:bg-white/10 hover:text-white">
+          {actionLabel}
+        </Link>
+      ) : null}
     </div>
   );
 }
@@ -719,14 +749,14 @@ export default function SettingsPage() {
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div>
                   <p className="text-[11px] uppercase tracking-[0.28em] text-accent/80">
-                    Workspace Content
+                    Master Data
                   </p>
                   <h2 className="mt-2 text-xl font-semibold text-white">
-                    Branches, ministries, departments, and flexible groupings
+                    Keep one source of truth for church structure
                   </h2>
                   <p className="mt-2 text-sm text-white/50">
-                    Church and branch stay universal. Everything else can be modeled as a
-                    parent-child grouping tree to match how each church is organized.
+                    Branches, ministries, and CBS groups are now created from their live workspaces.
+                    This page is for tenant branding support data, departments, and grouping hierarchy.
                   </p>
                 </div>
                 <Button
@@ -738,34 +768,71 @@ export default function SettingsPage() {
                   }
                   onClick={handleSaveContent}
                 >
-                  {updateTenantMutation.isPending ? 'Saving...' : 'Save content'}
+                  {updateTenantMutation.isPending ? 'Saving...' : 'Save master data'}
                 </Button>
               </div>
             </Card>
 
-            <div className="grid gap-5 xl:grid-cols-3">
-              <ArrayEditor
-                title="Branches"
-                hint="Main church branches used across members, users, services, and reports."
-                values={contentForm.branches}
-                onChange={(branches) => setContentForm((current) => ({ ...current, branches }))}
-                placeholder="Main Branch"
+            <div className="grid items-start gap-5 xl:grid-cols-2">
+              <SourceOfTruthCard
+                eyebrow="Operational Setup"
+                title="Where to create real records"
+                description="Use the live workspaces below so staff do not create the same thing twice in Settings and again in the operational modules."
+                tags={[
+                  'Branches -> HQ > Branches',
+                  'Ministries -> Ministry workspace',
+                  'CBS Groups -> CBS Groups workspace',
+                  'Departments + Groupings -> Maintain here',
+                ]}
               />
+              <SourceOfTruthCard
+                eyebrow="Synced Snapshot"
+                title="Master lists used by forms"
+                description="Member, visitor, volunteer, and event forms still use these tenant lists for dropdowns. Branches and ministries are synced here automatically from their live workspaces."
+                tags={[
+                  `${contentForm.branches.length} branches`,
+                  `${contentForm.ministries.length} ministries`,
+                  `${contentForm.departments.length} departments`,
+                  `${contentForm.groupings.length} grouping levels`,
+                ]}
+              />
+            </div>
+
+            <div className="grid items-start gap-5 xl:grid-cols-2">
+              <SourceOfTruthCard
+                eyebrow="Branches"
+                title="Manage branch profiles in HQ"
+                description="Create, edit, and review branch records from the headquarters branch workspace. The branch names are mirrored back here automatically for form dropdowns."
+                tags={contentForm.branches}
+                to="/hq/branches"
+                actionLabel="Open Branches"
+              />
+              <SourceOfTruthCard
+                eyebrow="Ministries"
+                title="Manage ministries in Ministry"
+                description="Create operational ministry records inside the ministry workspace. Ministry names are mirrored back here automatically for member assignment and setup forms."
+                tags={contentForm.ministries}
+                to="/ministry/list"
+                actionLabel="Open Ministry List"
+              />
+            </div>
+
+            <div className="grid items-start gap-5 xl:grid-cols-2">
               <ArrayEditor
                 title="Departments"
-                hint="Static ministry departments like choir, ushers, protocol, media."
+                hint="Use departments for volunteer teams and service departments such as choir, ushers, protocol, media, or hospitality."
                 values={contentForm.departments}
                 onChange={(departments) =>
                   setContentForm((current) => ({ ...current, departments }))
                 }
                 placeholder="Choir"
               />
-              <ArrayEditor
-                title="Ministries"
-                hint="Major ministry areas that can change from church to church."
-                values={contentForm.ministries}
-                onChange={(ministries) => setContentForm((current) => ({ ...current, ministries }))}
-                placeholder="Youth Ministry"
+              <SourceOfTruthCard
+                eyebrow="CBS Groups"
+                title="Manage Bible study groups in CBS"
+                description="CBS groups, prospects, sessions, and pipeline stages belong in the CBS workspace. They are operational discipleship records, not Settings content."
+                to="/cbs/groups"
+                actionLabel="Open CBS Groups"
               />
             </div>
 
@@ -776,8 +843,8 @@ export default function SettingsPage() {
                 </p>
                 <h2 className="mt-2 text-xl font-semibold text-white">Flexible hierarchy</h2>
                 <p className="mt-2 text-sm text-white/50">
-                  Example: Church {'>'} Branch {'>'} Regional Zone {'>'} Zone {'>'} Cell or
-                  Church {'>'} Branch {'>'} Zone.
+                  Use this for the structure under a branch, such as Region, Zone, District,
+                  Cell, Cluster, Sector, or any custom discipleship hierarchy.
                 </p>
               </div>
 

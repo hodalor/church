@@ -2,7 +2,9 @@ import { useEffect, useState } from 'react';
 import {
   BarChart3,
   Bell,
+  Bot,
   BookOpen,
+  BrainCircuit,
   Building2,
   CalendarDays,
   ChevronDown,
@@ -157,6 +159,8 @@ const navigation = [
   {
     title: 'Intelligence',
     items: [
+      { label: 'Insights', to: '/insights', icon: BrainCircuit },
+      { label: 'AI Assistant', to: '/ai', icon: Bot },
       { label: 'Family Ministry', to: '/hq/family-ministry', icon: HeartHandshake },
       { label: 'Audit Trail', to: '/audit', icon: Shield },
     ],

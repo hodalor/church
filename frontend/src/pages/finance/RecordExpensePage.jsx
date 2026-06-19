@@ -1,10 +1,11 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import FinancePageLayout from '../../components/finance/FinancePageLayout';
 import Card from '../../components/ui/Card';
 import Button from '../../components/ui/Button';
 import RouteModal from '../../components/ui/RouteModal';
+import useBranchOptions from '../../hooks/useBranchOptions';
 import useCurrency from '../../hooks/useCurrency';
 import { recordExpense } from '../../api/endpoints/finance';
 import { supabaseUpload } from '../../utils/supabaseUpload';
@@ -26,6 +27,13 @@ export default function RecordExpensePage() {
     department: '',
     notes: '',
   });
+  const { branchOptions } = useBranchOptions({ includeCurrent: form.branch });
+
+  useEffect(() => {
+    if (branchOptions.length && !form.branch) {
+      setForm((current) => ({ ...current, branch: branchOptions[0] }));
+    }
+  }, [branchOptions, form.branch]);
 
   const mutation = useMutation({
     mutationFn: recordExpense,
@@ -114,7 +122,12 @@ export default function RecordExpensePage() {
               </label>
               <label className="space-y-2">
                 <span className="text-sm text-white/80">Branch</span>
-                <input value={form.branch} onChange={(event) => updateField('branch', event.target.value)} className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white" />
+                <select value={form.branch} onChange={(event) => updateField('branch', event.target.value)} className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white">
+                  <option value="">Select branch</option>
+                  {branchOptions.map((branch) => (
+                    <option key={branch} value={branch}>{branch}</option>
+                  ))}
+                </select>
               </label>
               <label className="space-y-2">
                 <span className="text-sm text-white/80">Department</span>

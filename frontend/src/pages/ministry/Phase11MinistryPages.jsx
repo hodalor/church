@@ -15,6 +15,7 @@ import Input from '../../components/ui/Input';
 import Modal from '../../components/ui/Modal';
 import PageHeader from '../../components/ui/PageHeader';
 import SearchInput from '../../components/ui/SearchInput';
+import useBranchOptions from '../../hooks/useBranchOptions';
 import {
   addMemberToMinistry,
   bulkAddMembers,
@@ -486,6 +487,7 @@ export function CreateMinistryPage() {
       requiresApproval: false,
     },
   });
+  const { branchOptions } = useBranchOptions({ includeCurrent: form.watch('branch') });
 
   const name = form.watch('name');
   useEffect(() => {
@@ -556,7 +558,15 @@ export function CreateMinistryPage() {
               </select>
             </label>
             <Input label="Code" {...form.register('code')} />
-            <Input label="Branch" {...form.register('branch')} />
+            <label className="space-y-1.5">
+              <span className="text-[13px] font-medium text-white/75">Branch</span>
+              <select {...form.register('branch')} className="w-full rounded-xl border border-white/10 bg-[#101827] px-3.5 py-2.5 text-sm text-white">
+                <option value="">Select branch</option>
+                {branchOptions.map((branch) => (
+                  <option key={branch} value={branch}>{branch}</option>
+                ))}
+              </select>
+            </label>
             <Input label="Established Date" type="date" {...form.register('establishedDate')} />
             <Input label="Logo URL" placeholder="https://..." {...form.register('logoUrl')} />
             <UserSelect label="Leader" value={form.watch('leaderId')} onChange={(value) => form.setValue('leaderId', value)} options={users} />

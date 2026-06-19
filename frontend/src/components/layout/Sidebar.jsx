@@ -94,6 +94,34 @@ const headquartersSubItems = [
   { label: 'Reports', to: '/hq/reports', capabilityOptions: ['hq.reports.view'] },
 ];
 
+const ministryWorkspaceSubItems = [
+  { label: 'Overview', to: '/ministry', capabilityOptions: ['ministry.view'] },
+  { label: 'Ministry List', to: '/ministry/list', capabilityOptions: ['ministry.view'] },
+];
+
+const cbsSubItems = [
+  { label: 'Overview', to: '/cbs', capabilityOptions: ['cbs.view'] },
+  { label: 'Groups', to: '/cbs/groups', capabilityOptions: ['cbs.view'] },
+  { label: 'Prospects', to: '/cbs/prospects', capabilityOptions: ['cbs.view', 'cbs.prospects.view'] },
+  { label: 'Pipeline', to: '/cbs/prospects/pipeline', capabilityOptions: ['cbs.view', 'cbs.prospects.view'] },
+  { label: 'Reports', to: '/cbs/reports', capabilityOptions: ['cbs.view', 'cbs.reports.view'] },
+];
+
+const leadershipSubItems = [
+  { label: 'Overview', to: '/leadership', capabilityOptions: ['leadership.view'] },
+  { label: 'Profiles', to: '/leadership/profiles', capabilityOptions: ['leadership.view', 'leadership.candidates.view'] },
+  { label: 'Succession', to: '/leadership/succession', capabilityOptions: ['leadership.view', 'leadership.succession.view'] },
+  { label: 'Reports', to: '/leadership/reports', capabilityOptions: ['leadership.view', 'leadership.reports.view'] },
+];
+
+const strategicSubItems = [
+  { label: 'Overview', to: '/strategic', capabilityOptions: ['strategic.view'] },
+  { label: 'Plans', to: '/strategic/plan', capabilityOptions: ['strategic.view', 'strategic.plans.view'] },
+  { label: 'KPIs', to: '/strategic/kpis', capabilityOptions: ['strategic.view', 'strategic.kpis.view'] },
+  { label: 'Scorecard', to: '/strategic/scorecard', capabilityOptions: ['strategic.view', 'strategic.kpis.view'] },
+  { label: 'Reports', to: '/strategic/reports', capabilityOptions: ['strategic.view', 'strategic.reports.view'] },
+];
+
 const navigation = [
   {
     title: 'Overview',
@@ -121,13 +149,13 @@ const navigation = [
         label: 'Family Ministry',
         to: '/hq/family-ministry',
         icon: HeartHandshake,
-        capabilityOptions: ['family_ministry.view'],
+        capabilityOptions: ['family.view', 'family.analytics.view'],
       },
       {
         label: 'Audit Trail',
         to: '/audit',
         icon: Shield,
-        capabilityOptions: ['audit_trail.view'],
+        capabilityOptions: ['audit.view', 'audit.suspicious.view', 'audit.exports.view'],
       },
       {
         label: 'AI Assistant',
@@ -142,27 +170,27 @@ const navigation = [
     items: [
       {
         label: 'Ministry',
-        to: '/ministry',
         icon: HandHelping,
-        capabilityOptions: ['ministry_management.view'],
+        capabilityOptions: ['ministry.view', 'ministry.members.view', 'ministry.meetings.view', 'ministry.reports.view'],
+        children: ministryWorkspaceSubItems,
       },
       {
         label: 'CBS Groups',
-        to: '/cbs',
         icon: BookOpen,
         capabilityOptions: ['cbs.view'],
+        children: cbsSubItems,
       },
       {
         label: 'Leadership',
-        to: '/leadership',
         icon: Users,
-        capabilityOptions: ['leadership_development.view'],
+        capabilityOptions: ['leadership.view', 'leadership.candidates.view', 'leadership.succession.view', 'leadership.reports.view'],
+        children: leadershipSubItems,
       },
       {
         label: 'Strategic Plan',
-        to: '/strategic',
         icon: Target,
-        capabilityOptions: ['strategic_planning.view'],
+        capabilityOptions: ['strategic.view', 'strategic.plans.view', 'strategic.kpis.view', 'strategic.initiatives.view', 'strategic.reports.view'],
+        children: strategicSubItems,
       },
     ],
   },
@@ -208,6 +236,10 @@ export default function Sidebar({ isOpen, onToggle }) {
     'Pastoral Care': location.pathname.startsWith('/pastoral'),
     Volunteers: location.pathname.startsWith('/volunteers'),
     Events: location.pathname.startsWith('/events'),
+    Ministry: location.pathname.startsWith('/ministry'),
+    'CBS Groups': location.pathname.startsWith('/cbs'),
+    Leadership: location.pathname.startsWith('/leadership'),
+    'Strategic Plan': location.pathname.startsWith('/strategic'),
   });
   const productName = globalBranding.appName || 'Ecclesia';
   const productTagline = globalBranding.tagline || 'Church OS';
@@ -223,6 +255,10 @@ export default function Sidebar({ isOpen, onToggle }) {
       'Pastoral Care': current['Pastoral Care'] || location.pathname.startsWith('/pastoral'),
       Volunteers: current.Volunteers || location.pathname.startsWith('/volunteers'),
       Events: current.Events || location.pathname.startsWith('/events'),
+      Ministry: current.Ministry || location.pathname.startsWith('/ministry'),
+      'CBS Groups': current['CBS Groups'] || location.pathname.startsWith('/cbs'),
+      Leadership: current.Leadership || location.pathname.startsWith('/leadership'),
+      'Strategic Plan': current['Strategic Plan'] || location.pathname.startsWith('/strategic'),
     }));
   }, [location.pathname]);
 

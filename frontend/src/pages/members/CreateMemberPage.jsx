@@ -8,7 +8,9 @@ import Card from '../../components/ui/Card';
 import GroupingPathSelector from '../../components/ui/GroupingPathSelector';
 import Input from '../../components/ui/Input';
 import RouteModal from '../../components/ui/RouteModal';
+import { getAllBranches } from '../../api/endpoints/branches';
 import { createMember, searchMembers } from '../../api/endpoints/members';
+import { getAllMinistries } from '../../api/endpoints/ministry';
 import { getAllTenants, getCurrentTenant, getTenantById } from '../../api/endpoints/tenants';
 import { useAuth } from '../../hooks/useAuth';
 import { useCapabilities } from '../../hooks/useCapabilities';
@@ -61,6 +63,17 @@ export default function CreateMemberPage() {
     queryFn: () => (isSuperAdmin ? getTenantById(targetTenantId) : getCurrentTenant()),
     enabled: !isSuperAdmin || Boolean(targetTenantId),
   });
+  const branchesQuery = useQuery({
+    queryKey: ['member-form-branches', targetTenantId],
+    queryFn: () => getAllBranches(isSuperAdmin ? { tenantId: targetTenantId, limit: 200 } : { limit: 200 }),
+    enabled: !isSuperAdmin || Boolean(targetTenantId),
+  });
+  const ministriesQuery = useQuery({
+    queryKey: ['member-form-ministries', targetTenantId],
+    queryFn: () =>
+      getAllMinistries(isSuperAdmin ? { tenantId: targetTenantId, limit: 200 } : { limit: 200 }),
+    enabled: !isSuperAdmin || Boolean(targetTenantId),
+  });
 
   const familySearchQuery = useQuery({
     queryKey: ['member-family-search', activeFamilySearch.value],
@@ -89,6 +102,18 @@ export default function CreateMemberPage() {
 
   const content = tenantSettingsQuery.data?.content || {};
   const groupingOptions = useMemo(() => content.groupings || [], [content.groupings]);
+  const liveBranches = useMemo(() => {
+    const branchNames = (branchesQuery.data?.items || [])
+      .map((item) => item.branchName)
+      .filter(Boolean);
+    return branchNames.length ? [...new Set(branchNames)] : content.branches || [];
+  }, [branchesQuery.data?.items, content.branches]);
+  const liveMinistries = useMemo(() => {
+    const ministryNames = (ministriesQuery.data?.ministries || ministriesQuery.data?.items || [])
+      .map((item) => item.name)
+      .filter(Boolean);
+    return ministryNames.length ? [...new Set(ministryNames)] : content.ministries || [];
+  }, [ministriesQuery.data?.items, ministriesQuery.data?.ministries, content.ministries]);
 
   const payload = useMemo(
     () => ({
@@ -287,7 +312,7 @@ export default function CreateMemberPage() {
                   className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white outline-none focus:border-accent"
                 >
                   <option value="">Select branch</option>
-                  {(content.branches || []).map((item) => (
+                  {liveBranches.map((item) => (
                     <option key={item} value={item}>
                       {item}
                     </option>
@@ -317,7 +342,7 @@ export default function CreateMemberPage() {
                   className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white outline-none focus:border-accent"
                 >
                   <option value="">Select ministry</option>
-                  {(content.ministries || []).map((item) => (
+                  {liveMinistries.map((item) => (
                     <option key={item} value={item}>
                       {item}
                     </option>

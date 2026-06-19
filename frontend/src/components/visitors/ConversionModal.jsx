@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import Modal from '../ui/Modal';
 import Button from '../ui/Button';
 import Input from '../ui/Input';
+import useBranchOptions from '../../hooks/useBranchOptions';
 
 const membershipOptions = ['visitor', 'new_convert', 'member', 'worker', 'leader', 'clergy'];
 const baptismOptions = ['not_baptised', 'water', 'holy_spirit', 'both'];
@@ -18,6 +19,7 @@ export default function ConversionModal({ isOpen, visitor, onClose, onConvert, i
     baptismStatus: 'not_baptised',
     salvationDate: '',
   });
+  const { branchOptions } = useBranchOptions({ includeCurrent: form.branch });
 
   useEffect(() => {
     if (!visitor) {
@@ -52,7 +54,21 @@ export default function ConversionModal({ isOpen, visitor, onClose, onConvert, i
           <Input label="Phone" value={form.phone} onChange={(event) => setForm((current) => ({ ...current, phone: event.target.value }))} />
           <Input label="Email" value={form.email} onChange={(event) => setForm((current) => ({ ...current, email: event.target.value }))} />
           <Input label="Gender" value={form.gender} onChange={(event) => setForm((current) => ({ ...current, gender: event.target.value }))} />
-          <Input label="Branch" value={form.branch} onChange={(event) => setForm((current) => ({ ...current, branch: event.target.value }))} />
+          <label className="block space-y-2">
+            <span className="text-sm font-medium text-white/80">Branch</span>
+            <select
+              value={form.branch}
+              onChange={(event) => setForm((current) => ({ ...current, branch: event.target.value }))}
+              className="w-full rounded-xl border border-white/10 bg-[#101827] px-4 py-3 text-sm text-white outline-none"
+            >
+              <option value="">Select branch</option>
+              {branchOptions.map((branch) => (
+                <option key={branch} value={branch}>
+                  {branch}
+                </option>
+              ))}
+            </select>
+          </label>
           <label className="block space-y-2">
             <span className="text-sm font-medium text-white/80">Membership Status</span>
             <select

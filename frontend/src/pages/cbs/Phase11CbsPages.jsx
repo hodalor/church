@@ -16,6 +16,7 @@ import Input from '../../components/ui/Input';
 import Modal from '../../components/ui/Modal';
 import PageHeader from '../../components/ui/PageHeader';
 import SearchInput from '../../components/ui/SearchInput';
+import useBranchOptions from '../../hooks/useBranchOptions';
 import {
   addProspect,
   convertToMember,
@@ -450,6 +451,7 @@ export function CreateCBSGroupPage() {
   });
 
   const users = usersQuery.data?.users || usersQuery.data?.items || [];
+  const { branchOptions } = useBranchOptions({ includeCurrent: form.watch('branch') });
 
   const mutation = useMutation({
     mutationFn: createGroup,
@@ -507,7 +509,15 @@ export function CreateCBSGroupPage() {
               </select>
             </label>
             <Input label="Zone" {...form.register('zone')} />
-            <Input label="Branch" {...form.register('branch')} />
+            <label className="space-y-1.5">
+              <span className="text-[13px] font-medium text-white/75">Branch</span>
+              <select {...form.register('branch')} className="w-full rounded-xl border border-white/10 bg-[#101827] px-3.5 py-2.5 text-sm text-white">
+                <option value="">Select branch</option>
+                {branchOptions.map((branch) => (
+                  <option key={branch} value={branch}>{branch}</option>
+                ))}
+              </select>
+            </label>
             <UserSelect label="Leader" required value={form.watch('leaderId')} onChange={(value) => form.setValue('leaderId', value)} users={users} />
             <UserSelect label="Supervisor" value={form.watch('supervisorId')} onChange={(value) => form.setValue('supervisorId', value)} users={users} />
             <Input label="Location" {...form.register('location')} />

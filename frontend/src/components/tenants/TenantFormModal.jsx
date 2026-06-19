@@ -65,12 +65,7 @@ export default function TenantFormModal({ isOpen, onClose, onCreated }) {
   useEffect(() => {
     setForm((current) => ({
       ...current,
-      initialUserCapabilities: normalizeCapabilities(
-        current.initialUserCapabilities.filter((capability) =>
-          current.capabilities.includes(capability),
-        ),
-        current.capabilities,
-      ),
+      initialUserCapabilities: normalizeCapabilities(current.capabilities, current.capabilities),
     }));
   }, [form.capabilities]);
 
@@ -141,11 +136,6 @@ export default function TenantFormModal({ isOpen, onClose, onCreated }) {
       return;
     }
 
-    if (!form.initialUserCapabilities.length) {
-      setError('Select at least one initial admin capability.');
-      return;
-    }
-
     const selectedCountry = getCountryOptionByName(eligibleCountries, form.country);
     const payload = {
       tenantId: form.tenantId,
@@ -162,10 +152,7 @@ export default function TenantFormModal({ isOpen, onClose, onCreated }) {
       initialUsername: form.initialUsername,
       initialPin: form.initialPin,
       capabilities: normalizeCapabilities(form.capabilities, allCapabilities),
-      initialUserCapabilities: normalizeCapabilities(
-        form.initialUserCapabilities,
-        form.capabilities,
-      ),
+      initialUserCapabilities: normalizeCapabilities(form.capabilities, form.capabilities),
       ...(form.logoUrl ? { logoUrl: form.logoUrl } : {}),
     };
 
@@ -307,13 +294,18 @@ export default function TenantFormModal({ isOpen, onClose, onCreated }) {
           allowedCapabilities={allCapabilities}
         />
 
-        <CapabilityMatrix
-          title="Initial Admin Capabilities"
-          description="Choose what the first church admin can view, create, modify, or delete."
-          value={form.initialUserCapabilities}
-          onChange={(nextValue) => updateField('initialUserCapabilities', nextValue)}
-          allowedCapabilities={form.capabilities}
-        />
+        <div className="rounded-[24px] border border-emerald-400/20 bg-[linear-gradient(135deg,rgba(52,211,153,0.12),rgba(16,24,39,0.98))] p-4">
+          <p className="text-[11px] uppercase tracking-[0.22em] text-emerald-200/80">Default Admin Access</p>
+          <h3 className="mt-2 text-lg font-semibold text-white">First church admin gets full tenant access</h3>
+          <p className="mt-2 text-sm text-white/65">
+            Every feature you enable for this tenant is automatically assigned to the default church admin account.
+          </p>
+          <div className="mt-4 rounded-2xl border border-white/10 bg-white/5 px-4 py-3">
+            <p className="text-sm text-white/75">
+              Enabled tenant permissions: <span className="font-semibold text-white">{form.capabilities.length}</span>
+            </p>
+          </div>
+        </div>
 
         <div className="flex items-center justify-between gap-4">
           {error ? <p className="text-sm text-red-400">{error}</p> : <p className="text-sm text-white/45">Tenant and first admin access are saved together.</p>}

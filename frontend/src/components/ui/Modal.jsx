@@ -4,7 +4,7 @@ import Button from './Button';
 const sizeClasses = {
   md: 'max-w-xl lg:max-w-[35vw]',
   lg: 'max-w-3xl lg:max-w-[52vw]',
-  xl: 'max-w-5xl lg:max-w-[70vw]',
+  xl: 'max-w-6xl lg:max-w-[82vw]',
 };
 
 export default function Modal({

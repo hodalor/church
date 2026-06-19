@@ -28,6 +28,7 @@ import Modal from '../../components/ui/Modal';
 import PageHeader from '../../components/ui/PageHeader';
 import Badge from '../../components/ui/Badge';
 import { useAuth } from '../../hooks/useAuth';
+import useBranchOptions from '../../hooks/useBranchOptions';
 import { useCapabilities } from '../../hooks/useCapabilities';
 import { supabaseUpload } from '../../utils/supabaseUpload';
 import { formatDate } from '../../utils/formatDate';
@@ -227,6 +228,11 @@ export default function MemberDetailPage() {
     [groupingOptions, member?.groupingIds],
   );
   const exportFilename = useMemo(() => `${memberId}-member-export.json`, [memberId]);
+  const { branchOptions } = useBranchOptions({
+    tenantId: targetTenantId,
+    enabled: !isSuperAdmin || Boolean(targetTenantId),
+    includeCurrent: form.branch,
+  });
 
   if (!canViewMembers) {
     return (
@@ -406,7 +412,21 @@ export default function MemberDetailPage() {
                     ))}
                   </select>
                 </label>
-                <Input label="Branch" value={form.branch} onChange={(event) => setForm((current) => ({ ...current, branch: event.target.value }))} />
+                <label className="block space-y-2">
+                  <span className="text-sm font-medium text-white/80">Branch</span>
+                  <select
+                    value={form.branch}
+                    onChange={(event) => setForm((current) => ({ ...current, branch: event.target.value }))}
+                    className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white"
+                  >
+                    <option value="">Select branch</option>
+                    {branchOptions.map((branch) => (
+                      <option key={branch} value={branch}>
+                        {branch}
+                      </option>
+                    ))}
+                  </select>
+                </label>
                 <Input label="Department" value={form.department} onChange={(event) => setForm((current) => ({ ...current, department: event.target.value }))} />
                 <Input label="Ministry" value={form.ministry} onChange={(event) => setForm((current) => ({ ...current, ministry: event.target.value }))} />
                 <div className="md:col-span-2">

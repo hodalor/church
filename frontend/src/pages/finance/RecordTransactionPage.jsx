@@ -11,6 +11,7 @@ import Modal from '../../components/ui/Modal';
 import RouteModal from '../../components/ui/RouteModal';
 import MemberSearchInput from '../../components/finance/MemberSearchInput';
 import { useAuth } from '../../hooks/useAuth';
+import useBranchOptions from '../../hooks/useBranchOptions';
 import useCurrency from '../../hooks/useCurrency';
 import { getReceipt, recordTransaction } from '../../api/endpoints/finance';
 
@@ -65,8 +66,9 @@ export default function RecordTransactionPage() {
   const [searchParams] = useSearchParams();
   const [successData, setSuccessData] = useState(null);
   const [selectedMember, setSelectedMember] = useState(null);
+  const { branchOptions } = useBranchOptions({ includeCurrent: user?.branch || '' });
   const defaultCurrency = user?.currency || currencyCode || 'USD';
-  const defaultBranch = user?.branch || '';
+  const defaultBranch = user?.branch || branchOptions[0] || '';
   const queryPrefill = useMemo(
     () => ({
       type: searchParams.get('type') || 'tithe',
@@ -296,11 +298,17 @@ export default function RecordTransactionPage() {
 
             <label className="space-y-2">
               <span className="text-sm text-white/80">Branch</span>
-              <input
+              <select
                 {...form.register('branch')}
                 className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white"
-                placeholder="Main branch"
-              />
+              >
+                <option value="">Select branch</option>
+                {branchOptions.map((branch) => (
+                  <option key={branch} value={branch}>
+                    {branch}
+                  </option>
+                ))}
+              </select>
             </label>
 
             {type === 'pledge_payment' ? (

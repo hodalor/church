@@ -170,6 +170,24 @@ const serializeTenant = (tenantDocument) => {
   };
 };
 
+const syncDefaultAdminCapabilities = async (tenantId, tenantCapabilities) => {
+  if (!tenantId || !Array.isArray(tenantCapabilities) || !tenantCapabilities.length) {
+    return;
+  }
+
+  const defaultAdmin = await User.findOne({
+    tenantId: tenantId.trim().toLowerCase(),
+    role: 'head_pastor',
+  }).sort({ createdAt: 1 });
+
+  if (!defaultAdmin) {
+    return;
+  }
+
+  defaultAdmin.capabilities = [...tenantCapabilities];
+  await defaultAdmin.save();
+};
+
 export const createTenant = async (payload) => {
   const normalizedTenantId = payload.tenantId.trim().toLowerCase();
 
@@ -181,11 +199,7 @@ export const createTenant = async (payload) => {
     payload.capabilities,
     getDefaultTenantCapabilities(),
   );
-  const initialUserCapabilities = resolveUserCapabilities({
-    role: 'head_pastor',
-    capabilities: payload.initialUserCapabilities,
-    tenantCapabilities,
-  });
+  const initialUserCapabilities = [...tenantCapabilities];
   const branding = buildTenantBranding(payload);
   const content = buildTenantContent(payload);
   const financial = buildTenantFinancial(payload);
@@ -338,6 +352,10 @@ export const updateTenant = async (tenantId, payload) => {
 
   if (!tenant) {
     throw createHttpError(404, 'Tenant not found');
+  }
+
+  if (normalizedCapabilities) {
+    await syncDefaultAdminCapabilities(tenant.tenantId, normalizedCapabilities);
   }
 
   return serializeTenant(tenant);

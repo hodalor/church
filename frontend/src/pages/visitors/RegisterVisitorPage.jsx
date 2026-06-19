@@ -7,7 +7,7 @@ import MemberSearchInput from '../../components/finance/MemberSearchInput';
 import Button from '../../components/ui/Button';
 import Card from '../../components/ui/Card';
 import Input from '../../components/ui/Input';
-import { getCurrentTenant } from '../../api/endpoints/tenants';
+import { getAllBranches } from '../../api/endpoints/branches';
 import {
   checkVisitorDuplicateByPhone,
   recordVisitorReturnVisit,
@@ -50,9 +50,9 @@ export default function RegisterVisitorPage() {
   const streamRef = useRef(null);
   const debouncedPhone = useDebounce(form.phone, 450);
 
-  const tenantQuery = useQuery({
-    queryKey: ['visitor-register-tenant'],
-    queryFn: getCurrentTenant,
+  const branchesQuery = useQuery({
+    queryKey: ['visitor-register-branches'],
+    queryFn: () => getAllBranches({ limit: 200 }),
   });
 
   const duplicateQuery = useQuery({
@@ -122,16 +122,19 @@ export default function RegisterVisitorPage() {
   }, [cameraOpen]);
 
   useEffect(() => {
-    if (tenantQuery.data?.content?.branches?.length && !form.branch) {
+    if (branchesQuery.data?.items?.length && !form.branch) {
       setForm((current) => ({
         ...current,
-        branch: tenantQuery.data.content.branches[0],
+        branch: branchesQuery.data.items[0]?.branchName || '',
       }));
     }
-  }, [form.branch, tenantQuery.data]);
+  }, [branchesQuery.data?.items, form.branch]);
 
   const duplicateVisitor = duplicateQuery.data;
-  const availableBranches = tenantQuery.data?.content?.branches || [];
+  const availableBranches = useMemo(
+    () => [...new Set((branchesQuery.data?.items || []).map((item) => item.branchName).filter(Boolean))],
+    [branchesQuery.data?.items],
+  );
 
   const heardAboutOptions = useMemo(
     () =>
