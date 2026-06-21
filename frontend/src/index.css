@@ -48,8 +48,8 @@ select {
 select:not([multiple]) {
   appearance: none;
   background-image:
-    linear-gradient(45deg, transparent 50%, rgba(255, 255, 255, 0.55) 50%),
-    linear-gradient(135deg, rgba(255, 255, 255, 0.55) 50%, transparent 50%);
+    linear-gradient(45deg, transparent 50%, rgba(15, 23, 42, 0.7) 50%),
+    linear-gradient(135deg, rgba(15, 23, 42, 0.7) 50%, transparent 50%);
   background-position:
     calc(100% - 18px) calc(50% - 3px),
     calc(100% - 12px) calc(50% - 3px);
@@ -61,6 +61,118 @@ select:not([multiple]) {
 
 select:not([multiple])::-ms-expand {
   display: none;
+}
+
+input[class*='bg-white/5'],
+input[class*='bg-[#101827]'],
+input[class*='bg-[linear-gradient'],
+input[class*='text-white'],
+select[class*='bg-white/5'],
+select[class*='bg-[#101827]'],
+select[class*='bg-[linear-gradient'],
+select[class*='text-white'],
+textarea[class*='bg-white/5'],
+textarea[class*='bg-[#101827]'],
+textarea[class*='bg-[linear-gradient'],
+textarea[class*='text-white'] {
+  background: #ffffff !important;
+  background-image: none !important;
+  color: #0f172a !important;
+  border-color: #cbd5e1 !important;
+}
+
+input[class*='bg-white/5']::placeholder,
+input[class*='bg-[#101827]']::placeholder,
+input[class*='bg-[linear-gradient']::placeholder,
+input[class*='text-white']::placeholder,
+textarea[class*='bg-white/5']::placeholder,
+textarea[class*='bg-[#101827]']::placeholder,
+textarea[class*='bg-[linear-gradient']::placeholder,
+textarea[class*='text-white']::placeholder {
+  color: #64748b !important;
+  opacity: 1;
+}
+
+:is(label, div)[class*='bg-white/5']:has(> input[class*='bg-transparent']),
+:is(label, div)[class*='bg-[#101827]']:has(> input[class*='bg-transparent']),
+:is(label, div)[class*='bg-[linear-gradient']:has(> input[class*='bg-transparent']) {
+  background: #ffffff !important;
+  background-image: none !important;
+  border-color: #cbd5e1 !important;
+  color: #0f172a !important;
+}
+
+:is(label, div)[class*='bg-white/5']:has(> input[class*='bg-transparent']) > input,
+:is(label, div)[class*='bg-[#101827]']:has(> input[class*='bg-transparent']) > input,
+:is(label, div)[class*='bg-[linear-gradient']:has(> input[class*='bg-transparent']) > input {
+  color: #0f172a !important;
+}
+
+:is(label, div)[class*='bg-white/5']:has(> input[class*='bg-transparent']) > input::placeholder,
+:is(label, div)[class*='bg-[#101827]']:has(> input[class*='bg-transparent']) > input::placeholder,
+:is(label, div)[class*='bg-[linear-gradient']:has(> input[class*='bg-transparent']) > input::placeholder {
+  color: #64748b !important;
+  opacity: 1;
+}
+
+:is(label, div)[class*='bg-white/5']:has(> input[class*='bg-transparent']) > svg,
+:is(label, div)[class*='bg-[#101827]']:has(> input[class*='bg-transparent']) > svg,
+:is(label, div)[class*='bg-[linear-gradient']:has(> input[class*='bg-transparent']) > svg,
+:is(label, div)[class*='bg-white/5']:has(> input[class*='bg-transparent']) > span,
+:is(label, div)[class*='bg-[#101827]']:has(> input[class*='bg-transparent']) > span,
+:is(label, div)[class*='bg-[linear-gradient']:has(> input[class*='bg-transparent']) > span {
+  color: #64748b !important;
+}
+
+input[class*='bg-white/5']:disabled,
+input[class*='bg-[#101827]']:disabled,
+input[class*='bg-[linear-gradient']:disabled,
+select[class*='bg-white/5']:disabled,
+select[class*='bg-[#101827]']:disabled,
+select[class*='bg-[linear-gradient']:disabled,
+textarea[class*='bg-white/5']:disabled,
+textarea[class*='bg-[#101827]']:disabled,
+textarea[class*='bg-[linear-gradient']:disabled {
+  background: #f8fafc !important;
+  color: #94a3b8 !important;
+  cursor: not-allowed;
+}
+
+select option {
+  color: #0f172a;
+  background: #ffffff;
+}
+
+.card-surface {
+  background: #ffffff !important;
+  background-image: none !important;
+  border-color: #e2e8f0 !important;
+  color: #0f172a !important;
+  box-shadow: 0 12px 28px rgba(15, 23, 42, 0.08) !important;
+  backdrop-filter: none !important;
+}
+
+.card-surface :is(h1, h2, h3, h4, h5, h6, p, span, small, strong, em, label, td, th, li, dt, dd, div)[class~='text-white'] {
+  color: #0f172a !important;
+}
+
+.card-surface :is(p, span, small, label, td, th, li, div)[class*='text-white/'] {
+  color: #475569 !important;
+}
+
+.card-surface :is(div, section, article, aside, label, header, footer)[class*='bg-white/5'],
+.card-surface :is(div, section, article, aside, label, header, footer)[class*='bg-[#101827]'],
+.card-surface :is(div, section, article, aside, label, header, footer)[class*='bg-[#0b1120]'],
+.card-surface :is(div, section, article, aside, label, header, footer)[class*='bg-[linear-gradient'] {
+  background: #f8fafc !important;
+  background-image: none !important;
+  border-color: #e2e8f0 !important;
+  color: #0f172a !important;
+}
+
+.card-surface :is(div, section, article, aside, label, header, footer)[class*='border-white/10'],
+.card-surface :is(div, section, article, aside, label, header, footer)[class*='border-white/8'] {
+  border-color: #e2e8f0 !important;
 }
 
 #root {

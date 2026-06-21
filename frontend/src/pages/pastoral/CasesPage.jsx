@@ -8,6 +8,7 @@ import PastoralPageLayout from '../../components/pastoral/PastoralPageLayout';
 import Button from '../../components/ui/Button';
 import Card from '../../components/ui/Card';
 import Modal from '../../components/ui/Modal';
+import useBranchOptions from '../../hooks/useBranchOptions';
 import { usePastoralAccess } from '../../hooks/usePastoralAccess';
 import {
   formatPastoralLabel,
@@ -70,6 +71,7 @@ export default function CasesPage() {
     () => (usersQuery.data || []).filter((person) => pastoralRoles.includes(person.role)),
     [usersQuery.data],
   );
+  const { branchOptions, filterPlaceholder: branchFilterPlaceholder } = useBranchOptions({ includeCurrent: filters.branch });
 
   const casesQuery = useQuery({
     queryKey: ['pastoral-cases', activeTab, filters, user?.userId],
@@ -227,12 +229,18 @@ export default function CasesPage() {
               </option>
             ))}
           </select>
-          <input
+          <select
             value={filters.branch}
             onChange={(event) => setFilters((current) => ({ ...current, branch: event.target.value }))}
-            placeholder="Branch"
-            className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white outline-none placeholder:text-white/35"
-          />
+            className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white"
+          >
+            <option value="">{branchFilterPlaceholder}</option>
+            {branchOptions.map((branch) => (
+              <option key={branch} value={branch}>
+                {branch}
+              </option>
+            ))}
+          </select>
           <input
             type="date"
             value={filters.fromDate}

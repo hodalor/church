@@ -12,6 +12,7 @@ import TransactionTypeBadge from '../../components/finance/TransactionTypeBadge'
 import useCurrency from '../../hooks/useCurrency';
 import { useFinanceAccess } from '../../hooks/useFinanceAccess';
 import { useAuth } from '../../hooks/useAuth';
+import useBranchOptions from '../../hooks/useBranchOptions';
 import { getPledgeById, recordPledgePayment } from '../../api/endpoints/finance';
 
 export default function PledgeDetailPage() {
@@ -20,6 +21,7 @@ export default function PledgeDetailPage() {
   const { canRecordPledgePayments } = useFinanceAccess();
   const { formatCurrency } = useCurrency();
   const { user } = useAuth();
+  const { branchOptions } = useBranchOptions({ includeCurrent: user?.branch || '' });
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [paymentForm, setPaymentForm] = useState({
     amount: '',
@@ -249,11 +251,18 @@ export default function PledgeDetailPage() {
             </label>
             <label className="space-y-2">
               <span className="text-sm text-white/75">Branch</span>
-              <input
+              <select
                 value={paymentForm.branch}
                 onChange={(event) => setPaymentForm((current) => ({ ...current, branch: event.target.value }))}
                 className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white"
-              />
+              >
+                <option value="">Select branch</option>
+                {branchOptions.map((branch) => (
+                  <option key={branch} value={branch}>
+                    {branch}
+                  </option>
+                ))}
+              </select>
             </label>
             {paymentForm.paymentMethod !== 'cash' ? (
               <label className="space-y-2 md:col-span-2">

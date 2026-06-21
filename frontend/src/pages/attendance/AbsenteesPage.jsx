@@ -8,7 +8,9 @@ import DataTable from '../../components/ui/DataTable';
 import PageHeader from '../../components/ui/PageHeader';
 import SearchInput from '../../components/ui/SearchInput';
 import { getAbsentees } from '../../api/endpoints/attendance';
+import { getCurrentTenant } from '../../api/endpoints/tenants';
 import useAttendanceAccess from '../../hooks/useAttendanceAccess';
+import useBranchOptions from '../../hooks/useBranchOptions';
 import { useCommunicationAccess } from '../../hooks/useCommunicationAccess';
 import { downloadCsv } from '../../utils/attendance';
 
@@ -21,6 +23,12 @@ export default function AbsenteesPage() {
   const [department, setDepartment] = useState('');
   const [missedCount, setMissedCount] = useState('2');
   const [selectedIds, setSelectedIds] = useState([]);
+  const { branchOptions, filterPlaceholder: branchFilterPlaceholder } = useBranchOptions({ includeCurrent: branch });
+  const tenantQuery = useQuery({
+    queryKey: ['attendance-absentees-tenant'],
+    queryFn: getCurrentTenant,
+  });
+  const departmentOptions = tenantQuery.data?.content?.departments || [];
 
   const absenteesQuery = useQuery({
     queryKey: ['attendance-absentees', search, branch, department, missedCount],
@@ -161,18 +169,31 @@ export default function AbsenteesPage() {
         <Card className="space-y-4">
           <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
             <SearchInput value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search member" />
-            <input
+            <select
               value={branch}
               onChange={(event) => setBranch(event.target.value)}
               className="w-full rounded-xl border border-white/10 bg-[#101827] px-3.5 py-2.5 text-sm text-white"
-              placeholder="Branch"
-            />
-            <input
+            >
+              <option value="">{branchFilterPlaceholder}</option>
+              {branchOptions.map((item) => (
+                <option key={item} value={item}>
+                  {item}
+                </option>
+              ))}
+            </select>
+            <select
               value={department}
               onChange={(event) => setDepartment(event.target.value)}
+              disabled={!departmentOptions.length}
               className="w-full rounded-xl border border-white/10 bg-[#101827] px-3.5 py-2.5 text-sm text-white"
-              placeholder="Department"
-            />
+            >
+              <option value="">{departmentOptions.length ? 'All departments' : 'No departments configured yet'}</option>
+              {departmentOptions.map((item) => (
+                <option key={item} value={item}>
+                  {item}
+                </option>
+              ))}
+            </select>
             <select
               value={missedCount}
               onChange={(event) => setMissedCount(event.target.value)}

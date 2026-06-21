@@ -33,7 +33,7 @@ export default function MemberSearchInput({
             value={search}
             onChange={(event) => setSearch(event.target.value)}
             placeholder={placeholder}
-            className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white outline-none placeholder:text-white/35 focus:border-accent"
+            className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none placeholder:text-slate-500 focus:border-accent"
           />
           <button
             type="button"
@@ -41,7 +41,7 @@ export default function MemberSearchInput({
               setSearch('');
               onClear?.();
             }}
-            className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm font-semibold text-white/70"
+            className="rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm font-semibold text-slate-700 transition hover:border-accent/50 hover:text-slate-900"
           >
             Clear
           </button>
@@ -49,7 +49,7 @@ export default function MemberSearchInput({
       </label>
 
       {debouncedSearch.trim().length >= 2 && members.length ? (
-        <div className="absolute z-20 mt-1 w-full rounded-2xl border border-white/10 bg-[#0b1120] shadow-2xl shadow-black/30">
+        <div className="absolute z-20 mt-1 w-full rounded-2xl border border-slate-200 bg-white shadow-2xl shadow-slate-900/10">
           {members.map((member) => {
             const fullName = [member.firstName, member.lastName].filter(Boolean).join(' ');
             return (
@@ -64,7 +64,7 @@ export default function MemberSearchInput({
                   });
                   setSearch(fullName || member.memberId);
                 }}
-                className="flex w-full items-center gap-3 border-b border-white/5 px-4 py-3 text-left last:border-b-0 hover:bg-white/5"
+                className="flex w-full items-center gap-3 border-b border-slate-100 px-4 py-3 text-left last:border-b-0 hover:bg-slate-50"
               >
                 {member.photoUrl ? (
                   <img src={member.photoUrl} alt={fullName} className="h-10 w-10 rounded-full object-cover" />
@@ -74,8 +74,8 @@ export default function MemberSearchInput({
                   </div>
                 )}
                 <div>
-                  <p className="font-medium text-white">{fullName || member.memberId}</p>
-                  <p className="text-xs uppercase tracking-[0.18em] text-white/45">{member.memberId}</p>
+                  <p className="font-medium text-slate-900">{fullName || member.memberId}</p>
+                  <p className="text-xs uppercase tracking-[0.18em] text-slate-500">{member.memberId}</p>
                 </div>
               </button>
             );

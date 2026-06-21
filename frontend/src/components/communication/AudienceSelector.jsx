@@ -5,6 +5,7 @@ import Input from '../ui/Input';
 import Card from '../ui/Card';
 import MemberSearchInput from '../finance/MemberSearchInput';
 import { previewBroadcastAudience } from '../../api/endpoints/communication';
+import useBranchOptions from '../../hooks/useBranchOptions';
 
 const audienceOptions = [
   { value: 'all_members', label: 'All Members' },
@@ -35,6 +36,7 @@ export default function AudienceSelector({
   channels = ['in_app'],
 }) {
   const audience = useMemo(() => value || { type: 'all_members' }, [value]);
+  const { branchOptions } = useBranchOptions({ includeCurrent: audience.branch || '' });
   const previewPayload = useMemo(
     () => ({
       title: title || 'Preview',
@@ -81,7 +83,23 @@ export default function AudienceSelector({
         })}
       </div>
 
-      {audience.type === 'branch' ? <Input label="Branch" value={audience.branch || ''} onChange={(event) => setField('branch', event.target.value)} placeholder="Main branch" /> : null}
+      {audience.type === 'branch' ? (
+        <label className="block space-y-2">
+          <span className="text-sm font-medium text-white/75">Branch</span>
+          <select
+            value={audience.branch || ''}
+            onChange={(event) => setField('branch', event.target.value)}
+            className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white outline-none"
+          >
+            <option value="">Select branch</option>
+            {branchOptions.map((branch) => (
+              <option key={branch} value={branch}>
+                {branch}
+              </option>
+            ))}
+          </select>
+        </label>
+      ) : null}
 
       {audience.type === 'department' ? (
         <label className="block space-y-2">

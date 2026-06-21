@@ -53,6 +53,7 @@ export default function TenantFormModal({ isOpen, onClose, onCreated }) {
   const [form, setForm] = useState(buildInitialState(eligibleCountries));
   const [filePreview, setFilePreview] = useState('');
   const [error, setError] = useState('');
+  const lightInputProps = { labelClassName: 'text-slate-700' };
 
   useEffect(() => {
     if (!isOpen) {
@@ -166,13 +167,14 @@ export default function TenantFormModal({ isOpen, onClose, onCreated }) {
       title="Register New Church"
       description="Create the tenant, choose enabled modules, and set the first church admin access."
       size="xl"
+      tone="light"
     >
       <form className="space-y-5" onSubmit={handleSubmit}>
         <div className="grid gap-5 xl:grid-cols-2">
-          <div className="space-y-4 rounded-[24px] border border-white/10 bg-[#101827] p-4">
+          <div className="space-y-4 rounded-[24px] border border-slate-200 bg-white p-4 shadow-sm">
             <div>
               <p className="text-[11px] uppercase tracking-[0.25em] text-accent">Church Details</p>
-              <h3 className="mt-2 text-lg font-semibold text-white">Tenant profile</h3>
+              <h3 className="mt-2 text-lg font-semibold text-slate-900">Tenant profile</h3>
             </div>
 
             <div className="grid gap-4 md:grid-cols-2">
@@ -182,9 +184,10 @@ export default function TenantFormModal({ isOpen, onClose, onCreated }) {
                   value={form.tenantId}
                   onChange={(event) => updateField('tenantId', event.target.value.toLowerCase())}
                   placeholder="calvary"
+                  {...lightInputProps}
                 />
                 {tenantIdValidation ? (
-                  <p className={`text-sm ${tenantIdValidation.valid ? 'text-emerald-400' : 'text-red-400'}`}>
+                  <p className={`text-sm ${tenantIdValidation.valid ? 'text-emerald-600' : 'text-red-600'}`}>
                     {tenantIdValidation.message}
                   </p>
                 ) : null}
@@ -194,6 +197,7 @@ export default function TenantFormModal({ isOpen, onClose, onCreated }) {
                 value={form.churchName}
                 onChange={(event) => updateField('churchName', event.target.value)}
                 placeholder="Calvary Chapel"
+                {...lightInputProps}
               />
               <Input
                 label="Email"
@@ -201,19 +205,21 @@ export default function TenantFormModal({ isOpen, onClose, onCreated }) {
                 value={form.email}
                 onChange={(event) => updateField('email', event.target.value)}
                 placeholder="info@calvary.org"
+                {...lightInputProps}
               />
               <Input
                 label="Phone"
                 value={form.phone}
                 onChange={(event) => updateField('phone', event.target.value)}
                 placeholder="+233..."
+                {...lightInputProps}
               />
               <label className="block space-y-2">
-                <span className="text-sm font-medium text-white/80">Country</span>
+                <span className="text-sm font-medium text-slate-700">Country</span>
                 <select
                   value={form.country}
                   onChange={(event) => updateField('country', event.target.value)}
-                  className="w-full rounded-2xl border border-white/10 bg-[#101827] px-4 py-3 text-sm text-white outline-none focus:border-accent"
+                  className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none focus:border-accent"
                 >
                   {eligibleCountries.map((country) => (
                     <option key={country.name} value={country.name}>
@@ -223,12 +229,12 @@ export default function TenantFormModal({ isOpen, onClose, onCreated }) {
                 </select>
               </label>
               <label className="block space-y-2">
-                <span className="text-sm font-medium text-white/80">Logo</span>
+                <span className="text-sm font-medium text-slate-700">Logo</span>
                 <input
                   type="file"
                   accept="image/*"
                   onChange={handleLogoUpload}
-                  className="w-full rounded-2xl border border-white/10 bg-[#101827] px-4 py-3 text-sm text-white/70"
+                  className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-600"
                 />
                 {filePreview ? (
                   <img src={filePreview} alt="Church logo preview" className="h-20 w-20 rounded-2xl object-cover" />
@@ -245,20 +251,20 @@ export default function TenantFormModal({ isOpen, onClose, onCreated }) {
                   className={`rounded-[22px] border p-4 text-left ${
                     form.subscriptionPlan === plan.id
                       ? 'border-accent bg-accent/10'
-                      : 'border-white/10 bg-[#0b1120]'
+                      : 'border-slate-200 bg-slate-50'
                   }`}
                 >
-                  <p className="text-lg font-semibold text-white">{plan.title}</p>
-                  <p className="mt-2 text-sm text-white/60">{plan.description}</p>
+                  <p className="text-lg font-semibold text-slate-900">{plan.title}</p>
+                  <p className="mt-2 text-sm text-slate-600">{plan.description}</p>
                 </button>
               ))}
             </div>
           </div>
 
-          <div className="space-y-4 rounded-[24px] border border-white/10 bg-[#101827] p-4">
+          <div className="space-y-4 rounded-[24px] border border-slate-200 bg-white p-4 shadow-sm">
             <div>
               <p className="text-[11px] uppercase tracking-[0.25em] text-accent">Initial Admin</p>
-              <h3 className="mt-2 text-lg font-semibold text-white">Church admin profile</h3>
+              <h3 className="mt-2 text-lg font-semibold text-slate-900">Church admin profile</h3>
             </div>
 
             <div className="grid gap-4 md:grid-cols-2">
@@ -267,20 +273,30 @@ export default function TenantFormModal({ isOpen, onClose, onCreated }) {
                 value={form.initialFullName}
                 onChange={(event) => updateField('initialFullName', event.target.value)}
                 placeholder="Lead pastor name"
+                {...lightInputProps}
               />
               <Input
                 label="Username"
                 value={form.initialUsername}
                 onChange={(event) => updateField('initialUsername', event.target.value)}
                 placeholder="headpastor"
+                {...lightInputProps}
               />
               <div>
-                <span className="mb-2 block text-sm font-medium text-white/80">Initial PIN</span>
-                <PinInput value={form.initialPin} onChange={(value) => updateField('initialPin', value)} />
+                <span className="mb-2 block text-sm font-medium text-slate-700">Initial PIN</span>
+                <PinInput
+                  value={form.initialPin}
+                  onChange={(value) => updateField('initialPin', value)}
+                  tone="light"
+                />
               </div>
               <div>
-                <span className="mb-2 block text-sm font-medium text-white/80">Confirm PIN</span>
-                <PinInput value={form.confirmPin} onChange={(value) => updateField('confirmPin', value)} />
+                <span className="mb-2 block text-sm font-medium text-slate-700">Confirm PIN</span>
+                <PinInput
+                  value={form.confirmPin}
+                  onChange={(value) => updateField('confirmPin', value)}
+                  tone="light"
+                />
               </div>
             </div>
           </div>
@@ -292,25 +308,31 @@ export default function TenantFormModal({ isOpen, onClose, onCreated }) {
           value={form.capabilities}
           onChange={(nextValue) => updateField('capabilities', nextValue)}
           allowedCapabilities={allCapabilities}
+          tone="light"
         />
 
-        <div className="rounded-[24px] border border-emerald-400/20 bg-[linear-gradient(135deg,rgba(52,211,153,0.12),rgba(16,24,39,0.98))] p-4">
-          <p className="text-[11px] uppercase tracking-[0.22em] text-emerald-200/80">Default Admin Access</p>
-          <h3 className="mt-2 text-lg font-semibold text-white">First church admin gets full tenant access</h3>
-          <p className="mt-2 text-sm text-white/65">
+        <div className="rounded-[24px] border border-emerald-200 bg-emerald-50 p-4">
+          <p className="text-[11px] uppercase tracking-[0.22em] text-emerald-700">Default Admin Access</p>
+          <h3 className="mt-2 text-lg font-semibold text-slate-900">First church admin gets full tenant access</h3>
+          <p className="mt-2 text-sm text-slate-600">
             Every feature you enable for this tenant is automatically assigned to the default church admin account.
           </p>
-          <div className="mt-4 rounded-2xl border border-white/10 bg-white/5 px-4 py-3">
-            <p className="text-sm text-white/75">
-              Enabled tenant permissions: <span className="font-semibold text-white">{form.capabilities.length}</span>
+          <div className="mt-4 rounded-2xl border border-emerald-200 bg-white px-4 py-3">
+            <p className="text-sm text-slate-600">
+              Enabled tenant permissions: <span className="font-semibold text-slate-900">{form.capabilities.length}</span>
             </p>
           </div>
         </div>
 
         <div className="flex items-center justify-between gap-4">
-          {error ? <p className="text-sm text-red-400">{error}</p> : <p className="text-sm text-white/45">Tenant and first admin access are saved together.</p>}
+          {error ? <p className="text-sm text-red-600">{error}</p> : <p className="text-sm text-slate-500">Tenant and first admin access are saved together.</p>}
           <div className="flex gap-3">
-            <Button type="button" variant="ghost" onClick={onClose}>
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={onClose}
+              className="border-slate-300 bg-white text-slate-700 hover:bg-slate-50 hover:text-slate-900"
+            >
               Cancel
             </Button>
             <Button type="submit" variant="secondary" disabled={mutation.isPending}>

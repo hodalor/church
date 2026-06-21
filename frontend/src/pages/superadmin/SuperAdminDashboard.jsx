@@ -112,10 +112,10 @@ export default function SuperAdminDashboard() {
         </div>
 
         <div className="grid gap-6 xl:grid-cols-[1.2fr_0.8fr]">
-          <Card className="space-y-4 bg-[linear-gradient(135deg,rgba(56,189,248,0.12),rgba(13,19,32,0.98))]">
+          <Card className="space-y-4">
             <div>
-              <p className="text-sm uppercase tracking-[0.25em] text-white/55">Platform Growth</p>
-              <h2 className="mt-2 text-2xl font-semibold text-white">Tenant growth momentum</h2>
+              <p className="text-sm uppercase tracking-[0.25em] text-slate-500">Platform Growth</p>
+              <h2 className="mt-2 text-2xl font-semibold text-slate-900">Tenant growth momentum</h2>
             </div>
             <div className="h-64">
               <ResponsiveContainer width="100%" height="100%">
@@ -129,10 +129,10 @@ export default function SuperAdminDashboard() {
             </div>
           </Card>
 
-          <Card className="space-y-4 bg-[linear-gradient(135deg,rgba(244,201,93,0.16),rgba(13,19,32,0.98))]">
+          <Card className="space-y-4">
             <div>
-              <p className="text-sm uppercase tracking-[0.25em] text-white/55">Platform Health</p>
-              <h2 className="mt-2 text-2xl font-semibold text-white">Church health distribution</h2>
+              <p className="text-sm uppercase tracking-[0.25em] text-slate-500">Platform Health</p>
+              <h2 className="mt-2 text-2xl font-semibold text-slate-900">Church health distribution</h2>
             </div>
             <div className="h-64">
               <ResponsiveContainer width="100%" height="100%">
@@ -152,11 +152,11 @@ export default function SuperAdminDashboard() {
         </div>
 
         <div className="grid items-start gap-6 xl:grid-cols-3">
-          <Card className="space-y-4 xl:col-span-2 bg-[linear-gradient(135deg,rgba(167,139,250,0.14),rgba(13,19,32,0.98))]">
+          <Card className="space-y-4 xl:col-span-2">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm uppercase tracking-[0.25em] text-white/55">Revenue</p>
-                <h2 className="mt-2 text-2xl font-semibold text-white">Monthly platform revenue</h2>
+                <p className="text-sm uppercase tracking-[0.25em] text-slate-500">Revenue</p>
+                <h2 className="mt-2 text-2xl font-semibold text-slate-900">Monthly platform revenue</h2>
               </div>
               <Button variant="ghost" onClick={() => navigate('/superadmin/platform')}>
                 Open BI
@@ -174,10 +174,10 @@ export default function SuperAdminDashboard() {
             </div>
           </Card>
 
-          <Card className="space-y-4 bg-[linear-gradient(135deg,rgba(52,211,153,0.14),rgba(13,19,32,0.98))]">
+          <Card className="space-y-4">
             <div>
-              <p className="text-sm uppercase tracking-[0.25em] text-white/55">Fastest Growing Churches</p>
-              <h2 className="mt-2 text-2xl font-semibold text-white">Leaderboard</h2>
+              <p className="text-sm uppercase tracking-[0.25em] text-slate-500">Fastest Growing Churches</p>
+              <h2 className="mt-2 text-2xl font-semibold text-slate-900">Leaderboard</h2>
             </div>
             <div className="space-y-3">
               {fastestGrowing.length ? (
@@ -186,13 +186,13 @@ export default function SuperAdminDashboard() {
                     key={tenant.tenantId}
                     type="button"
                     onClick={() => navigate(`/superadmin/tenants/${tenant.tenantId}`)}
-                    className="flex w-full items-center justify-between rounded-2xl border border-emerald-400/20 bg-emerald-400/10 px-4 py-2.5 text-left"
+                    className="flex w-full items-center justify-between rounded-2xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-left"
                   >
                     <div>
-                      <p className="font-medium text-white">
+                      <p className="font-medium text-slate-900">
                         {index + 1}. {tenant.churchName}
                       </p>
-                      <p className="mt-1 text-xs text-white/45">
+                      <p className="mt-1 text-xs text-slate-500">
                         {tenant.country || 'Unknown'} • {tenant.subscriptionPlan || tenant.plan || '-'}
                       </p>
                     </div>
@@ -212,11 +212,11 @@ export default function SuperAdminDashboard() {
           </Card>
         </div>
 
-        <Card className="space-y-4 bg-[linear-gradient(135deg,rgba(34,211,238,0.1),rgba(13,19,32,0.98))]">
+        <Card className="space-y-4">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
-              <p className="text-sm uppercase tracking-[0.25em] text-white/55">Phase 11 Workspaces</p>
-              <h2 className="mt-2 text-2xl font-semibold text-white">Growth and intelligence modules</h2>
+              <p className="text-sm uppercase tracking-[0.25em] text-slate-500">Phase 11 Workspaces</p>
+              <h2 className="mt-2 text-2xl font-semibold text-slate-900">Growth and intelligence modules</h2>
             </div>
             <Button variant="ghost" onClick={() => navigate('/strategic')}>
               Open Strategic Plan
@@ -259,10 +259,10 @@ export default function SuperAdminDashboard() {
                 key={item.title}
                 type="button"
                 onClick={() => navigate(item.to)}
-                className="rounded-2xl border border-white/10 bg-[linear-gradient(135deg,rgba(30,42,74,0.72),rgba(12,17,28,0.98))] p-3.5 text-left transition hover:border-accent/30"
+                className="rounded-2xl border border-slate-200 bg-slate-50 p-3.5 text-left transition hover:border-accent/30 hover:bg-white"
               >
-                <p className="text-lg font-semibold text-white">{item.title}</p>
-                <p className="mt-2 text-sm leading-6 text-white/60">{item.description}</p>
+                <p className="text-lg font-semibold text-slate-900">{item.title}</p>
+                <p className="mt-2 text-sm leading-6 text-slate-600">{item.description}</p>
                 <p className="mt-4 text-xs uppercase tracking-[0.18em] text-accent">Open workspace</p>
               </button>
             ))}
@@ -270,10 +270,10 @@ export default function SuperAdminDashboard() {
         </Card>
 
         <div className="space-y-4">
-          <Card className="space-y-4 bg-[linear-gradient(135deg,rgba(251,113,133,0.1),rgba(13,19,32,0.98))]">
+          <Card className="space-y-4">
             <div>
-              <p className="text-sm uppercase tracking-[0.25em] text-white/55">Alert Tenants</p>
-              <h2 className="mt-2 text-2xl font-semibold text-white">Needs attention now</h2>
+              <p className="text-sm uppercase tracking-[0.25em] text-slate-500">Alert Tenants</p>
+              <h2 className="mt-2 text-2xl font-semibold text-slate-900">Needs attention now</h2>
             </div>
             <div className="grid items-start gap-3 md:grid-cols-2 xl:grid-cols-3">
               {alertTenants.length ? (
@@ -282,8 +282,8 @@ export default function SuperAdminDashboard() {
                     key={tenant.tenantId}
                     className="rounded-2xl border border-rose-500/25 bg-rose-500/10 px-4 py-3"
                   >
-                    <p className="font-medium text-white">{tenant.churchName}</p>
-                    <p className="mt-1 text-sm text-white/65">
+                    <p className="font-medium text-slate-900">{tenant.churchName}</p>
+                    <p className="mt-1 text-sm text-slate-600">
                       {Number(tenant.healthScore || 0) < 55
                         ? `Health score is ${Math.round(Number(tenant.healthScore || 0))}%.`
                         : `Growth has fallen to ${Number(tenant.growth || 0).toFixed(1)}%.`}
@@ -307,19 +307,19 @@ export default function SuperAdminDashboard() {
             </div>
           </Card>
 
-          <Card className="space-y-4 bg-[linear-gradient(135deg,rgba(56,189,248,0.08),rgba(13,19,32,0.98))]">
+          <Card className="space-y-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm uppercase tracking-[0.25em] text-white/55">Tenant Snapshot</p>
-                <h2 className="mt-2 text-2xl font-semibold text-white">Recent comparison table</h2>
+                <p className="text-sm uppercase tracking-[0.25em] text-slate-500">Tenant Snapshot</p>
+                <h2 className="mt-2 text-2xl font-semibold text-slate-900">Recent comparison table</h2>
               </div>
               <Button variant="ghost" onClick={() => navigate('/superadmin/platform/tenants')}>
                 View all
               </Button>
             </div>
             <div className="overflow-x-auto">
-              <table className="w-full min-w-[860px] text-left text-sm text-white/75">
-                <thead className="text-[11px] uppercase tracking-[0.2em] text-white/40">
+              <table className="w-full min-w-[860px] text-left text-sm text-slate-700">
+                <thead className="text-[11px] uppercase tracking-[0.2em] text-slate-500">
                   <tr>
                     <th className="pb-3 pr-4">Church</th>
                     <th className="pb-3 pr-4">Plan</th>
@@ -332,7 +332,7 @@ export default function SuperAdminDashboard() {
                 <tbody>
                   {tenantRows.slice(0, 6).map((tenant) => (
                     <tr key={tenant.tenantId} className="border-t border-white/8 align-top">
-                      <td className="py-3 pr-4 font-medium text-white">{tenant.churchName}</td>
+                      <td className="py-3 pr-4 font-medium text-slate-900">{tenant.churchName}</td>
                       <td className="py-3 pr-4">{tenant.subscriptionPlan || tenant.plan || '-'}</td>
                       <td className="py-3 pr-4">{formatAnalyticsNumber(tenant.members || 0)}</td>
                       <td className="py-3 pr-4">{formatAnalyticsNumber(tenant.attendance || 0)}</td>

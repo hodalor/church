@@ -151,6 +151,7 @@ export default function AIPastorAssistant() {
 
   const form = forms[activeTool];
   const history = historyQuery.data?.items || [];
+  const aiInputProps = { labelClassName: 'text-slate-700' };
 
   return (
     <AppShell>
@@ -208,8 +209,8 @@ export default function AIPastorAssistant() {
 
             {activeTool === 'sermon' ? (
               <div className="grid gap-4 md:grid-cols-2">
-                <Input label="Topic" value={form.topic} onChange={(event) => updateField('sermon', 'topic', event.target.value)} />
-                <Input label="Key Scripture" value={form.scripture} onChange={(event) => updateField('sermon', 'scripture', event.target.value)} />
+                <Input label="Topic" value={form.topic} onChange={(event) => updateField('sermon', 'topic', event.target.value)} {...aiInputProps} />
+                <Input label="Key Scripture" value={form.scripture} onChange={(event) => updateField('sermon', 'scripture', event.target.value)} {...aiInputProps} />
                 <label className="block space-y-2">
                   <span className="text-sm font-medium text-[#1E2A4A]">Sermon Type</span>
                   <select className="w-full rounded-xl border border-slate-200 px-3 py-2.5" value={form.sermonType} onChange={(event) => updateField('sermon', 'sermonType', event.target.value)}>
@@ -235,9 +236,9 @@ export default function AIPastorAssistant() {
               </div>
             ) : activeTool === 'announcement' ? (
               <div className="grid gap-4 md:grid-cols-2">
-                <Input label="Event Title" value={form.eventTitle} onChange={(event) => updateField('announcement', 'eventTitle', event.target.value)} />
-                <Input label="Date + Time" value={form.date} onChange={(event) => updateField('announcement', 'date', event.target.value)} />
-                <Input label="Venue" value={form.venue} onChange={(event) => updateField('announcement', 'venue', event.target.value)} />
+                <Input label="Event Title" value={form.eventTitle} onChange={(event) => updateField('announcement', 'eventTitle', event.target.value)} {...aiInputProps} />
+                <Input label="Date + Time" value={form.date} onChange={(event) => updateField('announcement', 'date', event.target.value)} {...aiInputProps} />
+                <Input label="Venue" value={form.venue} onChange={(event) => updateField('announcement', 'venue', event.target.value)} {...aiInputProps} />
                 <label className="block space-y-2">
                   <span className="text-sm font-medium text-[#1E2A4A]">Tone</span>
                   <select className="w-full rounded-xl border border-slate-200 px-3 py-2.5" value={form.tone} onChange={(event) => updateField('announcement', 'tone', event.target.value)}>
@@ -251,8 +252,8 @@ export default function AIPastorAssistant() {
               </div>
             ) : activeTool === 'prayer' ? (
               <div className="grid gap-4 md:grid-cols-2">
-                <Input label="Theme" value={form.theme} onChange={(event) => updateField('prayer', 'theme', event.target.value)} />
-                <Input label="Congregation Context" value={form.audience} onChange={(event) => updateField('prayer', 'audience', event.target.value)} />
+                <Input label="Theme" value={form.theme} onChange={(event) => updateField('prayer', 'theme', event.target.value)} {...aiInputProps} />
+                <Input label="Congregation Context" value={form.audience} onChange={(event) => updateField('prayer', 'audience', event.target.value)} {...aiInputProps} />
                 <label className="block space-y-2 md:col-span-2">
                   <span className="text-sm font-medium text-[#1E2A4A]">Specific Needs</span>
                   <textarea className="min-h-[120px] w-full rounded-xl border border-slate-200 px-3 py-2.5" value={form.context} onChange={(event) => updateField('prayer', 'context', event.target.value)} />
@@ -260,14 +261,14 @@ export default function AIPastorAssistant() {
               </div>
             ) : activeTool === 'devotional' ? (
               <div className="grid gap-4 md:grid-cols-2">
-                <Input label="Topic" value={form.theme} onChange={(event) => updateField('devotional', 'theme', event.target.value)} />
-                <Input label="Key Scripture" value={form.scripture} onChange={(event) => updateField('devotional', 'scripture', event.target.value)} />
-                <Input label="Day of Week" value={form.audience} onChange={(event) => updateField('devotional', 'audience', event.target.value)} />
+                <Input label="Topic" value={form.theme} onChange={(event) => updateField('devotional', 'theme', event.target.value)} {...aiInputProps} />
+                <Input label="Key Scripture" value={form.scripture} onChange={(event) => updateField('devotional', 'scripture', event.target.value)} {...aiInputProps} />
+                <Input label="Day of Week" value={form.audience} onChange={(event) => updateField('devotional', 'audience', event.target.value)} {...aiInputProps} />
               </div>
             ) : activeTool === 'meeting' ? (
               <div className="grid gap-4">
-                <Input label="Meeting Type" value={form.meetingTitle} onChange={(event) => updateField('meeting', 'meetingTitle', event.target.value)} />
-                <Input label="Attendees" value={form.attendees} onChange={(event) => updateField('meeting', 'attendees', event.target.value)} />
+                <Input label="Meeting Type" value={form.meetingTitle} onChange={(event) => updateField('meeting', 'meetingTitle', event.target.value)} {...aiInputProps} />
+                <Input label="Attendees" value={form.attendees} onChange={(event) => updateField('meeting', 'attendees', event.target.value)} {...aiInputProps} />
                 <label className="block space-y-2">
                   <span className="text-sm font-medium text-[#1E2A4A]">Meeting Notes</span>
                   <textarea className="min-h-[160px] w-full rounded-xl border border-slate-200 px-3 py-2.5" value={form.meetingNotes} onChange={(event) => updateField('meeting', 'meetingNotes', event.target.value)} />
@@ -275,7 +276,7 @@ export default function AIPastorAssistant() {
               </div>
             ) : activeTool === 'member' ? (
               <div className="grid gap-4">
-                <Input label="Member Name" value={form.memberName} onChange={(event) => updateField('member', 'memberName', event.target.value)} />
+                <Input label="Member Name" value={form.memberName} onChange={(event) => updateField('member', 'memberName', event.target.value)} {...aiInputProps} />
                 <label className="block space-y-2">
                   <span className="text-sm font-medium text-[#1E2A4A]">Member Summary</span>
                   <textarea className="min-h-[140px] w-full rounded-xl border border-slate-200 px-3 py-2.5" value={form.memberSummary} onChange={(event) => updateField('member', 'memberSummary', event.target.value)} />
@@ -287,7 +288,7 @@ export default function AIPastorAssistant() {
               </div>
             ) : (
               <div className="grid gap-4">
-                <Input label="Target Period" value={form.targetPeriod} onChange={(event) => updateField('growth', 'targetPeriod', event.target.value)} />
+                <Input label="Target Period" value={form.targetPeriod} onChange={(event) => updateField('growth', 'targetPeriod', event.target.value)} {...aiInputProps} />
                 <label className="block space-y-2">
                   <span className="text-sm font-medium text-[#1E2A4A]">Analytics Summary</span>
                   <textarea className="min-h-[180px] w-full rounded-xl border border-slate-200 px-3 py-2.5" value={form.analyticsSummary} onChange={(event) => updateField('growth', 'analyticsSummary', event.target.value)} />

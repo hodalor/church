@@ -8,6 +8,7 @@ import PageHeader from '../../components/ui/PageHeader';
 import Pagination from '../../components/ui/Pagination';
 import { deleteService, getServices } from '../../api/endpoints/attendance';
 import useAttendanceAccess from '../../hooks/useAttendanceAccess';
+import useBranchOptions from '../../hooks/useBranchOptions';
 
 const tabs = [
   { label: 'Upcoming', value: 'upcoming' },
@@ -30,6 +31,7 @@ export default function ServicesPage() {
   const branch = searchParams.get('branch') || '';
   const from = searchParams.get('from') || '';
   const to = searchParams.get('to') || '';
+  const { branchOptions } = useBranchOptions();
   const tenantId = searchParams.get('tenantId') || '';
 
   const servicesQuery = useQuery({
@@ -126,12 +128,18 @@ export default function ServicesPage() {
             </label>
             <label className="space-y-1.5">
               <span className="text-[13px] font-medium text-white/75">Branch</span>
-              <input
+              <select
                 value={branch}
                 onChange={(event) => updateParam('branch', event.target.value)}
                 className={filterInputClass}
-                placeholder="Main branch"
-              />
+              >
+                <option value="">All branches</option>
+                {branchOptions.map((item) => (
+                  <option key={item} value={item}>
+                    {item}
+                  </option>
+                ))}
+              </select>
             </label>
             <label className="space-y-1.5">
               <span className="text-[13px] font-medium text-white/75">From</span>

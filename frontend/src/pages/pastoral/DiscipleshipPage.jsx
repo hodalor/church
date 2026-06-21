@@ -9,6 +9,7 @@ import PastoralPageLayout from '../../components/pastoral/PastoralPageLayout';
 import Button from '../../components/ui/Button';
 import Card from '../../components/ui/Card';
 import Modal from '../../components/ui/Modal';
+import useBranchOptions from '../../hooks/useBranchOptions';
 import { formatPastoralLabel, formatShortDate } from '../../utils/pastoral';
 
 const tabs = [
@@ -58,6 +59,7 @@ export default function DiscipleshipPage() {
     () => (usersQuery.data || []).filter((person) => pastoralRoles.includes(person.role)),
     [usersQuery.data],
   );
+  const { branchOptions, filterPlaceholder: branchFilterPlaceholder } = useBranchOptions({ includeCurrent: filters.branch });
 
   const enrollMutation = useMutation({
     mutationFn: (payload) => enrollMember(payload),
@@ -160,12 +162,18 @@ export default function DiscipleshipPage() {
                 </option>
               ))}
             </select>
-            <input
+            <select
               value={filters.branch}
               onChange={(event) => setFilters((current) => ({ ...current, branch: event.target.value }))}
-              placeholder="Branch"
-              className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white outline-none placeholder:text-white/35"
-            />
+              className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white"
+            >
+              <option value="">{branchFilterPlaceholder}</option>
+              {branchOptions.map((branch) => (
+                <option key={branch} value={branch}>
+                  {branch}
+                </option>
+              ))}
+            </select>
           </Card>
 
           <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">

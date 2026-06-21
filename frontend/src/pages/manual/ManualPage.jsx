@@ -336,6 +336,138 @@ const workflowSections = [
   },
 ];
 
+const submenuGuideSections = [
+  {
+    title: 'Members Workspace',
+    audience: 'Membership desk, pastors, admins',
+    items: [
+      'Members List: Search the full church directory, open detail pages, and review profile completeness.',
+      'Create Member: Register a new member with branch, department, ministry, grouping, family, and contact details.',
+      'Member Detail: Edit profile data, link family members, review attendance, giving, pastoral notes, and ministry placement.',
+    ],
+  },
+  {
+    title: 'Visitors Workspace',
+    audience: 'Protocol, follow-up, evangelism teams',
+    items: [
+      'Register Visitor: Capture first-time guests quickly at reception or after service.',
+      'Visitors List: Review all guest records, contact details, branch assignment, and current stage.',
+      'Pipeline: Move people from first visit to contact, nurture, conversion, and membership.',
+      'Follow-Ups: Assign calls, WhatsApp, SMS, home visits, and next actions to workers.',
+      'Workflow Builder: Define the standard steps the church uses for follow-up.',
+      'Reports: Measure visitor volume, source channels, stage movement, and follow-up performance.',
+    ],
+  },
+  {
+    title: 'Volunteers Workspace',
+    audience: 'Service coordinators and department heads',
+    items: [
+      'Volunteers Dashboard: Check service coverage, shortages, attendance trends, and team health.',
+      'Volunteers List: Review all volunteers, departments, skills, and availability.',
+      'Register Volunteer: Add a volunteer profile and connect it to the member record.',
+      'Rosters: Build rotas by service, event, date, or department.',
+      'Roster Detail: Confirm assignments, note attendance, and see gaps or over-allocation.',
+    ],
+  },
+  {
+    title: 'Attendance Workspace',
+    audience: 'Front desk, ushers, service admins',
+    items: [
+      'Services: Create and manage service records before the event day.',
+      'Create Service: Define service type, branch, time, and expected attendance context.',
+      'Service Detail: Review attendance totals, demographic split, and service notes.',
+      'Check-In Console: Run live attendance capture during or after service.',
+      'Attendance Reports: Track weekly, monthly, and branch attendance patterns.',
+      'Absentees: Identify missing members for care and follow-up work.',
+    ],
+  },
+  {
+    title: 'Finance Workspace',
+    audience: 'Treasury, finance team, executive leaders',
+    items: [
+      'Finance Dashboard: See income, expense, cashflow, pending approvals, and smart insights.',
+      'Transactions: Record offerings, tithes, donations, and other income.',
+      'Record Transaction: Enter a giving or income record with source, type, and member linkage.',
+      'Pledges: Track commitments made by members or partners over time.',
+      'Expenses: Capture spending, status, approval, and supporting details.',
+      'Budgets: Define planned spend and compare it to actual results.',
+      'Reports: Open statements, summaries, and decision-ready finance analysis.',
+      'Audit Log: Review sensitive finance actions and trace changes.',
+      'Member Statement: View a member or donor giving history.',
+    ],
+  },
+  {
+    title: 'Events Workspace',
+    audience: 'Program and conference teams',
+    items: [
+      'Events Dashboard: Track upcoming events, registrations, tickets, and attendance.',
+      'Create Event: Set title, venue, dates, registration settings, and publishing state.',
+      'Event Detail: Manage schedules, speakers, registrations, and communication around the event.',
+      'Registrations: Review who registered, ticket tiers, and confirmation status.',
+      'Event Check-In: Admit attendees on event day and monitor turnout.',
+    ],
+  },
+  {
+    title: 'Communication Workspace',
+    audience: 'Media, admin, prayer, follow-up teams',
+    items: [
+      'Communication Dashboard: View sending activity, delivery, response, and pending communication tasks.',
+      'Broadcasts: Send SMS, email, or app announcements to selected audiences.',
+      'Create Broadcast: Compose and schedule a new message.',
+      'Templates: Save reusable message formats for common communication.',
+      'Prayer Requests: Receive, categorize, and follow prayer needs.',
+      'Polls: Create response forms for quick church feedback.',
+      'Inbox: Monitor message-related updates and communication alerts.',
+    ],
+  },
+  {
+    title: 'Pastoral Workspace',
+    audience: 'Pastors, counselors, care teams',
+    items: [
+      'Pastoral Dashboard: Review care load, overdue interactions, and discipleship status.',
+      'Cases: Open and manage structured pastoral cases.',
+      'Create Case: Start a new care record for counseling, crisis, or sensitive ministry work.',
+      'Case Detail: Add confidential notes, milestones, actions, and outcomes.',
+      'Appointments: Schedule and monitor pastoral meetings.',
+      'Tracks: Build structured discipleship or care journeys.',
+      'Discipleship: Review progress through those tracks.',
+      'Reports: Measure workload, outcomes, overdue cases, and growth trends.',
+    ],
+  },
+  {
+    title: 'Leadership, Strategic, Ministry, CBS, HQ, AI',
+    audience: 'Senior leaders and ministry heads',
+    items: [
+      'Ministry: Overview, list, detail, meetings, and ministry performance.',
+      'CBS Groups: Overview, groups, prospects, pipeline, sessions, and conversion reporting.',
+      'Leadership: Leadership profiles, readiness, succession, and development pipeline.',
+      'Strategic Plan: Plans, KPIs, scorecard, and reports for long-range direction.',
+      'HQ: Overview, Branches, Intelligence, Family Ministry, and consolidated reports.',
+      'Insights: Cross-module patterns, warnings, and opportunity flags.',
+      'AI Assistant: Drafts, narratives, summaries, prayer points, devotionals, and leadership writing support.',
+    ],
+  },
+  {
+    title: 'Settings And Platform',
+    audience: 'Admins and super admin',
+    items: [
+      'Settings > Branding: Tenant identity, logo, and top-bar presentation.',
+      'Settings > Content: Departments and grouping hierarchy only; branches and ministries come from live workspaces.',
+      'Settings > Config: Super admin controls for global branding, countries, and platform defaults.',
+      'Users: Worker accounts, branch scope, and capability-based access.',
+      'Tenants: Super admin creates and manages church workspaces and enabled features.',
+      'Platform BI / Tenant Comparison: Compare churches, health, adoption, and performance.',
+    ],
+  },
+];
+
+const hiddenPageNotes = [
+  'HQ > Intelligence and Insights are leadership reading rooms, not data-entry pages. They surface patterns from members, attendance, finance, visitors, volunteers, pastoral care, and communication.',
+  'AI Assistant becomes most useful only after the operational modules already contain clean data.',
+  'Audit pages are review pages for tracing changes, not the place where records are originally created.',
+  'Settings > Content is no longer where real branches or ministries are created. It now supports departments and grouping hierarchy while branches and ministries come from live modules.',
+];
+
 export default function ManualPage() {
   const { role } = useAuth();
   const Shell = role === 'super_admin' ? SuperAdminShell : AppShell;
@@ -343,38 +475,38 @@ export default function ManualPage() {
   return (
     <Shell>
       <div className="space-y-6">
-        <Card className="space-y-4">
+        <Card className="space-y-4 border-slate-200 bg-white text-slate-900 shadow-[0_12px_28px_rgba(15,23,42,0.08)]">
           <p className="text-[11px] uppercase tracking-[0.28em] text-accent/80">Manual</p>
-          <h1 className="text-3xl font-semibold text-white">System Working Guide</h1>
-          <p className="max-w-5xl text-sm leading-6 text-white/60">
+          <h1 className="text-3xl font-semibold text-slate-900">System Working Guide</h1>
+          <p className="max-w-5xl text-sm leading-6 text-slate-600">
             This handbook explains how the whole system fits together, what each menu and submenu
             is for, where each type of data should be created, and how a non-technical worker can
             use the platform step by step without getting lost.
           </p>
         </Card>
 
-        <Card className="space-y-4">
-          <h2 className="text-2xl font-semibold text-white">How The System Works</h2>
+        <Card className="space-y-4 border-slate-200 bg-white text-slate-900 shadow-[0_12px_28px_rgba(15,23,42,0.08)]">
+          <h2 className="text-2xl font-semibold text-slate-900">How The System Works</h2>
           <div className="grid gap-4 xl:grid-cols-2">
             {operatingRules.map((section) => (
-              <div key={section.title} className="rounded-3xl border border-white/10 bg-white/5 p-4">
-                <h3 className="text-lg font-semibold text-white">{section.title}</h3>
-                <p className="mt-2 text-sm leading-6 text-white/60">{section.description}</p>
+              <div key={section.title} className="rounded-3xl border border-slate-200 bg-slate-50 p-4">
+                <h3 className="text-lg font-semibold text-slate-900">{section.title}</h3>
+                <p className="mt-2 text-sm leading-6 text-slate-600">{section.description}</p>
               </div>
             ))}
           </div>
         </Card>
 
-        <Card className="space-y-4">
-          <h2 className="text-2xl font-semibold text-white">Where To Set Things Up</h2>
+        <Card className="space-y-4 border-slate-200 bg-white text-slate-900 shadow-[0_12px_28px_rgba(15,23,42,0.08)]">
+          <h2 className="text-2xl font-semibold text-slate-900">Where To Set Things Up</h2>
           <div className="grid gap-4 xl:grid-cols-2">
             {setupMap.map((section) => (
-              <div key={section.title} className="rounded-3xl border border-white/10 bg-white/5 p-4">
-                <h3 className="text-lg font-semibold text-white">{section.title}</h3>
+              <div key={section.title} className="rounded-3xl border border-slate-200 bg-slate-50 p-4">
+                <h3 className="text-lg font-semibold text-slate-900">{section.title}</h3>
                 <p className="mt-2 text-xs uppercase tracking-[0.22em] text-accent/80">
                   {section.owner}
                 </p>
-                <p className="mt-2 text-sm leading-6 text-white/60">{section.description}</p>
+                <p className="mt-2 text-sm leading-6 text-slate-600">{section.description}</p>
               </div>
             ))}
           </div>
@@ -382,18 +514,18 @@ export default function ManualPage() {
 
         <div className="space-y-5">
           {navigationGroups.map((group) => (
-            <Card key={group.title} className="space-y-4">
+            <Card key={group.title} className="space-y-4 border-slate-200 bg-white text-slate-900 shadow-[0_12px_28px_rgba(15,23,42,0.08)]">
               <div>
                 <p className="text-[11px] uppercase tracking-[0.28em] text-accent/80">
                   {group.audience}
                 </p>
-                <h2 className="mt-2 text-2xl font-semibold text-white">{group.title}</h2>
+                <h2 className="mt-2 text-2xl font-semibold text-slate-900">{group.title}</h2>
               </div>
               <div className="grid gap-4 xl:grid-cols-2">
                 {group.items.map((item) => (
-                  <div key={item.name} className="rounded-3xl border border-white/10 bg-white/5 p-4">
-                    <h3 className="text-lg font-semibold text-white">{item.name}</h3>
-                    <p className="mt-2 text-sm leading-6 text-white/60">{item.description}</p>
+                  <div key={item.name} className="rounded-3xl border border-slate-200 bg-slate-50 p-4">
+                    <h3 className="text-lg font-semibold text-slate-900">{item.name}</h3>
+                    <p className="mt-2 text-sm leading-6 text-slate-600">{item.description}</p>
                   </div>
                 ))}
               </div>
@@ -401,15 +533,45 @@ export default function ManualPage() {
           ))}
         </div>
 
-        <Card className="space-y-4">
-          <h2 className="text-2xl font-semibold text-white">Step-By-Step Workflows</h2>
+        <Card className="space-y-4 border-slate-200 bg-white text-slate-900 shadow-[0_12px_28px_rgba(15,23,42,0.08)]">
+          <h2 className="text-2xl font-semibold text-slate-900">Menu And Submenu Guide</h2>
+          <div className="grid gap-4 xl:grid-cols-2">
+            {submenuGuideSections.map((section) => (
+              <div key={section.title} className="rounded-3xl border border-slate-200 bg-slate-50 p-4">
+                <p className="text-[11px] uppercase tracking-[0.24em] text-accent/80">{section.audience}</p>
+                <h3 className="mt-2 text-lg font-semibold text-slate-900">{section.title}</h3>
+                <div className="mt-3 space-y-2">
+                  {section.items.map((item) => (
+                    <p key={item} className="text-sm leading-6 text-slate-600">
+                      {item}
+                    </p>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        </Card>
+
+        <Card className="space-y-4 border-slate-200 bg-white text-slate-900 shadow-[0_12px_28px_rgba(15,23,42,0.08)]">
+          <h2 className="text-2xl font-semibold text-slate-900">Hidden And Internal Pages</h2>
+          <div className="grid gap-4 xl:grid-cols-2">
+            {hiddenPageNotes.map((note) => (
+              <div key={note} className="rounded-3xl border border-slate-200 bg-slate-50 p-4">
+                <p className="text-sm leading-6 text-slate-600">{note}</p>
+              </div>
+            ))}
+          </div>
+        </Card>
+
+        <Card className="space-y-4 border-slate-200 bg-white text-slate-900 shadow-[0_12px_28px_rgba(15,23,42,0.08)]">
+          <h2 className="text-2xl font-semibold text-slate-900">Step-By-Step Workflows</h2>
           <div className="grid gap-4 xl:grid-cols-2">
             {workflowSections.map((section) => (
-              <div key={section.title} className="rounded-3xl border border-white/10 bg-white/5 p-4">
-                <h3 className="text-lg font-semibold text-white">{section.title}</h3>
+              <div key={section.title} className="rounded-3xl border border-slate-200 bg-slate-50 p-4">
+                <h3 className="text-lg font-semibold text-slate-900">{section.title}</h3>
                 <div className="mt-3 space-y-2">
                   {section.steps.map((step) => (
-                    <p key={step} className="text-sm leading-6 text-white/60">
+                    <p key={step} className="text-sm leading-6 text-slate-600">
                       {step}
                     </p>
                   ))}

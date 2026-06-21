@@ -26,8 +26,23 @@ export default function useBranchOptions({
     return [...new Set(includeCurrent ? [includeCurrent, ...liveBranchNames] : liveBranchNames)];
   }, [branchesQuery.data?.items, includeCurrent]);
 
+  const isLoading = branchesQuery.isLoading;
+  const hasOptions = branchOptions.length > 0;
+
   return {
     branchOptions,
     branchesQuery,
+    isLoading,
+    hasOptions,
+    selectPlaceholder: isLoading
+      ? 'Loading branches...'
+      : hasOptions
+        ? 'Select branch'
+        : 'No branches created yet',
+    filterPlaceholder: isLoading
+      ? 'Loading branches...'
+      : hasOptions
+        ? 'All branches'
+        : 'No branches available',
   };
 }

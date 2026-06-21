@@ -32,7 +32,7 @@ export default function CreateServicePage() {
   const [searchParams] = useSearchParams();
   const serviceId = searchParams.get('serviceId');
   const [form, setForm] = useState(createInitialForm());
-  const { branchOptions } = useBranchOptions({ includeCurrent: form.branch });
+  const { branchOptions, isLoading: isBranchesLoading, selectPlaceholder: branchSelectPlaceholder } = useBranchOptions({ includeCurrent: form.branch });
 
   const serviceQuery = useQuery({
     queryKey: ['attendance-service-edit', serviceId],
@@ -148,9 +148,10 @@ export default function CreateServicePage() {
               <select
                 value={form.branch}
                 onChange={(event) => setField('branch', event.target.value)}
+                disabled={isBranchesLoading || !branchOptions.length}
                 className="w-full rounded-xl border border-white/10 bg-[#101827] px-3.5 py-2.5 text-sm text-white"
               >
-                <option value="">Select branch</option>
+                <option value="">{branchSelectPlaceholder}</option>
                 {branchOptions.map((branch) => (
                   <option key={branch} value={branch}>
                     {branch}

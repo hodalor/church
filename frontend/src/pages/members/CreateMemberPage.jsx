@@ -102,18 +102,19 @@ export default function CreateMemberPage() {
 
   const content = tenantSettingsQuery.data?.content || {};
   const groupingOptions = useMemo(() => content.groupings || [], [content.groupings]);
+  const departmentOptions = content.departments || [];
   const liveBranches = useMemo(() => {
     const branchNames = (branchesQuery.data?.items || [])
       .map((item) => item.branchName)
       .filter(Boolean);
-    return branchNames.length ? [...new Set(branchNames)] : content.branches || [];
-  }, [branchesQuery.data?.items, content.branches]);
+    return [...new Set(branchNames)];
+  }, [branchesQuery.data?.items]);
   const liveMinistries = useMemo(() => {
     const ministryNames = (ministriesQuery.data?.ministries || ministriesQuery.data?.items || [])
       .map((item) => item.name)
       .filter(Boolean);
-    return ministryNames.length ? [...new Set(ministryNames)] : content.ministries || [];
-  }, [ministriesQuery.data?.items, ministriesQuery.data?.ministries, content.ministries]);
+    return [...new Set(ministryNames)];
+  }, [ministriesQuery.data?.items, ministriesQuery.data?.ministries]);
 
   const payload = useMemo(
     () => ({
@@ -309,9 +310,16 @@ export default function CreateMemberPage() {
                 <select
                   value={form.branch}
                   onChange={(event) => updateField('branch', event.target.value)}
+                  disabled={branchesQuery.isLoading || !liveBranches.length}
                   className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white outline-none focus:border-accent"
                 >
-                  <option value="">Select branch</option>
+                  <option value="">
+                    {branchesQuery.isLoading
+                      ? 'Loading branches...'
+                      : liveBranches.length
+                        ? 'Select branch'
+                        : 'No branches created yet'}
+                  </option>
                   {liveBranches.map((item) => (
                     <option key={item} value={item}>
                       {item}
@@ -324,10 +332,13 @@ export default function CreateMemberPage() {
                 <select
                   value={form.department}
                   onChange={(event) => updateField('department', event.target.value)}
+                  disabled={!departmentOptions.length}
                   className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white outline-none focus:border-accent"
                 >
-                  <option value="">Select department</option>
-                  {(content.departments || []).map((item) => (
+                  <option value="">
+                    {departmentOptions.length ? 'Select department' : 'No departments configured yet'}
+                  </option>
+                  {departmentOptions.map((item) => (
                     <option key={item} value={item}>
                       {item}
                     </option>
@@ -339,9 +350,16 @@ export default function CreateMemberPage() {
                 <select
                   value={form.ministry}
                   onChange={(event) => updateField('ministry', event.target.value)}
+                  disabled={ministriesQuery.isLoading || !liveMinistries.length}
                   className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white outline-none focus:border-accent"
                 >
-                  <option value="">Select ministry</option>
+                  <option value="">
+                    {ministriesQuery.isLoading
+                      ? 'Loading ministries...'
+                      : liveMinistries.length
+                        ? 'Select ministry'
+                        : 'No ministries created yet'}
+                  </option>
                   {liveMinistries.map((item) => (
                     <option key={item} value={item}>
                       {item}

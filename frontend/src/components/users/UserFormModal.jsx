@@ -50,11 +50,16 @@ export default function UserFormModal({
     () => normalizeCapabilities(allowedCapabilities),
     [allowedCapabilities],
   );
+  const branchOptions = useMemo(
+    () => [...new Set([...(user?.assignedBranches || []), ...availableBranches])],
+    [availableBranches, user?.assignedBranches],
+  );
   const isEditing = Boolean(user?._id);
   const [form, setForm] = useState(
     buildInitialState(normalizedAllowedCapabilities, defaultRole, user),
   );
   const [error, setError] = useState('');
+  const lightInputProps = { labelClassName: 'text-slate-700' };
 
   useEffect(() => {
     if (!isOpen) {
@@ -145,13 +150,14 @@ export default function UserFormModal({
       title={title}
       description={description}
       size="xl"
+      tone="light"
     >
       <form className="space-y-5" onSubmit={handleSubmit}>
         <div className="grid gap-5 xl:grid-cols-2">
-          <div className="space-y-4 rounded-[24px] border border-white/10 bg-[#101827] p-4">
+          <div className="space-y-4 rounded-[24px] border border-slate-200 bg-white p-4 shadow-sm">
             <div>
               <p className="text-[11px] uppercase tracking-[0.25em] text-accent">User Details</p>
-              <h3 className="mt-2 text-lg font-semibold text-white">Staff account profile</h3>
+              <h3 className="mt-2 text-lg font-semibold text-slate-900">Staff account profile</h3>
             </div>
 
             <div className="grid gap-4 md:grid-cols-2">
@@ -160,25 +166,28 @@ export default function UserFormModal({
                 value={form.fullName}
                 onChange={(event) => updateField('fullName', event.target.value)}
                 placeholder="Pastor Michael Doe"
+                {...lightInputProps}
               />
               <Input
                 label="Username"
                 value={form.username}
                 onChange={(event) => updateField('username', event.target.value)}
                 placeholder="michael"
+                {...lightInputProps}
               />
               <Input
                 label="PIN"
                 value={form.pin}
                 onChange={(event) => updateField('pin', event.target.value)}
                 placeholder={isEditing ? 'Leave blank to keep current PIN' : '0903'}
+                {...lightInputProps}
               />
               <label className="block space-y-2">
-                <span className="text-sm font-medium text-white/80">Role</span>
+                <span className="text-sm font-medium text-slate-700">Role</span>
                 <select
                   value={form.role}
                   onChange={(event) => handleRoleChange(event.target.value)}
-                  className="w-full rounded-2xl border border-white/10 bg-[#101827] px-4 py-3 text-sm text-white outline-none focus:border-accent"
+                  className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none focus:border-accent"
                 >
                   {userRoleOptions.map((role) => (
                     <option key={role} value={role}>
@@ -192,17 +201,19 @@ export default function UserFormModal({
                 value={form.email}
                 onChange={(event) => updateField('email', event.target.value)}
                 placeholder="pastor@church.org"
+                {...lightInputProps}
               />
               <Input
                 label="Phone"
                 value={form.phone}
                 onChange={(event) => updateField('phone', event.target.value)}
                 placeholder="+233..."
+                {...lightInputProps}
               />
               <label className="block space-y-2 md:col-span-2">
-                <span className="text-sm font-medium text-white/80">Branch Scope</span>
-                <div className="space-y-3 rounded-2xl border border-white/10 bg-[#0b1120] p-4">
-                  <label className="flex items-center gap-3 text-sm text-white/75">
+                <span className="text-sm font-medium text-slate-700">Branch Scope</span>
+                <div className="space-y-3 rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                  <label className="flex items-center gap-3 text-sm text-slate-700">
                     <input
                       type="checkbox"
                       checked={form.allBranches}
@@ -217,12 +228,12 @@ export default function UserFormModal({
                     Access all branches in this church
                   </label>
                   <label className="block space-y-2">
-                    <span className="text-xs uppercase tracking-[0.18em] text-white/45">
+                    <span className="text-xs uppercase tracking-[0.18em] text-slate-500">
                       Assigned Branches
                     </span>
                     <select
                       multiple
-                      disabled={form.allBranches}
+                      disabled={form.allBranches || !branchOptions.length}
                       value={form.assignedBranches}
                       onChange={(event) =>
                         updateField(
@@ -230,9 +241,12 @@ export default function UserFormModal({
                           Array.from(event.target.selectedOptions, (option) => option.value),
                         )
                       }
-                      className="min-h-[120px] w-full rounded-2xl border border-white/10 bg-[#101827] px-4 py-3 text-sm text-white outline-none focus:border-accent disabled:opacity-50"
+                      className="min-h-[120px] w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none focus:border-accent disabled:bg-slate-100 disabled:text-slate-400"
                     >
-                      {availableBranches.map((branch) => (
+                      {!branchOptions.length ? (
+                        <option value="">No live branches created yet</option>
+                      ) : null}
+                      {branchOptions.map((branch) => (
                         <option key={branch} value={branch}>
                           {branch}
                         </option>
@@ -246,12 +260,14 @@ export default function UserFormModal({
                 value={form.memberId}
                 onChange={(event) => updateField('memberId', event.target.value)}
                 placeholder="calvary-000001"
+                {...lightInputProps}
               />
               <Input
                 label="Photo URL"
                 value={form.photoUrl}
                 onChange={(event) => updateField('photoUrl', event.target.value)}
                 placeholder="https://..."
+                {...lightInputProps}
               />
             </div>
           </div>
@@ -262,13 +278,19 @@ export default function UserFormModal({
             value={form.capabilities}
             onChange={(nextValue) => updateField('capabilities', nextValue)}
             allowedCapabilities={normalizedAllowedCapabilities}
+            tone="light"
           />
         </div>
 
         <div className="flex items-center justify-between gap-4">
-          {error ? <p className="text-sm text-red-400">{error}</p> : <p className="text-sm text-white/45">User capabilities cannot exceed the church tenant permissions.</p>}
+          {error ? <p className="text-sm text-red-600">{error}</p> : <p className="text-sm text-slate-500">User capabilities cannot exceed the church tenant permissions.</p>}
           <div className="flex gap-3">
-            <Button type="button" variant="ghost" onClick={onClose}>
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={onClose}
+              className="border-slate-300 bg-white text-slate-700 hover:bg-slate-50 hover:text-slate-900"
+            >
               Cancel
             </Button>
             <Button type="submit" variant="secondary" disabled={mutation.isPending}>

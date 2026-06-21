@@ -58,12 +58,12 @@ function QuickActionCard({ label, description, to }) {
   return (
     <Link
       to={to}
-      className="rounded-[18px] border border-cyan-400/18 bg-[linear-gradient(135deg,rgba(34,211,238,0.14),rgba(13,19,32,0.98))] p-3.5 transition hover:border-accent/30 hover:bg-[linear-gradient(135deg,rgba(55,215,239,0.18),rgba(17,26,42,0.98))]"
+      className="rounded-[18px] border border-slate-200 bg-white p-3.5 text-slate-900 shadow-[0_12px_28px_rgba(15,23,42,0.08)] transition hover:border-accent/30 hover:bg-slate-50"
     >
       <div className="flex items-center justify-between gap-3">
         <div>
-          <h3 className="text-base font-semibold text-white">{label}</h3>
-          <p className="mt-2 text-sm text-white/58">{description}</p>
+          <h3 className="text-base font-semibold text-slate-900">{label}</h3>
+          <p className="mt-2 text-sm text-slate-600">{description}</p>
         </div>
         <ArrowRight className="h-5 w-5 text-accent" />
       </div>
@@ -98,13 +98,11 @@ function AlertBanner({ tone, icon: Icon, children, onDismiss }) {
 function ModuleCard({ title, metric, helper, to, chart, tone = 'line' }) {
   const palette = {
     line: {
-      shell:
-        'border-violet-400/18 bg-[linear-gradient(135deg,rgba(167,139,250,0.16),rgba(13,19,32,0.98))] hover:bg-[linear-gradient(135deg,rgba(184,163,255,0.18),rgba(17,24,39,0.98))]',
+      shell: 'border-slate-200 bg-white hover:bg-slate-50',
       chart: '#A78BFA',
     },
     bar: {
-      shell:
-        'border-amber-400/18 bg-[linear-gradient(135deg,rgba(244,201,93,0.16),rgba(13,19,32,0.98))] hover:bg-[linear-gradient(135deg,rgba(248,211,110,0.18),rgba(17,24,39,0.98))]',
+      shell: 'border-slate-200 bg-white hover:bg-slate-50',
       chart: '#F4C95D',
     },
   };
@@ -112,15 +110,15 @@ function ModuleCard({ title, metric, helper, to, chart, tone = 'line' }) {
   return (
     <Link
       to={to}
-      className={`block rounded-[18px] border p-3.5 transition hover:border-accent/30 ${theme.shell}`}
+      className={`block rounded-[18px] border p-3.5 text-slate-900 shadow-[0_12px_28px_rgba(15,23,42,0.08)] transition hover:border-accent/30 ${theme.shell}`}
     >
       <div className="flex items-start justify-between gap-3">
         <div>
-          <p className="inline-flex rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-[10px] uppercase tracking-[0.2em] text-white/70">
+          <p className="inline-flex rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-[10px] uppercase tracking-[0.2em] text-slate-500">
             {title}
           </p>
-          <h3 className="mt-3 text-[1.65rem] font-semibold text-white">{metric}</h3>
-          <p className="mt-2 text-sm text-white/55">{helper}</p>
+          <h3 className="mt-3 text-[1.65rem] font-semibold text-slate-900">{metric}</h3>
+          <p className="mt-2 text-sm text-slate-600">{helper}</p>
         </div>
         <ArrowRight className="mt-1 h-4 w-4 text-accent" />
       </div>
@@ -857,7 +855,7 @@ export default function DashboardPage() {
         <Card className="space-y-4">
           <div>
             <p className="text-sm uppercase tracking-[0.25em] text-accent">Momentum</p>
-            <h2 className="mt-2 text-xl font-semibold text-white">
+            <h2 className="mt-2 text-xl font-semibold text-slate-900">
               {isCareDashboard
                 ? 'Follow-up cadence'
                 : isVolunteerDashboard
@@ -887,7 +885,7 @@ export default function DashboardPage() {
         <Card className="space-y-4">
           <div>
             <p className="text-sm uppercase tracking-[0.25em] text-accent">Highlights</p>
-            <h2 className="mt-2 text-xl font-semibold text-white">What needs your attention</h2>
+            <h2 className="mt-2 text-xl font-semibold text-slate-900">What needs your attention</h2>
           </div>
           <div className="space-y-3">
             {recentHighlights.length ? (
@@ -898,14 +896,14 @@ export default function DashboardPage() {
                   <Link
                     key={item.id}
                     to={item.to}
-                    className="flex items-start gap-3 rounded-2xl border border-white/10 bg-[linear-gradient(135deg,rgba(34,211,238,0.1),rgba(16,24,39,0.98))] px-4 py-3 transition hover:bg-[linear-gradient(135deg,rgba(48,220,241,0.14),rgba(19,31,53,0.98))]"
+                    className="flex items-start gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 transition hover:bg-slate-100"
                   >
                     <div className="mt-0.5 rounded-xl bg-accent/10 p-2 text-accent">
                       <Icon className="h-4 w-4" />
                     </div>
                     <div className="min-w-0">
-                      <p className="font-medium text-white">{item.title}</p>
-                      <p className="mt-1 text-sm text-white/55">{item.helper}</p>
+                      <p className="font-medium text-slate-900">{item.title}</p>
+                      <p className="mt-1 text-sm text-slate-600">{item.helper}</p>
                     </div>
                   </Link>
                 );

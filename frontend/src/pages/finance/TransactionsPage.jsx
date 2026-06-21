@@ -10,6 +10,7 @@ import Pagination from '../../components/ui/Pagination';
 import SearchInput from '../../components/ui/SearchInput';
 import AmountDisplay from '../../components/finance/AmountDisplay';
 import TransactionTypeBadge from '../../components/finance/TransactionTypeBadge';
+import useBranchOptions from '../../hooks/useBranchOptions';
 import useCurrency from '../../hooks/useCurrency';
 import { useFinanceAccess } from '../../hooks/useFinanceAccess';
 import { getAllTransactions, reverseTransaction, verifyTransaction } from '../../api/endpoints/finance';
@@ -61,6 +62,7 @@ export default function TransactionsPage() {
     useFinanceAccess();
   const { formatCurrency } = useCurrency();
   const [selectedRows, setSelectedRows] = useState([]);
+  const { branchOptions } = useBranchOptions();
 
   const page = Number(searchParams.get('page') || 1);
   const from = searchParams.get('from') || '';
@@ -204,12 +206,18 @@ export default function TransactionsPage() {
             </label>
             <label className="space-y-2">
               <span className="text-sm text-white/70">Branch</span>
-              <input
+              <select
                 value={branch}
                 onChange={(event) => updateParam('branch', event.target.value)}
                 className="w-full rounded-2xl border border-white/10 bg-[#101827] px-4 py-3 text-sm text-white"
-                placeholder="Main branch"
-              />
+              >
+                <option value="">All branches</option>
+                {branchOptions.map((item) => (
+                  <option key={item} value={item}>
+                    {item}
+                  </option>
+                ))}
+              </select>
             </label>
             <label className="space-y-2">
               <span className="text-sm text-white/70">Verified</span>

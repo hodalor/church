@@ -29,6 +29,7 @@ import PageHeader from '../../components/ui/PageHeader';
 import Badge from '../../components/ui/Badge';
 import { useAuth } from '../../hooks/useAuth';
 import useBranchOptions from '../../hooks/useBranchOptions';
+import useMinistryOptions from '../../hooks/useMinistryOptions';
 import { useCapabilities } from '../../hooks/useCapabilities';
 import { supabaseUpload } from '../../utils/supabaseUpload';
 import { formatDate } from '../../utils/formatDate';
@@ -223,15 +224,24 @@ export default function MemberDetailPage() {
     () => tenantSettingsQuery.data?.content?.groupings || [],
     [tenantSettingsQuery.data?.content?.groupings],
   );
+  const departmentOptions = useMemo(
+    () => tenantSettingsQuery.data?.content?.departments || [],
+    [tenantSettingsQuery.data?.content?.departments],
+  );
   const groupingPathLabels = useMemo(
     () => buildGroupingPathLabels(groupingOptions, member?.groupingIds || []),
     [groupingOptions, member?.groupingIds],
   );
   const exportFilename = useMemo(() => `${memberId}-member-export.json`, [memberId]);
-  const { branchOptions } = useBranchOptions({
+  const { branchOptions, isLoading: isBranchesLoading, selectPlaceholder: branchSelectPlaceholder } = useBranchOptions({
     tenantId: targetTenantId,
     enabled: !isSuperAdmin || Boolean(targetTenantId),
     includeCurrent: form.branch,
+  });
+  const { ministryOptions, isLoading: isMinistriesLoading, selectPlaceholder: ministrySelectPlaceholder } = useMinistryOptions({
+    tenantId: targetTenantId,
+    enabled: !isSuperAdmin || Boolean(targetTenantId),
+    includeCurrent: form.ministry,
   });
 
   if (!canViewMembers) {
@@ -417,9 +427,10 @@ export default function MemberDetailPage() {
                   <select
                     value={form.branch}
                     onChange={(event) => setForm((current) => ({ ...current, branch: event.target.value }))}
+                    disabled={isBranchesLoading || !branchOptions.length}
                     className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white"
                   >
-                    <option value="">Select branch</option>
+                    <option value="">{branchSelectPlaceholder}</option>
                     {branchOptions.map((branch) => (
                       <option key={branch} value={branch}>
                         {branch}
@@ -427,8 +438,46 @@ export default function MemberDetailPage() {
                     ))}
                   </select>
                 </label>
-                <Input label="Department" value={form.department} onChange={(event) => setForm((current) => ({ ...current, department: event.target.value }))} />
-                <Input label="Ministry" value={form.ministry} onChange={(event) => setForm((current) => ({ ...current, ministry: event.target.value }))} />
+                <label className="block space-y-2">
+                  <span className="text-sm font-medium text-white/80">Department</span>
+                  <select
+                    multiple
+                    value={form.department
+                      ? form.department.split(',').map((item) => item.trim()).filter(Boolean)
+                      : []}
+                    onChange={(event) =>
+                      setForm((current) => ({
+                        ...current,
+                        department: Array.from(event.target.selectedOptions, (option) => option.value).join(', '),
+                      }))
+                    }
+                    disabled={!departmentOptions.length}
+                    className="min-h-[120px] w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white"
+                  >
+                    {!departmentOptions.length ? <option value="">No departments configured yet</option> : null}
+                    {departmentOptions.map((department) => (
+                      <option key={department} value={department}>
+                        {department}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <label className="block space-y-2">
+                  <span className="text-sm font-medium text-white/80">Ministry</span>
+                  <select
+                    value={form.ministry}
+                    onChange={(event) => setForm((current) => ({ ...current, ministry: event.target.value }))}
+                    disabled={isMinistriesLoading || !ministryOptions.length}
+                    className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white"
+                  >
+                    <option value="">{ministrySelectPlaceholder}</option>
+                    {ministryOptions.map((ministry) => (
+                      <option key={ministry} value={ministry}>
+                        {ministry}
+                      </option>
+                    ))}
+                  </select>
+                </label>
                 <div className="md:col-span-2">
                   <GroupingPathSelector
                     groupings={groupingOptions}

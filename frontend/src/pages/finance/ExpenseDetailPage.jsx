@@ -8,7 +8,9 @@ import Button from '../../components/ui/Button';
 import ConfirmModal from '../../components/ui/ConfirmModal';
 import Input from '../../components/ui/Input';
 import AmountDisplay from '../../components/finance/AmountDisplay';
+import { getCurrentTenant } from '../../api/endpoints/tenants';
 import useCurrency from '../../hooks/useCurrency';
+import useBranchOptions from '../../hooks/useBranchOptions';
 import { useFinanceAccess } from '../../hooks/useFinanceAccess';
 import {
   approveExpense,
@@ -56,6 +58,12 @@ export default function ExpenseDetailPage() {
     budgetId: '',
     notes: '',
   });
+  const { branchOptions, isLoading: isBranchesLoading, selectPlaceholder: branchSelectPlaceholder } = useBranchOptions({ includeCurrent: form.branch });
+  const tenantQuery = useQuery({
+    queryKey: ['finance-expense-detail-tenant'],
+    queryFn: getCurrentTenant,
+  });
+  const departmentOptions = tenantQuery.data?.content?.departments || [];
   const [isEditing, setIsEditing] = useState(false);
   const [rejectReason, setRejectReason] = useState('');
   const [showRejectModal, setShowRejectModal] = useState(false);
@@ -271,19 +279,35 @@ export default function ExpenseDetailPage() {
                 </label>
                 <label className="space-y-2">
                   <span className="text-sm text-white/75">Branch</span>
-                  <input
+                  <select
                     value={form.branch}
                     onChange={(event) => setForm((current) => ({ ...current, branch: event.target.value }))}
+                    disabled={isBranchesLoading || !branchOptions.length}
                     className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white"
-                  />
+                  >
+                    <option value="">{branchSelectPlaceholder}</option>
+                    {branchOptions.map((branch) => (
+                      <option key={branch} value={branch}>
+                        {branch}
+                      </option>
+                    ))}
+                  </select>
                 </label>
                 <label className="space-y-2">
                   <span className="text-sm text-white/75">Department</span>
-                  <input
+                  <select
                     value={form.department}
                     onChange={(event) => setForm((current) => ({ ...current, department: event.target.value }))}
+                    disabled={!departmentOptions.length}
                     className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white"
-                  />
+                  >
+                    <option value="">{departmentOptions.length ? 'Select department' : 'No departments configured yet'}</option>
+                    {departmentOptions.map((department) => (
+                      <option key={department} value={department}>
+                        {department}
+                      </option>
+                    ))}
+                  </select>
                 </label>
                 <label className="space-y-2">
                   <span className="text-sm text-white/75">Budget ID</span>

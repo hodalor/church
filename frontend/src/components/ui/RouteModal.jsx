@@ -6,6 +6,7 @@ export default function RouteModal({
   description,
   fallbackPath,
   size = 'xl',
+  tone = 'light',
   children,
   className = '',
   bodyClassName = '',
@@ -18,6 +19,7 @@ export default function RouteModal({
       title={title}
       description={description}
       size={size}
+      tone={tone}
       className={className}
       bodyClassName={bodyClassName}
       onClose={() => navigate(fallbackPath, { replace: true })}

@@ -9,17 +9,12 @@ import PageHeader from '../../components/ui/PageHeader';
 import Badge from '../../components/ui/Badge';
 import UserFormModal from '../../components/users/UserFormModal';
 import { getUsers } from '../../api/endpoints/users';
-import { getCurrentTenant } from '../../api/endpoints/tenants';
 import { formatDate } from '../../utils/formatDate';
 import { useAuth } from '../../hooks/useAuth';
 import { useCapabilities } from '../../hooks/useCapabilities';
+import useBranchOptions from '../../hooks/useBranchOptions';
 
-const statTones = [
-  'border-cyan-400/18 bg-[linear-gradient(135deg,rgba(34,211,238,0.14),rgba(13,19,32,0.98))]',
-  'border-emerald-400/18 bg-[linear-gradient(135deg,rgba(16,185,129,0.15),rgba(13,19,32,0.98))]',
-  'border-violet-400/18 bg-[linear-gradient(135deg,rgba(167,139,250,0.16),rgba(13,19,32,0.98))]',
-  'border-amber-300/20 bg-[linear-gradient(135deg,rgba(244,201,93,0.18),rgba(13,19,32,0.98))]',
-];
+const statTones = ['border-cyan-200', 'border-emerald-200', 'border-violet-200', 'border-amber-200'];
 
 export default function UsersPage() {
   const queryClient = useQueryClient();
@@ -31,16 +26,12 @@ export default function UsersPage() {
   const canViewUsers = hasCapability('users.view');
   const canCreateUsers = hasCapability('users.create');
   const canModifyUsers = hasCapability('users.modify');
+  const { branchOptions } = useBranchOptions();
 
   const usersQuery = useQuery({
     queryKey: ['tenant-users'],
     queryFn: () => getUsers({ tenantId }),
     enabled: Boolean(tenantId) && canViewUsers,
-  });
-  const tenantSettingsQuery = useQuery({
-    queryKey: ['tenant-user-settings'],
-    queryFn: getCurrentTenant,
-    enabled: canViewUsers,
   });
   const users = useMemo(() => usersQuery.data || [], [usersQuery.data]);
   const stats = useMemo(
@@ -72,8 +63,8 @@ export default function UsersPage() {
         header: 'User',
         render: (user) => (
           <div>
-            <p className="font-semibold text-white">{user.fullName || user.username}</p>
-            <p className="mt-1 text-xs text-white/45">{user.username}</p>
+            <p className="font-semibold text-slate-900">{user.fullName || user.username}</p>
+            <p className="mt-1 text-xs text-slate-500">{user.username}</p>
           </div>
         ),
       },
@@ -123,7 +114,7 @@ export default function UsersPage() {
               Edit
             </Button>
           ) : (
-            <span className="text-white/35">Read only</span>
+            <span className="text-slate-400">Read only</span>
           ),
       },
     ],
@@ -162,18 +153,18 @@ export default function UsersPage() {
 
         <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
           {stats.map((item, index) => (
-            <Card key={item.label} className={`min-h-[102px] p-3.5 ${statTones[index] || ''}`}>
-              <p className="inline-flex rounded-full border border-white/10 bg-white/8 px-2.5 py-1 text-[10px] uppercase tracking-[0.22em] text-white/72">
+            <Card key={item.label} className={`min-h-[102px] border-slate-200 bg-white p-3.5 text-slate-900 shadow-[0_12px_28px_rgba(15,23,42,0.08)] ${statTones[index] || ''}`}>
+              <p className="inline-flex rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-[10px] uppercase tracking-[0.22em] text-slate-500">
                 {item.label}
               </p>
-              <p className="mt-3 font-serif text-[2rem] font-semibold leading-none text-white">{item.value}</p>
-              <p className="mt-2 text-xs text-white/48">{item.helper}</p>
+              <p className="mt-3 font-serif text-[2rem] font-semibold leading-none text-slate-900">{item.value}</p>
+              <p className="mt-2 text-xs text-slate-500">{item.helper}</p>
             </Card>
           ))}
         </div>
 
-        <Card className="space-y-5 border-white/10 bg-[linear-gradient(135deg,rgba(15,23,42,0.94),rgba(8,13,24,0.98))]">
-          <div className="rounded-[18px] border border-cyan-400/14 bg-[linear-gradient(135deg,rgba(34,211,238,0.1),rgba(16,24,39,0.98))] px-4 py-3 text-sm text-white/60">
+        <Card className="space-y-5 border-slate-200 bg-white text-slate-900 shadow-[0_12px_28px_rgba(15,23,42,0.08)]">
+          <div className="rounded-[18px] border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600">
             You can assign up to {capabilities.length} permissions based on your current access scope.
           </div>
 
@@ -181,6 +172,7 @@ export default function UsersPage() {
             columns={columns}
             data={users}
             emptyMessage={usersQuery.isLoading ? 'Loading users...' : 'No users found for this tenant yet.'}
+            tone="light"
           />
         </Card>
       </div>
@@ -190,7 +182,7 @@ export default function UsersPage() {
         onClose={() => setShowCreateModal(false)}
         tenantId={tenantId}
         allowedCapabilities={capabilities}
-        availableBranches={tenantSettingsQuery.data?.content?.branches || []}
+        availableBranches={branchOptions}
         onCreated={() => queryClient.invalidateQueries({ queryKey: ['tenant-users'] })}
         title="Add Staff User"
         description="Create a church user and grant only the menus and actions they should have."
@@ -200,7 +192,7 @@ export default function UsersPage() {
         onClose={() => setEditingUser(null)}
         tenantId={tenantId}
         allowedCapabilities={capabilities}
-        availableBranches={tenantSettingsQuery.data?.content?.branches || []}
+        availableBranches={branchOptions}
         user={editingUser}
         onSaved={() => queryClient.invalidateQueries({ queryKey: ['tenant-users'] })}
         title="Edit Staff User"

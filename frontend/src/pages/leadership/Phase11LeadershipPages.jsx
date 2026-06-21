@@ -530,7 +530,6 @@ export function CreateProfilePage() {
   });
   const [selectedMember, setSelectedMember] = useState(null);
   const users = usersQuery.data?.users || usersQuery.data?.items || [];
-  const { branchOptions } = useBranchOptions({ includeCurrent: form.watch('branch') });
 
   const form = useForm({
     resolver: zodResolver(profileSchema),
@@ -550,6 +549,7 @@ export function CreateProfilePage() {
       tier: 'tier_4',
     },
   });
+  const { branchOptions } = useBranchOptions({ includeCurrent: form.watch('branch') });
 
   const mutation = useMutation({
     mutationFn: createLeadershipProfile,

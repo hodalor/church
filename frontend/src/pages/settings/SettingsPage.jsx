@@ -55,6 +55,12 @@ const violetPanelClass =
   'rounded-[20px] border border-white/10 bg-[linear-gradient(135deg,rgba(167,139,250,0.12),rgba(16,24,39,0.98))]';
 const inputClass =
   'w-full rounded-[16px] border border-white/10 bg-[linear-gradient(135deg,rgba(34,211,238,0.1),rgba(16,24,39,0.98))] px-4 py-3 text-sm text-white outline-none placeholder:text-white/35 focus:border-cyan-300/35';
+const contentShellPanelClass =
+  'border-slate-200 bg-white p-[18px] text-slate-900 shadow-[0_14px_30px_rgba(15,23,42,0.08)]';
+const contentPanelClass = 'rounded-[20px] border border-slate-200 bg-slate-50';
+const contentMutedPanelClass = 'rounded-[20px] border border-slate-200 bg-white';
+const contentInputClass =
+  'w-full rounded-[16px] border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none placeholder:text-slate-500 focus:border-accent';
 
 function BrandPreview({ name, logoUrl, caption }) {
   return (
@@ -76,6 +82,7 @@ function BrandPreview({ name, logoUrl, caption }) {
 
 function ArrayEditor({ title, hint, values, onChange, placeholder }) {
   const [draft, setDraft] = useState('');
+  const lightInputProps = { labelClassName: 'text-slate-700' };
 
   const addItem = () => {
     const nextValue = draft.trim();
@@ -88,10 +95,10 @@ function ArrayEditor({ title, hint, values, onChange, placeholder }) {
   };
 
   return (
-    <div className={`space-y-3 p-4 ${innerPanelClass}`}>
+    <div className={`space-y-3 p-4 ${contentPanelClass}`}>
       <div>
-        <h3 className="text-base font-semibold text-white">{title}</h3>
-        <p className="mt-1 text-sm text-white/50">{hint}</p>
+        <h3 className="text-base font-semibold text-slate-900">{title}</h3>
+        <p className="mt-1 text-sm text-slate-500">{hint}</p>
       </div>
       <div className="flex gap-3">
         <Input
@@ -99,6 +106,7 @@ function ArrayEditor({ title, hint, values, onChange, placeholder }) {
           value={draft}
           onChange={(event) => setDraft(event.target.value)}
           placeholder={placeholder}
+          {...lightInputProps}
         />
         <Button type="button" variant="secondary" className="self-end" onClick={addItem}>
           Add
@@ -117,7 +125,7 @@ function ArrayEditor({ title, hint, values, onChange, placeholder }) {
             </button>
           ))
         ) : (
-          <p className="text-sm text-white/35">Nothing added yet.</p>
+          <p className="text-sm text-slate-400">Nothing added yet.</p>
         )}
       </div>
     </div>
@@ -204,11 +212,11 @@ function CountryConfigEditor({ countries, draft, onDraftChange, onAdd, onRemove 
 
 function SourceOfTruthCard({ eyebrow, title, description, tags = [], to, actionLabel }) {
   return (
-    <div className={`space-y-4 p-4 ${innerPanelClass}`}>
+    <div className={`space-y-4 p-4 ${contentPanelClass}`}>
       <div>
         <p className="text-[11px] uppercase tracking-[0.22em] text-accent/80">{eyebrow}</p>
-        <h3 className="mt-2 text-lg font-semibold text-white">{title}</h3>
-        <p className="mt-2 text-sm text-white/55">{description}</p>
+        <h3 className="mt-2 text-lg font-semibold text-slate-900">{title}</h3>
+        <p className="mt-2 text-sm text-slate-600">{description}</p>
       </div>
       {tags.length ? (
         <div className="flex flex-wrap gap-2">
@@ -223,7 +231,7 @@ function SourceOfTruthCard({ eyebrow, title, description, tags = [], to, actionL
         </div>
       ) : null}
       {to ? (
-        <Link to={to} className="inline-flex rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm font-semibold text-white/80 transition hover:bg-white/10 hover:text-white">
+        <Link to={to} className="inline-flex rounded-full border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-accent/50 hover:text-slate-900">
           {actionLabel}
         </Link>
       ) : null}
@@ -727,13 +735,13 @@ export default function SettingsPage() {
         ) : (
           <div className="space-y-5">
             {isSuperAdmin ? (
-              <Card className={shellPanelClass}>
+              <Card className={contentShellPanelClass}>
                 <label className="block space-y-2">
-                  <span className="text-sm font-medium text-white/80">Church Tenant</span>
+                  <span className="text-sm font-medium text-slate-700">Church Tenant</span>
                   <select
                     value={selectedTenantId}
                     onChange={(event) => setSelectedTenantId(event.target.value)}
-                    className={inputClass}
+                    className={contentInputClass}
                   >
                     <option value="">Select a church tenant</option>
                     {(tenantsQuery.data?.tenants || []).map((tenant) => (
@@ -745,16 +753,16 @@ export default function SettingsPage() {
                 </label>
               </Card>
             ) : null}
-            <Card className={shellPanelClass}>
+            <Card className={contentShellPanelClass}>
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div>
                   <p className="text-[11px] uppercase tracking-[0.28em] text-accent/80">
                     Master Data
                   </p>
-                  <h2 className="mt-2 text-xl font-semibold text-white">
+                  <h2 className="mt-2 text-xl font-semibold text-slate-900">
                     Keep one source of truth for church structure
                   </h2>
-                  <p className="mt-2 text-sm text-white/50">
+                  <p className="mt-2 text-sm text-slate-600">
                     Branches, ministries, and CBS groups are now created from their live workspaces.
                     This page is for tenant branding support data, departments, and grouping hierarchy.
                   </p>
@@ -836,13 +844,13 @@ export default function SettingsPage() {
               />
             </div>
 
-            <Card className={`space-y-5 ${shellPanelClass}`}>
+            <Card className={`space-y-5 ${contentShellPanelClass}`}>
               <div>
                 <p className="text-[11px] uppercase tracking-[0.28em] text-accent/80">
                   Grouping Tree
                 </p>
-                <h2 className="mt-2 text-xl font-semibold text-white">Flexible hierarchy</h2>
-                <p className="mt-2 text-sm text-white/50">
+                <h2 className="mt-2 text-xl font-semibold text-slate-900">Flexible hierarchy</h2>
+                <p className="mt-2 text-sm text-slate-600">
                   Use this for the structure under a branch, such as Region, Zone, District,
                   Cell, Cluster, Sector, or any custom discipleship hierarchy.
                 </p>
@@ -856,15 +864,16 @@ export default function SettingsPage() {
                     setGroupingDraft((current) => ({ ...current, name: event.target.value }))
                   }
                   placeholder="Regional Zone"
+                  labelClassName="text-slate-700"
                 />
                 <label className="block space-y-2">
-                  <span className="text-sm font-medium text-white/80">Parent Grouping</span>
+                  <span className="text-sm font-medium text-slate-700">Parent Grouping</span>
                   <select
                     value={groupingDraft.parentId}
                     onChange={(event) =>
                       setGroupingDraft((current) => ({ ...current, parentId: event.target.value }))
                     }
-                    className={inputClass}
+                    className={contentInputClass}
                   >
                     <option value="">Top level after branch</option>
                     {groupingTreeRows.map((grouping) => (
@@ -881,6 +890,7 @@ export default function SettingsPage() {
                     setGroupingDraft((current) => ({ ...current, kind: event.target.value }))
                   }
                   placeholder="zone"
+                  labelClassName="text-slate-700"
                 />
                 <div className="flex items-end">
                   <Button type="button" variant="secondary" className="w-full" onClick={addGroupingNode}>
@@ -890,7 +900,7 @@ export default function SettingsPage() {
               </div>
 
               <label className="block space-y-2">
-                <span className="text-sm font-medium text-white/80">Description</span>
+                <span className="text-sm font-medium text-slate-700">Description</span>
                 <textarea
                   value={groupingDraft.description}
                   onChange={(event) =>
@@ -900,7 +910,7 @@ export default function SettingsPage() {
                     }))
                   }
                   rows={2}
-                  className={inputClass}
+                  className={contentInputClass}
                   placeholder="Optional note for this grouping level"
                 />
               </label>
@@ -913,14 +923,14 @@ export default function SettingsPage() {
                     return (
                       <div
                         key={grouping.id}
-                        className={`flex flex-wrap items-center justify-between gap-3 px-4 py-3 ${violetPanelClass}`}
+                        className={`flex flex-wrap items-center justify-between gap-3 px-4 py-3 ${contentMutedPanelClass}`}
                       >
                         <div className="min-w-0" style={{ paddingLeft: `${grouping.depth * 18}px` }}>
-                          <p className="font-semibold text-white">{grouping.name}</p>
-                          <p className="text-sm text-white/50">
+                          <p className="font-semibold text-slate-900">{grouping.name}</p>
+                          <p className="text-sm text-slate-600">
                             Parent: {parentName} | Type: {grouping.kind || 'group'}
                           </p>
-                          <p className="mt-1 text-xs text-white/35">{grouping.lineage.join(' > ')}</p>
+                          <p className="mt-1 text-xs text-slate-400">{grouping.lineage.join(' > ')}</p>
                         </div>
                         <div className="flex items-center gap-2">
                           <Badge tone="primary">{grouping.kind || 'group'}</Badge>
@@ -944,7 +954,7 @@ export default function SettingsPage() {
                     );
                   })
                 ) : (
-                  <p className="text-sm text-white/35">
+                  <p className="text-sm text-slate-400">
                     No grouping levels added yet. Add your first grouping after branch.
                   </p>
                 )}

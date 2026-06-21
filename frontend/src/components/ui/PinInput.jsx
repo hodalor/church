@@ -1,6 +1,13 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 
-export default function PinInput({ value = '', onChange, length = 6, minLength = 4, error }) {
+export default function PinInput({
+  value = '',
+  onChange,
+  length = 6,
+  minLength = 4,
+  error,
+  tone = 'dark',
+}) {
   const normalizedLength = Math.max(minLength, Math.min(length, 6));
   const refs = useRef([]);
   const initialDigits = useMemo(() => {
@@ -63,6 +70,12 @@ export default function PinInput({ value = '', onChange, length = 6, minLength =
     refs.current[Math.min(pasted.length, normalizedLength) - 1]?.focus();
   };
 
+  const inputClass = tone === 'light'
+    ? 'h-12 w-10 rounded-2xl border border-slate-300 bg-white text-center text-base font-semibold text-slate-900 shadow-sm outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/30 sm:h-14 sm:w-12 sm:text-lg'
+    : 'h-12 w-10 rounded-2xl border border-white/10 bg-[#0f172a] text-center text-base font-semibold text-white shadow-sm outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/30 sm:h-14 sm:w-12 sm:text-lg';
+  const helperClass = tone === 'light' ? 'text-xs text-slate-500' : 'text-xs text-white/45';
+  const errorClass = tone === 'light' ? 'text-sm text-red-600' : 'text-sm text-red-400';
+
   return (
     <div className="space-y-2">
       <div className="flex flex-wrap gap-2">
@@ -80,12 +93,12 @@ export default function PinInput({ value = '', onChange, length = 6, minLength =
             onChange={(event) => handleChange(index, event.target.value)}
             onKeyDown={(event) => handleKeyDown(index, event)}
             onPaste={handlePaste}
-            className="h-12 w-10 rounded-2xl border border-white/10 bg-[#0f172a] text-center text-base font-semibold text-white shadow-sm outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/30 sm:h-14 sm:w-12 sm:text-lg"
+            className={inputClass}
           />
         ))}
       </div>
-      <p className="text-xs text-white/45">Enter 4 to 6 digits.</p>
-      {error ? <span className="text-sm text-red-400">{error}</span> : null}
+      <p className={helperClass}>Enter 4 to 6 digits.</p>
+      {error ? <span className={errorClass}>{error}</span> : null}
     </div>
   );
 }
