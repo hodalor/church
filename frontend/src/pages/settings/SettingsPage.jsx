@@ -19,6 +19,7 @@ import {
 import { useAuth } from '../../hooks/useAuth';
 import { useCapabilities } from '../../hooks/useCapabilities';
 import { useTenant } from '../../hooks/useTenant';
+import { useTenantStore } from '../../stores/tenantStore';
 import { useBrandingStore } from '../../stores/brandingStore';
 import { getDescendantGroupingIds, getGroupingTreeRows } from '../../utils/groupings';
 import { normalizeEligibleCountries } from '../../utils/platformConfig';
@@ -243,6 +244,7 @@ export default function SettingsPage() {
   const { role, tenantId } = useAuth();
   const { hasCapability } = useCapabilities();
   const { churchName } = useTenant();
+  const setTenant = useTenantStore((state) => state.setTenant);
   const {
     globalBranding,
     tenantBranding,
@@ -321,7 +323,18 @@ export default function SettingsPage() {
       groupings: content.groupings || [],
     });
     setTenantBranding(nextBranding);
-  }, [churchName, setTenantBranding, tenantQuery.data]);
+
+    if (!isSuperAdmin) {
+      setTenant({
+        tenantId: tenantQuery.data.tenantId || tenantId,
+        churchName: tenantQuery.data.churchName || churchName || '',
+        country: tenantQuery.data.country || null,
+        countryCode: tenantQuery.data.countryCode || null,
+        currencyCode: tenantQuery.data.financial?.currencyCode || 'USD',
+        currencySymbol: tenantQuery.data.financial?.currencySymbol || '$',
+      });
+    }
+  }, [churchName, isSuperAdmin, setTenant, setTenantBranding, tenantId, tenantQuery.data]);
 
   useEffect(() => {
     if (!isSuperAdmin) {
@@ -383,6 +396,17 @@ export default function SettingsPage() {
         }
 
         setBrandingForm(nextBranding);
+      }
+
+      if (!isSuperAdmin) {
+        setTenant({
+          tenantId: data?.tenantId || tenantId,
+          churchName: data?.churchName || churchName || '',
+          country: data?.country || null,
+          countryCode: data?.countryCode || null,
+          currencyCode: data?.financial?.currencyCode || 'USD',
+          currencySymbol: data?.financial?.currencySymbol || '$',
+        });
       }
     },
   });

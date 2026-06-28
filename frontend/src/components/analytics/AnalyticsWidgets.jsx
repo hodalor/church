@@ -125,7 +125,7 @@ export function KpiCard({ label, value, change, helper, to, tone = 'default', co
   const theme = KPI_CARD_THEMES[tone] || KPI_CARD_THEMES.default;
   const content = (
     <div
-      className={`relative overflow-hidden rounded-[20px] border transition ${compact ? 'p-3.5' : 'p-4'} ${theme.shell}`}
+      className={`relative flex min-h-[148px] flex-col overflow-hidden rounded-[20px] border transition ${compact ? 'p-3.5' : 'p-4'} ${theme.shell} ${compact ? 'min-h-[132px]' : ''}`}
     >
       <div className={`absolute right-[-20px] top-[-26px] h-20 w-20 rounded-full blur-2xl ${theme.glow}`} />
       <div className="relative">
@@ -139,7 +139,7 @@ export function KpiCard({ label, value, change, helper, to, tone = 'default', co
           <h3 className={`${compact ? 'text-[1.6rem]' : 'text-3xl'} font-semibold ${theme.value}`}>{value}</h3>
         </div>
       </div>
-      {helper ? <p className={`${compact ? 'mt-2.5' : 'mt-3'} text-sm text-white/62`}>{helper}</p> : null}
+      {helper ? <p className={`${compact ? 'mt-auto pt-2.5' : 'mt-auto pt-3'} text-sm text-white/62`}>{helper}</p> : null}
     </div>
   );
 
@@ -252,9 +252,24 @@ export function InsightCard({ insight, onRead, onAction, readLabel = 'Mark as Re
   );
 }
 
-export function MiniLine({ data, dataKey = 'value', stroke = '#C9A84C', heightClass = 'h-20' }) {
+const MiniChartEmpty = ({ heightClass, label = 'No trend yet' }) => (
+  <div
+    className={`${heightClass} flex w-full items-center justify-center rounded-[18px] border border-slate-200 border-dashed bg-slate-50 text-center`}
+  >
+    <div className="space-y-1">
+      <div className="mx-auto flex h-9 w-9 items-center justify-center rounded-full border border-accent/35 bg-accent/10 text-accent">
+        ~
+      </div>
+      <p className="text-[11px] font-medium uppercase tracking-[0.18em] text-slate-400">{label}</p>
+    </div>
+  </div>
+);
+
+export function MiniLine({ data, dataKey = 'value', stroke = '#C9A84C', heightClass = 'h-20', compactEmpty = false }) {
   if (!Array.isArray(data) || !data.length) {
-    return <EmptyState className="py-6" icon="~" title="No trend yet" message="Trend data will appear here when records are available." />;
+    return compactEmpty
+      ? <MiniChartEmpty heightClass={heightClass} label="No trend yet" />
+      : <EmptyState className="py-6" icon="~" title="No trend yet" message="Trend data will appear here when records are available." />;
   }
 
   return (
@@ -269,9 +284,11 @@ export function MiniLine({ data, dataKey = 'value', stroke = '#C9A84C', heightCl
   );
 }
 
-export function MiniBar({ data, dataKey = 'value', color = '#1E2A4A', heightClass = 'h-24' }) {
+export function MiniBar({ data, dataKey = 'value', color = '#1E2A4A', heightClass = 'h-24', compactEmpty = false }) {
   if (!Array.isArray(data) || !data.length) {
-    return <EmptyState className="py-6" icon="~" title="No distribution yet" message="Data will render here once enough records are available." />;
+    return compactEmpty
+      ? <MiniChartEmpty heightClass={heightClass} label="No data yet" />
+      : <EmptyState className="py-6" icon="~" title="No distribution yet" message="Data will render here once enough records are available." />;
   }
 
   return (

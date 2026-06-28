@@ -11,7 +11,6 @@ import {
   Users,
 } from 'lucide-react';
 import Card from '../../components/ui/Card';
-import Button from '../../components/ui/Button';
 import EmptyState from '../../components/ui/EmptyState';
 import { MiniBar, MiniLine } from '../../components/analytics/AnalyticsWidgets';
 import { getAttendanceSummary, getAttendanceTrends, getServices } from '../../api/endpoints/attendance';
@@ -93,7 +92,7 @@ function ModuleCard({ title, metric, helper, to, chart, tone = 'line' }) {
   return (
     <Link
       to={to}
-      className={`block rounded-[18px] border p-3 text-slate-900 shadow-[0_12px_28px_rgba(15,23,42,0.08)] transition hover:border-accent/30 ${theme.shell}`}
+      className={`block min-h-[178px] rounded-[18px] border p-3 text-slate-900 shadow-[0_12px_28px_rgba(15,23,42,0.08)] transition hover:border-accent/30 ${theme.shell}`}
     >
       <div className="flex items-start justify-between gap-2.5">
         <div className="min-w-0">
@@ -107,9 +106,9 @@ function ModuleCard({ title, metric, helper, to, chart, tone = 'line' }) {
       </div>
       <div className="mt-2.5">
         {tone === 'bar' ? (
-          <MiniBar data={chart} color={theme.chart} heightClass="h-14" />
+          <MiniBar data={chart} color={theme.chart} heightClass="h-14" compactEmpty />
         ) : (
-          <MiniLine data={chart} stroke={theme.chart} heightClass="h-14" />
+          <MiniLine data={chart} stroke={theme.chart} heightClass="h-14" compactEmpty />
         )}
       </div>
     </Link>
@@ -682,18 +681,6 @@ export default function DashboardPage() {
             ];
 
   const workspaceSubtitle = isBranchDashboard ? `${workspaceName} • ${scopedBranchName}` : workspaceName;
-  const primaryContextText = isBranchDashboard
-    ? 'Branch-scoped leadership view'
-    : isCareDashboard
-      ? 'Care leader operations'
-      : isVolunteerDashboard
-        ? 'Volunteer coordination workspace'
-        : isFinanceDashboard
-          ? 'Finance control center'
-          : isMediaDashboard
-            ? 'Communication hub'
-            : 'Leadership command center';
-
   const recentHighlights = [
     ...(services
       .filter((service) => service.checkInOpen)
@@ -731,26 +718,13 @@ export default function DashboardPage() {
   return (
     <div className="space-y-6">
       <div className="grid items-start gap-4 xl:grid-cols-[minmax(0,1.4fr)_repeat(4,minmax(0,1fr))]">
-        <Card className="overflow-hidden bg-gradient-to-br from-white via-white to-accent/10">
-          <div>
-            <p className="text-sm uppercase tracking-[0.3em] text-accent">{primaryContextText}</p>
-            <h1 className="mt-3 text-3xl font-semibold text-primary">
+        <Card className="flex min-h-[160px] overflow-hidden bg-gradient-to-br from-white via-white to-accent/10">
+          <div className="flex flex-col justify-center">
+            <h1 className="text-[2rem] font-semibold leading-tight text-primary">
               {getGreeting()}, {firstName}
             </h1>
-            <p className="mt-3 max-w-2xl text-sm leading-6 text-primary/65">{workspaceSubtitle}</p>
+            <p className="mt-3 max-w-2xl text-sm leading-5 text-primary/65">{workspaceSubtitle}</p>
             <p className="mt-2 text-sm text-primary/55">{todayLabel}</p>
-            <div className="mt-6 flex flex-wrap gap-3">
-              <Link to={isMediaDashboard ? '/communication' : isVolunteerDashboard ? '/volunteers' : '/members'}>
-                <Button variant="secondary">
-                  {isMediaDashboard ? 'Open Communication' : isVolunteerDashboard ? 'Open Volunteers' : 'Open Members'}
-                </Button>
-              </Link>
-              <Link to={isCareDashboard ? '/pastoral' : isFinanceDashboard ? '/finance' : '/attendance'}>
-                <Button variant="ghost">
-                  {isCareDashboard ? 'Open Pastoral' : isFinanceDashboard ? 'Open Finance' : 'Open Attendance'}
-                </Button>
-              </Link>
-            </div>
           </div>
         </Card>
         {kpis.map((item) => (
