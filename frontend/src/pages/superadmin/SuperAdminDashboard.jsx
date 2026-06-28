@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { Bar, BarChart, Cell, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
@@ -22,6 +22,7 @@ const chartPalette = ['#F4C95D', '#38BDF8', '#34D399', '#A78BFA', '#FB7185'];
 
 export default function SuperAdminDashboard() {
   const navigate = useNavigate();
+  const [showAllKpis, setShowAllKpis] = useState(false);
   const overviewQuery = useQuery({
     queryKey: ['superadmin-platform-overview'],
     queryFn: getPlatformOverview,
@@ -79,6 +80,15 @@ export default function SuperAdminDashboard() {
         .slice(0, 5),
     [tenantRows],
   );
+  const kpiItems = [
+    ['Total Tenants', formatAnalyticsNumber(summary.totalTenants || 0)],
+    ['Total Members', formatAnalyticsNumber(summary.totalMembers || 0)],
+    ['Attendance', formatAnalyticsNumber(summary.totalAttendance || 0)],
+    ['Revenue', formatAnalyticsCurrency(summary.totalIncome || 0)],
+    ['Branches', formatAnalyticsNumber(summary.totalBranches || 0)],
+    ['Critical Insights', formatAnalyticsNumber(summary.criticalInsights || 0)],
+  ];
+  const visibleKpis = showAllKpis ? kpiItems : kpiItems.slice(0, 4);
 
   return (
     <SuperAdminShell>
@@ -98,17 +108,23 @@ export default function SuperAdminDashboard() {
           }
         />
 
-        <div className="grid items-start gap-4 md:grid-cols-2 xl:grid-cols-6">
-          {[
-            ['Total Tenants', formatAnalyticsNumber(summary.totalTenants || 0)],
-            ['Total Members', formatAnalyticsNumber(summary.totalMembers || 0)],
-            ['Attendance', formatAnalyticsNumber(summary.totalAttendance || 0)],
-            ['Revenue', formatAnalyticsCurrency(summary.totalIncome || 0)],
-            ['Branches', formatAnalyticsNumber(summary.totalBranches || 0)],
-            ['Critical Insights', formatAnalyticsNumber(summary.criticalInsights || 0)],
-          ].map(([label, value], index) => (
-            <KpiCard key={label} label={label} value={value} tone={kpiTones[index]} compact />
-          ))}
+        <div className="space-y-3">
+          <div className="grid items-start gap-4 md:grid-cols-2 xl:grid-cols-4">
+            {visibleKpis.map(([label, value], index) => (
+              <KpiCard key={label} label={label} value={value} tone={kpiTones[index]} compact />
+            ))}
+          </div>
+          {kpiItems.length > 4 ? (
+            <div className="flex justify-end">
+              <button
+                type="button"
+                onClick={() => setShowAllKpis((current) => !current)}
+                className="rounded-full border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-accent/40 hover:text-slate-900"
+              >
+                {showAllKpis ? 'Show Less' : 'Show More'}
+              </button>
+            </div>
+          ) : null}
         </div>
 
         <div className="grid gap-6 xl:grid-cols-[1.2fr_0.8fr]">

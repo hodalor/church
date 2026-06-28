@@ -36,6 +36,7 @@ const panelClass =
 export default function PlatformBIPage() {
   const { canViewPlatformBI } = useAnalyticsAccess();
   const [gradeFilter, setGradeFilter] = useState('all');
+  const [showAllKpis, setShowAllKpis] = useState(false);
 
   const overviewQuery = useQuery({
     queryKey: ['platform-bi-overview'],
@@ -102,6 +103,15 @@ export default function PlatformBIPage() {
       fill: ['#C9A84C', '#1E2A4A', '#8B5CF6', '#34D399'][index % 4],
     }));
   }, [overview.tenants]);
+  const kpiItems = [
+    ['Total Tenants', formatAnalyticsNumber(overview.summary?.totalTenants || 0)],
+    ['Total Members', formatAnalyticsNumber(overview.summary?.totalMembers || 0)],
+    ['Platform Attendance', formatAnalyticsNumber(overview.summary?.totalAttendance || 0)],
+    ['Platform Revenue', formatAnalyticsCurrency(overview.summary?.totalIncome || 0)],
+    ['Total Branches', formatAnalyticsNumber(overview.summary?.totalBranches || 0)],
+    ['Critical Insights', formatAnalyticsNumber(overview.summary?.criticalInsights || 0)],
+  ];
+  const visibleKpis = showAllKpis ? kpiItems : kpiItems.slice(0, 4);
 
   if (!canViewPlatformBI) {
     return (
@@ -128,22 +138,28 @@ export default function PlatformBIPage() {
       >
         {overviewQuery.isLoading ? (
           <div className="grid items-start gap-4 md:grid-cols-2 xl:grid-cols-4">
-            {Array.from({ length: 6 }).map((_, index) => (
+            {Array.from({ length: 4 }).map((_, index) => (
               <ChartSkeleton key={index} />
             ))}
           </div>
         ) : (
-          <div className="grid items-start gap-4 md:grid-cols-2 xl:grid-cols-6">
-            {[
-              ['Total Tenants', formatAnalyticsNumber(overview.summary?.totalTenants || 0)],
-              ['Total Members', formatAnalyticsNumber(overview.summary?.totalMembers || 0)],
-              ['Platform Attendance', formatAnalyticsNumber(overview.summary?.totalAttendance || 0)],
-              ['Platform Revenue', formatAnalyticsCurrency(overview.summary?.totalIncome || 0)],
-              ['Total Branches', formatAnalyticsNumber(overview.summary?.totalBranches || 0)],
-              ['Critical Insights', formatAnalyticsNumber(overview.summary?.criticalInsights || 0)],
-            ].map(([label, value], index) => (
-              <KpiCard key={label} label={label} value={value} tone={kpiTones[index]} compact />
-            ))}
+          <div className="space-y-3">
+            <div className="grid items-start gap-4 md:grid-cols-2 xl:grid-cols-4">
+              {visibleKpis.map(([label, value], index) => (
+                <KpiCard key={label} label={label} value={value} tone={kpiTones[index]} compact />
+              ))}
+            </div>
+            {kpiItems.length > 4 ? (
+              <div className="flex justify-end">
+                <button
+                  type="button"
+                  onClick={() => setShowAllKpis((current) => !current)}
+                  className="rounded-full border border-white/10 bg-white/[0.03] px-4 py-2 text-sm font-semibold text-white/75 transition hover:border-accent/30 hover:text-white"
+                >
+                  {showAllKpis ? 'Show Less' : 'Show More'}
+                </button>
+              </div>
+            ) : null}
           </div>
         )}
 

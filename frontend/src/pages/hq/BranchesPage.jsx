@@ -6,12 +6,16 @@ import Button from '../../components/ui/Button';
 import DataTable from '../../components/ui/DataTable';
 import EmptyState from '../../components/ui/EmptyState';
 import { TableRowSkeleton } from '../../components/ui/Skeleton';
-import { AnalyticsPage, HealthBadge } from '../../components/analytics/AnalyticsWidgets';
+import { AnalyticsPage } from '../../components/analytics/AnalyticsWidgets';
 import { getAllBranches } from '../../api/endpoints/branches';
 import { getBranchComparison } from '../../api/endpoints/hq';
 import useAnalyticsAccess from '../../hooks/useAnalyticsAccess';
 import { useTenant } from '../../hooks/useTenant';
-import { formatAnalyticsCurrency, formatAnalyticsNumber, getTrendMeta } from '../../utils/analytics';
+import {
+  formatAnalyticsCurrency,
+  formatAnalyticsNumber,
+  formatBranchHealthGrade,
+} from '../../utils/analytics';
 
 export default function BranchesPage() {
   const { canViewBranches, canManageBranches } = useAnalyticsAccess();
@@ -32,11 +36,20 @@ export default function BranchesPage() {
     const comparisonById = new Map((comparisonQuery.data?.items || []).map((item) => [item.branchId, item]));
     return profiles.map((branch) => {
       const analytics = comparisonById.get(branch.branchId) || {};
-      const trend = getTrendMeta(analytics?.health?.trend);
+      const trendDirection = String(analytics?.health?.trend || 'stable').toLowerCase();
+      const trendIcon =
+        trendDirection === 'up' || trendDirection === 'improving'
+          ? '↑'
+          : trendDirection === 'down' || trendDirection === 'declining'
+            ? '↓'
+            : '→';
       return {
         ...branch,
         analytics,
-        trend,
+        trend: {
+          direction: trendDirection,
+          icon: trendIcon,
+        },
       };
     });
   }, [branchesQuery.data?.items, comparisonQuery.data?.items]);
@@ -81,19 +94,48 @@ export default function BranchesPage() {
     {
       key: 'health',
       header: 'Health',
-      render: (branch) => <HealthBadge grade={branch.analytics?.health?.grade} score={branch.analytics?.health?.score} />,
+      render: (branch) => {
+        const grade = formatBranchHealthGrade(branch.analytics?.health?.grade);
+        const lightHealthClass =
+          grade === 'A'
+            ? 'border-emerald-200 bg-emerald-50 text-slate-900'
+            : grade === 'B'
+              ? 'border-teal-200 bg-teal-50 text-slate-900'
+              : grade === 'C'
+                ? 'border-amber-200 bg-amber-50 text-slate-900'
+                : grade === 'D'
+                  ? 'border-orange-200 bg-orange-50 text-slate-900'
+                  : 'border-rose-200 bg-rose-50 text-slate-900';
+        return (
+          <span className={`inline-flex items-center gap-2 rounded-full border px-3 py-1 text-sm font-semibold ${lightHealthClass}`}>
+            <span className="text-slate-900">{grade}</span>
+            <span className="text-slate-900">{formatAnalyticsNumber(branch.analytics?.health?.score || 0)}</span>
+          </span>
+        );
+      },
     },
     {
       key: 'trend',
       header: 'Trend',
-      render: (branch) => <span className={branch.trend.color}>{branch.trend.icon}</span>,
+      render: (branch) => {
+        const lightTrendClass =
+          branch.trend.direction === 'up' || branch.trend.direction === 'improving'
+            ? 'text-emerald-700'
+            : branch.trend.direction === 'down' || branch.trend.direction === 'declining'
+              ? 'text-rose-700'
+              : 'text-slate-900';
+        return <span className={`inline-flex items-center text-lg font-semibold ${lightTrendClass}`}>{branch.trend.icon}</span>;
+      },
     },
     {
       key: 'actions',
       header: 'Action',
       render: (branch) => (
-        <Link to={`/hq/branches/${branch.branchId}`}>
-          <Button variant="ghost">Open</Button>
+        <Link
+          to={`/hq/branches/${branch.branchId}`}
+          className="inline-flex items-center justify-center rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-sm font-semibold text-slate-900 transition duration-200 hover:border-accent/40 hover:bg-slate-50 hover:text-slate-900"
+        >
+          Open
         </Link>
       ),
     },
