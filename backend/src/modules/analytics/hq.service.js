@@ -167,27 +167,35 @@ const mapSeverityAlert = (item) => ({
   message: item.message,
 });
 
-export const getHQOverview = async (tenantId, actor = {}) => {
+export const getHQOverview = async (tenantId, query = {}, actor = {}) => {
   const normalizedTenantId = normalizeTenantId(tenantId);
-  const currentRange = getDateRangeForPeriod({ period: 'monthly', date: new Date() });
-  const previousMonthDate = addMonths(new Date(), -1);
-  const previousRange = getDateRangeForPeriod({ period: 'monthly', date: previousMonthDate });
+  const currentRange = getDateRangeForPeriod({
+    period: String(query.period || 'monthly'),
+    date: query.date ? new Date(query.date) : new Date(),
+    from: query.from || query.fromDate,
+    to: query.to || query.toDate,
+  });
+  const previousRange = getPreviousRange(currentRange);
 
   const [current, previous, branchComparison, scopedBranches] = await Promise.all([
     getScopedMetricsBundle({
       tenantId: normalizedTenantId,
       actor,
+      branchId: query.branchId,
+      branch: query.branch,
       start: currentRange.start,
       end: currentRange.end,
     }),
     getScopedMetricsBundle({
       tenantId: normalizedTenantId,
       actor,
+      branchId: query.branchId,
+      branch: query.branch,
       start: previousRange.start,
       end: previousRange.end,
     }),
-    getBranchComparison(normalizedTenantId, {}, actor),
-    buildBranchScope(normalizedTenantId, actor, {}),
+    getBranchComparison(normalizedTenantId, query, actor),
+    buildBranchScope(normalizedTenantId, actor, query),
   ]);
 
   const branchIds = scopedBranches.map((item) => item.branchId).filter(Boolean);

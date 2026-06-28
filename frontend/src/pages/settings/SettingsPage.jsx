@@ -268,9 +268,7 @@ export default function SettingsPage() {
     tagline: tenantBranding.tagline || 'Tenant workspace',
   });
   const [contentForm, setContentForm] = useState({
-    branches: [],
     departments: [],
-    ministries: [],
     groupings: [],
   });
   const [groupingDraft, setGroupingDraft] = useState(emptyGroupingForm);
@@ -317,9 +315,7 @@ export default function SettingsPage() {
 
     setBrandingForm(nextBranding);
     setContentForm({
-      branches: content.branches || [],
       departments: content.departments || [],
-      ministries: content.ministries || [],
       groupings: content.groupings || [],
     });
     setTenantBranding(nextBranding);
@@ -511,7 +507,14 @@ export default function SettingsPage() {
 
     updateTenantMutation.mutate({
       tenantId: selectedTenantId,
-      payload: { content: contentForm },
+      payload: {
+        content: {
+          branches: tenantQuery.data?.content?.branches || [],
+          ministries: tenantQuery.data?.content?.ministries || [],
+          departments: contentForm.departments,
+          groupings: contentForm.groupings,
+        },
+      },
     });
   };
 
@@ -818,34 +821,13 @@ export default function SettingsPage() {
                 ]}
               />
               <SourceOfTruthCard
-                eyebrow="Synced Snapshot"
-                title="Master lists used by forms"
-                description="Member, visitor, volunteer, and event forms still use these tenant lists for dropdowns. Branches and ministries are synced here automatically from their live workspaces."
+                eyebrow="Settings Scope"
+                title="Only keep support structure here"
+                description="Settings now maintains only departments and grouping hierarchy. Branches, ministries, and CBS records live in their own menus so the data stays unified everywhere."
                 tags={[
-                  `${contentForm.branches.length} branches`,
-                  `${contentForm.ministries.length} ministries`,
                   `${contentForm.departments.length} departments`,
                   `${contentForm.groupings.length} grouping levels`,
                 ]}
-              />
-            </div>
-
-            <div className="grid items-start gap-5 xl:grid-cols-2">
-              <SourceOfTruthCard
-                eyebrow="Branches"
-                title="Manage branch profiles in HQ"
-                description="Create, edit, and review branch records from the headquarters branch workspace. The branch names are mirrored back here automatically for form dropdowns."
-                tags={contentForm.branches}
-                to="/hq/branches"
-                actionLabel="Open Branches"
-              />
-              <SourceOfTruthCard
-                eyebrow="Ministries"
-                title="Manage ministries in Ministry"
-                description="Create operational ministry records inside the ministry workspace. Ministry names are mirrored back here automatically for member assignment and setup forms."
-                tags={contentForm.ministries}
-                to="/ministry/list"
-                actionLabel="Open Ministry List"
               />
             </div>
 

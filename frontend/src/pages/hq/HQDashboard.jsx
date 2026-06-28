@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Link, useNavigate } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
+import { useNavigate } from 'react-router-dom';
 import {
   Area,
   AreaChart,
@@ -8,10 +8,6 @@ import {
   ComposedChart,
   Legend,
   Line,
-  PolarAngleAxis,
-  PolarGrid,
-  Radar,
-  RadarChart,
   RadialBar,
   RadialBarChart,
   ReferenceLine,
@@ -22,17 +18,13 @@ import {
 } from 'recharts';
 import AppShell from '../../components/layout/AppShell';
 import Button from '../../components/ui/Button';
-import Modal from '../../components/ui/Modal';
 import EmptyState from '../../components/ui/EmptyState';
 import { CardSkeleton, ChartSkeleton, TableRowSkeleton } from '../../components/ui/Skeleton';
 import {
-  ActionLink,
   AnalyticsPage,
   AnalyticsSection,
   ChartPanel,
-  FilterTabs,
   HealthBadge,
-  InsightCard,
   KpiCard,
   RefreshPill,
   SummaryList,
@@ -45,38 +37,27 @@ import {
   getMemberIntelligence,
   getOperationalHealth,
 } from '../../api/endpoints/hq';
-import {
-  generateInsights,
-  getAllInsights,
-  getCriticalInsights,
-  markInsightActioned,
-  markInsightRead,
-} from '../../api/endpoints/insights';
 import useAnalyticsAccess from '../../hooks/useAnalyticsAccess';
 import { useTenant } from '../../hooks/useTenant';
-import { useBrandingStore } from '../../stores/brandingStore';
 import {
-  PERIOD_OPTIONS,
   buildKpiChange,
   formatAnalyticsCurrency,
   formatAnalyticsNumber,
   getTrendMeta,
   formatTimeAgo,
 } from '../../utils/analytics';
-import { showErrorToast, showSuccessToast } from '../../utils/toast';
 
-const radarColors = ['#C9A84C', '#60A5FA', '#34D399', '#F97316', '#A78BFA', '#F43F5E'];
+const today = new Date();
+const currentDateValue = today.toISOString().slice(0, 10);
+const currentMonthStartValue = new Date(today.getFullYear(), today.getMonth(), 1).toISOString().slice(0, 10);
 
 export default function HQDashboard() {
   const navigate = useNavigate();
-  const queryClient = useQueryClient();
-  const { canViewHQ, canViewInsights } = useAnalyticsAccess();
-  const { churchName, currencyCode, currencySymbol } = useTenant();
-  const tenantBranding = useBrandingStore((state) => state.tenantBranding);
-  const [period, setPeriod] = useState('monthly');
+  const { canViewHQ } = useAnalyticsAccess();
+  const { currencyCode, currencySymbol } = useTenant();
+  const [fromDate, setFromDate] = useState(currentMonthStartValue);
+  const [toDate, setToDate] = useState(currentDateValue);
   const [branchId, setBranchId] = useState('');
-  const [matrixView, setMatrixView] = useState('table');
-  const [isReportModalOpen, setIsReportModalOpen] = useState(false);
 
   const branchListQuery = useQuery({
     queryKey: ['hq-branch-list'],
@@ -84,13 +65,23 @@ export default function HQDashboard() {
     enabled: canViewHQ,
   });
   const overviewQuery = useQuery({
-    queryKey: ['hq-overview', period, branchId],
-    queryFn: () => getHQOverview({ period, branchId: branchId || undefined }),
+    queryKey: ['hq-overview', fromDate, toDate, branchId],
+    queryFn: () =>
+      getHQOverview({
+        from: fromDate || undefined,
+        to: toDate || undefined,
+        branchId: branchId || undefined,
+      }),
     enabled: canViewHQ,
   });
   const comparisonQuery = useQuery({
-    queryKey: ['hq-branch-comparison', period, branchId],
-    queryFn: () => getBranchComparison({ period, branchId: branchId || undefined }),
+    queryKey: ['hq-branch-comparison', fromDate, toDate, branchId],
+    queryFn: () =>
+      getBranchComparison({
+        from: fromDate || undefined,
+        to: toDate || undefined,
+        branchId: branchId || undefined,
+      }),
     enabled: canViewHQ,
   });
   const growthQuery = useQuery({
@@ -108,55 +99,12 @@ export default function HQDashboard() {
     queryFn: () => getMemberIntelligence({ branchId: branchId || undefined }),
     enabled: canViewHQ,
   });
-  const insightsQuery = useQuery({
-    queryKey: ['hq-insights-feed', branchId],
-    queryFn: () => getAllInsights({ limit: 6, branchId: branchId || undefined }),
-    enabled: canViewInsights,
-    refetchInterval: 300000,
-  });
-  const criticalInsightsQuery = useQuery({
-    queryKey: ['hq-critical-insights', branchId],
-    queryFn: () => getCriticalInsights({ limit: 5, branchId: branchId || undefined }),
-    enabled: canViewInsights,
-  });
-
-  const readMutation = useMutation({
-    mutationFn: (insight) => markInsightRead(insight._id || insight.id),
-    onSuccess: () => {
-      showSuccessToast('Insight marked as read.');
-      queryClient.invalidateQueries({ queryKey: ['hq-insights-feed'] });
-      queryClient.invalidateQueries({ queryKey: ['hq-critical-insights'] });
-    },
-    onError: (error) => showErrorToast(error.message || 'Unable to update insight.'),
-  });
-  const actionMutation = useMutation({
-    mutationFn: (insight) => markInsightActioned(insight._id || insight.id),
-    onSuccess: () => {
-      showSuccessToast('Insight marked as actioned.');
-      queryClient.invalidateQueries({ queryKey: ['hq-insights-feed'] });
-      queryClient.invalidateQueries({ queryKey: ['hq-critical-insights'] });
-    },
-    onError: (error) => showErrorToast(error.message || 'Unable to update insight.'),
-  });
-  const generateMutation = useMutation({
-    mutationFn: () => generateInsights(),
-    onSuccess: () => {
-      showSuccessToast('Fresh insights generated.');
-      queryClient.invalidateQueries({ queryKey: ['hq-insights-feed'] });
-      queryClient.invalidateQueries({ queryKey: ['hq-critical-insights'] });
-    },
-    onError: (error) => showErrorToast(error.message || 'Unable to generate insights.'),
-  });
-
   const overview = overviewQuery.data || {};
   const branchComparison = comparisonQuery.data?.items || [];
   const growthItems = useMemo(() => growthQuery.data?.items || [], [growthQuery.data]);
   const memberIntelligence = membersQuery.data || {};
   const operationalHealth = healthQuery.data || {};
-  const insights = insightsQuery.data?.items || [];
-  const criticalInsights = criticalInsightsQuery.data?.items || [];
   const branches = branchListQuery.data?.items || [];
-  const workspaceName = tenantBranding?.appName || churchName || 'Church';
 
   const growthChartData = useMemo(
     () =>
@@ -175,14 +123,6 @@ export default function HQDashboard() {
       (growthItems.find((row) => row.month === item.month)?.finance?.income || 0) -
       (growthItems.find((row) => row.month === item.month)?.finance?.expenses || 0),
   }));
-  const radarData = [
-    { subject: 'Members', ...Object.fromEntries(branchComparison.map((branch) => [branch.branchName, branch.members?.total || 0])) },
-    { subject: 'Attendance', ...Object.fromEntries(branchComparison.map((branch) => [branch.branchName, branch.attendance?.avg || 0])) },
-    { subject: 'Finance', ...Object.fromEntries(branchComparison.map((branch) => [branch.branchName, branch.finance?.income || 0])) },
-    { subject: 'Visitors', ...Object.fromEntries(branchComparison.map((branch) => [branch.branchName, branch.visitors?.total || 0])) },
-    { subject: 'Volunteers', ...Object.fromEntries(branchComparison.map((branch) => [branch.branchName, branch.members?.active || 0])) },
-    { subject: 'Pastoral', ...Object.fromEntries(branchComparison.map((branch) => [branch.branchName, 100 - (branch.members?.atRisk || 0)])) },
-  ];
   const healthDistribution = [
     { name: 'Active', value: memberIntelligence.activeCount || 0, fill: '#22C55E' },
     { name: 'Drifting', value: memberIntelligence.driftingCount || 0, fill: '#F59E0B' },
@@ -261,13 +201,6 @@ export default function HQDashboard() {
     },
   ];
   const timelineItems = useMemo(() => {
-    const alertItems = (overview.alerts || []).map((item, index) => ({
-      id: `alert-${index}`,
-      title: item.title || item.message || 'Insight alert',
-      type: item.type || 'insight',
-      branch: item.branchName || 'All branches',
-      time: item.createdAt || new Date().toISOString(),
-    }));
     const opItems = (operationalHealth.systemAlerts || []).map((item, index) => ({
       id: `system-${index}`,
       title: item.message,
@@ -275,8 +208,8 @@ export default function HQDashboard() {
       branch: 'System',
       time: new Date().toISOString(),
     }));
-    return [...alertItems, ...opItems].slice(0, 20);
-  }, [operationalHealth.systemAlerts, overview.alerts]);
+    return opItems.slice(0, 20);
+  }, [operationalHealth.systemAlerts]);
 
   if (!canViewHQ) {
     return (
@@ -297,9 +230,36 @@ export default function HQDashboard() {
     <AppShell>
       <AnalyticsPage
         title="Headquarters Overview"
-        subtitle="Monitor branch performance, growth momentum, finances, member health, and AI-driven ministry signals from one command center."
+        subtitle="Monitor branch performance, growth momentum, finances, and member health from one command center."
         action={
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap items-center gap-2">
+            <input
+              type="date"
+              value={fromDate}
+              onChange={(event) => setFromDate(event.target.value)}
+              max={toDate || undefined}
+              className="rounded-[18px] border border-slate-300 bg-white px-3.5 py-2.5 text-sm text-slate-900"
+            />
+            <input
+              type="date"
+              value={toDate}
+              onChange={(event) => setToDate(event.target.value)}
+              min={fromDate || undefined}
+              max={currentDateValue}
+              className="rounded-[18px] border border-slate-300 bg-white px-3.5 py-2.5 text-sm text-slate-900"
+            />
+            <select
+              value={branchId}
+              onChange={(event) => setBranchId(event.target.value)}
+              className="rounded-[18px] border border-slate-300 bg-white px-3.5 py-2.5 text-sm text-slate-900"
+            >
+              <option value="">All Branches</option>
+              {branches.map((branch) => (
+                <option key={branch.branchId} value={branch.branchId}>
+                  {branch.branchName}
+                </option>
+              ))}
+            </select>
             <RefreshPill
               label={`Updated ${formatTimeAgo(new Date().toISOString())}`}
               onClick={() => {
@@ -310,67 +270,21 @@ export default function HQDashboard() {
                 healthQuery.refetch();
               }}
             />
-            <Button variant="secondary" onClick={() => setIsReportModalOpen(true)}>
+            <Button
+              variant="secondary"
+              onClick={() => {
+                const params = new URLSearchParams();
+                if (branchId) params.set('branchId', branchId);
+                if (fromDate) params.set('from', fromDate);
+                if (toDate) params.set('to', toDate);
+                navigate(`/hq/reports${params.toString() ? `?${params.toString()}` : ''}`);
+              }}
+            >
               Generate Report
             </Button>
           </div>
         }
       >
-        <div className="grid items-start gap-3 xl:grid-cols-[minmax(0,1fr)_220px_220px]">
-          <CardSkeleton className="xl:hidden" />
-          <div className="rounded-[22px] border border-white/8 bg-[#0d1320] p-4 text-white xl:col-span-1">
-            <p className="text-sm text-white/60">{workspaceName}</p>
-            <p className="mt-2 text-2xl font-semibold text-white">{churchName || workspaceName}</p>
-            <p className="mt-2 text-sm text-white/45">Headquarters overview</p>
-          </div>
-          <select
-            value={period}
-            onChange={(event) => setPeriod(event.target.value)}
-            className="w-full rounded-[22px] border border-white/10 bg-[#0d1320] px-4 py-3 text-white"
-          >
-            {PERIOD_OPTIONS.map((option) => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </select>
-          <select
-            value={branchId}
-            onChange={(event) => setBranchId(event.target.value)}
-            className="w-full rounded-[22px] border border-white/10 bg-[#0d1320] px-4 py-3 text-white"
-          >
-            <option value="">All Branches</option>
-            {branches.map((branch) => (
-              <option key={branch.branchId} value={branch.branchId}>
-                {branch.branchName}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        {criticalInsights.length ? (
-          <AnalyticsSection
-            title={`${criticalInsights.length} critical alerts`}
-            subtitle="Immediate issues that need leadership attention."
-          >
-            <div className="space-y-3">
-              {criticalInsights.map((insight) => (
-                <InsightCard
-                  key={insight._id || insight.id}
-                  insight={insight}
-                  onAction={(item) => actionMutation.mutate(item)}
-                />
-              ))}
-            </div>
-          </AnalyticsSection>
-        ) : (
-          <AnalyticsSection title="System status" subtitle="The intelligence engine is not reporting urgent failures right now.">
-            <div className="rounded-[22px] border border-emerald-500/25 bg-emerald-500/10 px-4 py-4 text-emerald-100">
-              All systems healthy.
-            </div>
-          </AnalyticsSection>
-        )}
-
         {isLoading ? (
           <div className="grid items-start gap-4 md:grid-cols-2 xl:grid-cols-4">
             {Array.from({ length: 8 }).map((_, index) => (
@@ -387,24 +301,14 @@ export default function HQDashboard() {
 
         <AnalyticsSection
           title="Branch Performance Matrix"
-          subtitle="Compare branch membership, attendance, finance strength, and health trends."
-          action={
-            <FilterTabs
-              tabs={[
-                { label: 'Table View', value: 'table' },
-                { label: 'Visual View', value: 'visual' },
-              ]}
-              value={matrixView}
-              onChange={setMatrixView}
-            />
-          }
+          subtitle="Compare branch membership, attendance, finance strength, and health trends in one table."
         >
           {comparisonQuery.isLoading ? (
             <TableRowSkeleton columns={7} rows={6} />
-          ) : matrixView === 'table' ? (
+          ) : (
             <div className="overflow-x-auto">
-              <table className="w-full min-w-[860px] text-left text-sm text-white/75">
-                <thead className="text-[11px] uppercase tracking-[0.22em] text-white/40">
+              <table className="w-full min-w-[860px] text-left text-sm text-slate-700">
+                <thead className="text-[11px] uppercase tracking-[0.22em] text-slate-500">
                   <tr>
                     <th className="pb-3 pr-4">Branch</th>
                     <th className="pb-3 pr-4">Members</th>
@@ -421,10 +325,10 @@ export default function HQDashboard() {
                     return (
                       <tr
                         key={branch.branchId}
-                        className="cursor-pointer border-t border-white/8 align-top transition hover:bg-white/[0.03]"
+                        className="cursor-pointer border-t border-slate-200 align-top transition hover:bg-slate-50"
                         onClick={() => navigate(`/hq/branches/${branch.branchId}`)}
                       >
-                        <td className="py-3 pr-4 font-medium text-white">{branch.branchName}</td>
+                        <td className="py-3 pr-4 font-medium text-slate-900">{branch.branchName}</td>
                         <td className="py-3 pr-4">{formatAnalyticsNumber(branch.members?.total || 0)}</td>
                         <td className="py-3 pr-4">{formatAnalyticsNumber(branch.attendance?.avg || 0)}</td>
                         <td className="py-3 pr-4">{formatAnalyticsCurrency(branch.finance?.income || 0, currencyCode, currencySymbol)}</td>
@@ -436,26 +340,6 @@ export default function HQDashboard() {
                   })}
                 </tbody>
               </table>
-            </div>
-          ) : (
-            <div className="h-[420px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <RadarChart data={radarData}>
-                  <PolarGrid stroke="rgba(255,255,255,0.08)" />
-                  <PolarAngleAxis dataKey="subject" tick={{ fill: '#CBD5E1', fontSize: 12 }} />
-                  {branchComparison.map((branch, index) => (
-                    <Radar
-                      key={branch.branchId}
-                      dataKey={branch.branchName}
-                      stroke={radarColors[index % radarColors.length]}
-                      fill={radarColors[index % radarColors.length]}
-                      fillOpacity={0.08}
-                    />
-                  ))}
-                  <Legend />
-                  <Tooltip />
-                </RadarChart>
-              </ResponsiveContainer>
             </div>
           )}
         </AnalyticsSection>
@@ -534,64 +418,35 @@ export default function HQDashboard() {
           </ChartPanel>
         </div>
 
-        <div className="grid items-start gap-4 xl:grid-cols-[1.2fr_0.8fr]">
-          <AnalyticsSection
-            title="Operational Health"
-            subtitle="Volunteer coverage, pastoral load, communication cadence, and event readiness."
-          >
-            <div className="grid items-start gap-4 md:grid-cols-2">
-              <KpiCard
-                label="Volunteers"
-                value={`${Number(operationalHealth.volunteers?.coverageRate || 0).toFixed(1)}%`}
-                helper={`${formatAnalyticsNumber(operationalHealth.volunteers?.upcomingGaps?.length || 0)} shortage alerts`}
-              />
-              <KpiCard
-                label="Pastoral"
-                value={formatAnalyticsNumber(operationalHealth.pastoral?.overdueFollowUps || 0)}
-                helper={`${formatAnalyticsNumber(operationalHealth.pastoral?.criticalUnattended || 0)} critical unattended`}
-              />
-              <KpiCard
-                label="Communication"
-                value={formatAnalyticsNumber(operationalHealth.communication?.lastBroadcastDays || 0)}
-                helper={`${formatAnalyticsNumber(operationalHealth.communication?.unreadPrayerRequests || 0)} unread prayers`}
-              />
-              <KpiCard
-                label="Events"
-                value={formatAnalyticsNumber(operationalHealth.events?.upcomingCount || 0)}
-                helper={`${formatAnalyticsNumber(operationalHealth.events?.overduePreparation?.length || 0)} overdue prep items`}
-              />
-            </div>
-          </AnalyticsSection>
-
-          <AnalyticsSection
-            title="AI Insights Feed"
-            subtitle="Unread and high-priority intelligence updates."
-            action={
-              <div className="flex gap-2">
-                <Button variant="ghost" onClick={() => generateMutation.mutate()}>
-                  Generate New Insights
-                </Button>
-                <Link to="/insights">
-                  <Button variant="secondary">View All Insights</Button>
-                </Link>
-              </div>
-            }
-          >
-            <SummaryList
-              items={insights}
-              formatter={(insight) => (
-                <InsightCard
-                  key={insight._id || insight.id}
-                  insight={insight}
-                  onRead={(item) => readMutation.mutate(item)}
-                  onAction={(item) => actionMutation.mutate(item)}
-                />
-              )}
+        <AnalyticsSection
+          title="Operational Health"
+          subtitle="Volunteer coverage, pastoral load, communication cadence, and event readiness."
+        >
+          <div className="grid items-start gap-4 md:grid-cols-2 xl:grid-cols-4">
+            <KpiCard
+              label="Volunteers"
+              value={`${Number(operationalHealth.volunteers?.coverageRate || 0).toFixed(1)}%`}
+              helper={`${formatAnalyticsNumber(operationalHealth.volunteers?.upcomingGaps?.length || 0)} shortage alerts`}
             />
-          </AnalyticsSection>
-        </div>
+            <KpiCard
+              label="Pastoral"
+              value={formatAnalyticsNumber(operationalHealth.pastoral?.overdueFollowUps || 0)}
+              helper={`${formatAnalyticsNumber(operationalHealth.pastoral?.criticalUnattended || 0)} critical unattended`}
+            />
+            <KpiCard
+              label="Communication"
+              value={formatAnalyticsNumber(operationalHealth.communication?.lastBroadcastDays || 0)}
+              helper={`${formatAnalyticsNumber(operationalHealth.communication?.unreadPrayerRequests || 0)} unread prayers`}
+            />
+            <KpiCard
+              label="Events"
+              value={formatAnalyticsNumber(operationalHealth.events?.upcomingCount || 0)}
+              helper={`${formatAnalyticsNumber(operationalHealth.events?.overduePreparation?.length || 0)} overdue prep items`}
+            />
+          </div>
+        </AnalyticsSection>
 
-        <AnalyticsSection title="Recent Activity Timeline" subtitle="Latest intelligence and system activity across the workspace.">
+        <AnalyticsSection title="Recent Activity Timeline" subtitle="Latest system activity across the workspace.">
           <SummaryList
             items={timelineItems}
             formatter={(item) => (
@@ -608,30 +463,6 @@ export default function HQDashboard() {
           />
         </AnalyticsSection>
 
-        <Modal
-          isOpen={isReportModalOpen}
-          onClose={() => setIsReportModalOpen(false)}
-          title="Generate Consolidated Report"
-          description="Open the reporting workspace with the current dashboard filters."
-        >
-          <div className="space-y-4 text-white">
-            <p className="text-sm text-white/65">
-              Period: <span className="text-white">{PERIOD_OPTIONS.find((item) => item.value === period)?.label}</span>
-            </p>
-            <p className="text-sm text-white/65">
-              Branch: <span className="text-white">{branches.find((item) => item.branchId === branchId)?.branchName || 'All Branches'}</span>
-            </p>
-            <div className="flex gap-2">
-              <Button
-                variant="secondary"
-                onClick={() => navigate(`/hq/reports?branchId=${branchId}&period=${period}`)}
-              >
-                Open Report Page
-              </Button>
-              <ActionLink to="/hq/reports" label="Go to reports" />
-            </div>
-          </div>
-        </Modal>
       </AnalyticsPage>
     </AppShell>
   );

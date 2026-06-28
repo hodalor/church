@@ -2,7 +2,6 @@ import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import {
-  AlertTriangle,
   ArrowRight,
   Bell,
   CalendarDays,
@@ -22,7 +21,6 @@ import {
   getTransactionSummary,
 } from '../../api/endpoints/finance';
 import { getBranchComparison } from '../../api/endpoints/hq';
-import { getCriticalInsights } from '../../api/endpoints/insights';
 import { getMemberStats } from '../../api/endpoints/members';
 import { getCareStats, getMyCases } from '../../api/endpoints/pastoral';
 import { getUpcomingRosters } from '../../api/endpoints/rosters';
@@ -183,11 +181,6 @@ export default function DashboardPage() {
     queryFn: () => getBranchComparison({ period: 'monthly' }),
     enabled: isBranchDashboard,
   });
-  const criticalInsightsQuery = useQuery({
-    queryKey: ['dashboard-critical-insights'],
-    queryFn: () => getCriticalInsights({ limit: 3 }),
-    enabled: isPastorDashboard,
-  });
   const careStatsQuery = useQuery({
     queryKey: ['dashboard-care-stats'],
     queryFn: getCareStats,
@@ -269,11 +262,6 @@ export default function DashboardPage() {
   const upcomingEvents = upcomingEventsQuery.data?.items || upcomingEventsQuery.data || [];
   const communication = communicationQuery.data || {};
   const communicationStats = communication.stats || {};
-  const criticalInsights = useMemo(
-    () => criticalInsightsQuery.data?.items || [],
-    [criticalInsightsQuery.data],
-  );
-
   const pastorKpis = [
     {
       label: 'Members',
@@ -443,15 +431,6 @@ export default function DashboardPage() {
       });
     }
 
-    if (criticalInsights[0]) {
-      items.push({
-        id: `insight-${criticalInsights[0]._id || criticalInsights[0].id}`,
-        tone: 'danger',
-        icon: AlertTriangle,
-        message: criticalInsights[0].title || 'Critical insight requires attention',
-      });
-    }
-
     if ((followUps.overdue || []).length) {
       items.push({
         id: 'overdue-followups',
@@ -460,9 +439,8 @@ export default function DashboardPage() {
         message: `${formatAnalyticsNumber((followUps.overdue || []).length)} follow-ups overdue`,
       });
     }
-
     return items.filter((item) => !dismissedAlerts.includes(item.id)).slice(0, 3);
-  }, [criticalInsights, dismissedAlerts, followUps.overdue, services]);
+  }, [dismissedAlerts, followUps.overdue, services]);
 
   const attendanceTrendSeries = buildSeries(
     attendanceTrends.monthly || attendanceSummary.services || [],
@@ -692,13 +670,6 @@ export default function DashboardPage() {
         helper: 'Check-in is currently open',
         to: `/attendance/services/${service.serviceId || service._id}`,
       }))),
-    ...(criticalInsights.slice(0, 2).map((insight) => ({
-      id: `insight-${insight._id || insight.id}`,
-      icon: AlertTriangle,
-      title: insight.title,
-      helper: insight.message,
-      to: '/insights',
-    }))),
     ...(upcomingEvents.slice(0, 2).map((event) => ({
       id: `event-${event.eventId || event._id}`,
       icon: Sparkles,

@@ -94,7 +94,11 @@ export const refreshBranchCache = asyncHandler(async (req, res) => {
 
 export const getHQOverview = asyncHandler(async (req, res) => {
   ensureAnalyticsCapability(req, ['hq.view', 'hq.overview.view']);
-  const data = await hqService.getHQOverview(resolveScopedTenantId(req), analyticsActor(req));
+  const data = await hqService.getHQOverview(
+    resolveScopedTenantId(req),
+    req.query,
+    analyticsActor(req),
+  );
   return success(res, data, 'HQ overview fetched successfully.');
 });
 

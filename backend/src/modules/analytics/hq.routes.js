@@ -9,7 +9,7 @@ const hqRouter = Router();
 
 hqRouter.use(auth, tenantScope);
 
-hqRouter.get('/overview', analyticsController.getHQOverview);
+hqRouter.get('/overview', analyticsQueryValidation, validate, analyticsController.getHQOverview);
 hqRouter.get('/branch-comparison', analyticsQueryValidation, validate, analyticsController.getBranchComparison);
 hqRouter.get('/growth-trends', analyticsQueryValidation, validate, analyticsController.getGrowthTrends);
 hqRouter.get(
