@@ -11,6 +11,16 @@ import {
   userRoleOptions,
 } from '../../constants/capabilities';
 
+const extractMutationErrorMessage = (mutationError, fallbackMessage) => {
+  const responseData = mutationError?.response?.data;
+  const validationMessage = responseData?.errors?.[0]?.msg;
+  return validationMessage || responseData?.message || mutationError?.message || fallbackMessage;
+};
+
+const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const phonePattern = /^[+()\-\s\d]{7,20}$/;
+const pinPattern = /^\d{4,6}$/;
+
 const buildInitialState = (allowedCapabilities = [], defaultRole = 'associate_pastor', user = null) => {
   const nextRole = user?.role || defaultRole;
   const normalizedAllowedCapabilities = normalizeCapabilities(allowedCapabilities);
@@ -82,10 +92,10 @@ export default function UserFormModal({
       onClose();
     },
     onError: (mutationError) => {
-      setError(
-        mutationError.response?.data?.message ||
-          `Unable to ${isEditing ? 'update' : 'create'} user right now.`,
-      );
+      setError(extractMutationErrorMessage(
+        mutationError,
+        `Unable to ${isEditing ? 'update' : 'create'} user right now.`,
+      ));
     },
   });
 
@@ -119,6 +129,37 @@ export default function UserFormModal({
 
     if (!isEditing && !form.pin.trim()) {
       setError('PIN is required for new users.');
+      return;
+    }
+
+    if (form.pin.trim() && !pinPattern.test(form.pin.trim())) {
+      setError('PIN must be 4 to 6 digits only.');
+      return;
+    }
+
+    if (form.email.trim() && !emailPattern.test(form.email.trim())) {
+      setError('Email must be a valid email address.');
+      return;
+    }
+
+    if (form.phone.trim() && !phonePattern.test(form.phone.trim())) {
+      setError('Phone number format is invalid.');
+      return;
+    }
+
+    if (form.photoUrl.trim()) {
+      try {
+        // Match backend URL validation before sending the request.
+        // eslint-disable-next-line no-new
+        new URL(form.photoUrl.trim());
+      } catch {
+        setError('Photo URL must be a valid full link.');
+        return;
+      }
+    }
+
+    if (!form.allBranches && !form.assignedBranches.length) {
+      setError('Select at least one assigned branch or enable all branches.');
       return;
     }
 

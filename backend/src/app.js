@@ -41,6 +41,16 @@ import { error } from './utils/apiResponse.js';
 
 const app = express();
 const apiRouter = express.Router();
+const allowedOrigins = String(env.CLIENT_ORIGIN || '')
+  .split(',')
+  .map((origin) => origin.trim())
+  .filter(Boolean);
+const corsOrigin =
+  allowedOrigins.length === 0 || allowedOrigins.includes('*')
+    ? true
+    : allowedOrigins.length === 1
+      ? allowedOrigins[0]
+      : allowedOrigins;
 
 const apiLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
@@ -56,7 +66,7 @@ const apiLimiter = rateLimit({
 app.use(helmet());
 app.use(
   cors({
-    origin: env.CLIENT_ORIGIN === '*' ? true : env.CLIENT_ORIGIN,
+    origin: corsOrigin,
     credentials: true,
   }),
 );

@@ -252,13 +252,13 @@ export function InsightCard({ insight, onRead, onAction, readLabel = 'Mark as Re
   );
 }
 
-export function MiniLine({ data, dataKey = 'value', stroke = '#C9A84C' }) {
+export function MiniLine({ data, dataKey = 'value', stroke = '#C9A84C', heightClass = 'h-20' }) {
   if (!Array.isArray(data) || !data.length) {
     return <EmptyState className="py-6" icon="~" title="No trend yet" message="Trend data will appear here when records are available." />;
   }
 
   return (
-    <div className="h-20 w-full">
+    <div className={`${heightClass} w-full`}>
       <ResponsiveContainer width="100%" height="100%">
         <LineChart data={data}>
           <Tooltip contentStyle={{ background: '#0f172a', border: '1px solid rgba(255,255,255,0.08)' }} />
@@ -269,13 +269,13 @@ export function MiniLine({ data, dataKey = 'value', stroke = '#C9A84C' }) {
   );
 }
 
-export function MiniBar({ data, dataKey = 'value', color = '#1E2A4A' }) {
+export function MiniBar({ data, dataKey = 'value', color = '#1E2A4A', heightClass = 'h-24' }) {
   if (!Array.isArray(data) || !data.length) {
     return <EmptyState className="py-6" icon="~" title="No distribution yet" message="Data will render here once enough records are available." />;
   }
 
   return (
-    <div className="h-24 w-full">
+    <div className={`${heightClass} w-full`}>
       <ResponsiveContainer width="100%" height="100%">
         <BarChart data={data}>
           <XAxis hide dataKey="label" />

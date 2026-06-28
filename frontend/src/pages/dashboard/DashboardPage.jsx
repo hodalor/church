@@ -54,23 +54,6 @@ const buildSeries = (items = [], valueKey = 'value', labelKey = 'label') =>
     value: Number(item?.[valueKey] || 0),
   }));
 
-function QuickActionCard({ label, description, to }) {
-  return (
-    <Link
-      to={to}
-      className="rounded-[18px] border border-slate-200 bg-white p-3.5 text-slate-900 shadow-[0_12px_28px_rgba(15,23,42,0.08)] transition hover:border-accent/30 hover:bg-slate-50"
-    >
-      <div className="flex items-center justify-between gap-3">
-        <div>
-          <h3 className="text-base font-semibold text-slate-900">{label}</h3>
-          <p className="mt-2 text-sm text-slate-600">{description}</p>
-        </div>
-        <ArrowRight className="h-5 w-5 text-accent" />
-      </div>
-    </Link>
-  );
-}
-
 function AlertBanner({ tone, icon: Icon, children, onDismiss }) {
   const toneClasses = {
     success: 'border-emerald-500/25 bg-emerald-500/10 text-emerald-100',
@@ -110,23 +93,23 @@ function ModuleCard({ title, metric, helper, to, chart, tone = 'line' }) {
   return (
     <Link
       to={to}
-      className={`block rounded-[18px] border p-3.5 text-slate-900 shadow-[0_12px_28px_rgba(15,23,42,0.08)] transition hover:border-accent/30 ${theme.shell}`}
+      className={`block rounded-[18px] border p-3 text-slate-900 shadow-[0_12px_28px_rgba(15,23,42,0.08)] transition hover:border-accent/30 ${theme.shell}`}
     >
-      <div className="flex items-start justify-between gap-3">
-        <div>
-          <p className="inline-flex rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-[10px] uppercase tracking-[0.2em] text-slate-500">
+      <div className="flex items-start justify-between gap-2.5">
+        <div className="min-w-0">
+          <p className="inline-flex rounded-full border border-slate-200 bg-slate-50 px-2 py-0.5 text-[9px] uppercase tracking-[0.18em] text-slate-500">
             {title}
           </p>
-          <h3 className="mt-3 text-[1.65rem] font-semibold text-slate-900">{metric}</h3>
-          <p className="mt-2 text-sm text-slate-600">{helper}</p>
+          <h3 className="mt-2 text-[1.3rem] font-semibold leading-tight text-slate-900">{metric}</h3>
+          <p className="mt-1 max-h-9 overflow-hidden text-[12px] leading-4 text-slate-600">{helper}</p>
         </div>
-        <ArrowRight className="mt-1 h-4 w-4 text-accent" />
+        <ArrowRight className="mt-1 h-3.5 w-3.5 shrink-0 text-accent" />
       </div>
-      <div className="mt-4">
+      <div className="mt-2.5">
         {tone === 'bar' ? (
-          <MiniBar data={chart} color={theme.chart} />
+          <MiniBar data={chart} color={theme.chart} heightClass="h-14" />
         ) : (
-          <MiniLine data={chart} stroke={theme.chart} />
+          <MiniLine data={chart} stroke={theme.chart} heightClass="h-14" />
         )}
       </div>
     </Link>
@@ -448,41 +431,6 @@ export default function DashboardPage() {
             ? mediaKpis
             : pastorKpis;
 
-  const quickActions = isCareDashboard
-    ? [
-        { label: 'My Follow-ups', description: 'Open overdue and upcoming visitor tasks.', to: '/visitors/follow-ups' },
-        { label: 'Open Case', description: 'Create a new pastoral care case.', to: '/pastoral/cases/new' },
-        { label: 'Prayer Requests', description: 'Review requests that need response.', to: '/communication/prayer-requests' },
-        { label: 'Visit Log', description: 'See assigned visitors and follow-up history.', to: '/visitors' },
-      ]
-    : isVolunteerDashboard
-      ? [
-          { label: 'View Roster', description: 'Open current duty rosters.', to: '/volunteers/rosters' },
-          { label: 'My Volunteers', description: 'Review team members and reliability.', to: '/volunteers/list' },
-          { label: 'Upcoming Events', description: 'Prepare coverage for upcoming events.', to: '/events' },
-          { label: 'Mark Attendance', description: 'Jump into the service check-in console.', to: '/attendance/services' },
-        ]
-      : isFinanceDashboard
-        ? [
-            { label: 'Record Offering', description: 'Capture a new finance transaction.', to: '/finance/transactions/new' },
-            { label: 'Review Transactions', description: 'Verify and audit recent records.', to: '/finance/transactions' },
-            { label: 'Pending Expenses', description: 'Open approvals that need action.', to: '/finance/expenses' },
-            { label: 'Reports', description: 'View finance reporting and statements.', to: '/finance/reports' },
-          ]
-        : isMediaDashboard
-          ? [
-              { label: 'New Broadcast', description: 'Draft a new broadcast message.', to: '/communication/broadcasts/new' },
-              { label: 'Prayer Requests', description: 'Respond to communication needs.', to: '/communication/prayer-requests' },
-              { label: 'Polls', description: 'Review live engagement polls.', to: '/communication/polls' },
-              { label: 'Inbox', description: 'Open the latest inbox activity.', to: '/communication/inbox' },
-            ]
-          : [
-              { label: 'Check-in Console', description: 'Jump into live attendance capture.', to: '/attendance/services' },
-              { label: 'Record Offering', description: 'Open the finance recording flow.', to: '/finance/transactions/new' },
-              { label: 'View Insights', description: 'Review AI-detected ministry signals.', to: '/insights' },
-              { label: 'AI Assistant', description: 'Open the pastor writing workspace.', to: '/ai' },
-            ];
-
   const liveAlerts = useMemo(() => {
     const items = [];
     const liveService = services.find((service) => service.checkInOpen);
@@ -782,8 +730,8 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-6">
-      <Card className="overflow-hidden bg-gradient-to-br from-white via-white to-accent/10">
-        <div className="grid items-start gap-6 xl:grid-cols-[1.1fr_0.9fr]">
+      <div className="grid items-start gap-4 xl:grid-cols-[minmax(0,1.4fr)_repeat(4,minmax(0,1fr))]">
+        <Card className="overflow-hidden bg-gradient-to-br from-white via-white to-accent/10">
           <div>
             <p className="text-sm uppercase tracking-[0.3em] text-accent">{primaryContextText}</p>
             <h1 className="mt-3 text-3xl font-semibold text-primary">
@@ -804,20 +752,18 @@ export default function DashboardPage() {
               </Link>
             </div>
           </div>
-          <div className="grid items-start gap-3 sm:grid-cols-2">
-            {kpis.map((item) => (
-              <div
-                key={item.label}
-                className="rounded-3xl border border-primary/10 bg-white/70 p-4 shadow-sm"
-              >
-                <p className="text-xs uppercase tracking-[0.22em] text-primary/45">{item.label}</p>
-                <p className="mt-3 text-3xl font-semibold text-primary">{item.value}</p>
-                <p className="mt-2 text-sm text-primary/55">{item.helper}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </Card>
+        </Card>
+        {kpis.map((item) => (
+          <Card
+            key={item.label}
+            className="flex min-h-[160px] flex-col rounded-3xl border border-primary/10 bg-white p-4 shadow-sm"
+          >
+            <p className="text-xs uppercase tracking-[0.22em] text-primary/45">{item.label}</p>
+            <p className="mt-3 text-3xl font-semibold text-primary">{item.value}</p>
+            <p className="mt-auto pt-2 text-sm text-primary/55">{item.helper}</p>
+          </Card>
+        ))}
+      </div>
 
       {liveAlerts.length ? (
         <div className="space-y-3">
@@ -834,18 +780,7 @@ export default function DashboardPage() {
         </div>
       ) : null}
 
-      <div className="grid items-start gap-4 md:grid-cols-2 xl:grid-cols-4">
-        {quickActions.map((action) => (
-          <QuickActionCard
-            key={action.label}
-            label={action.label}
-            description={action.description}
-            to={action.to}
-          />
-        ))}
-      </div>
-
-      <div className="grid items-start gap-4 md:grid-cols-2 xl:grid-cols-4">
+      <div className="grid items-start gap-3 md:grid-cols-2 xl:grid-cols-4">
         {moduleCards.map((card) => (
           <ModuleCard key={card.title} {...card} />
         ))}

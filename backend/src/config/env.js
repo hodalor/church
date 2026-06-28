@@ -34,7 +34,10 @@ const env = {
   SUPER_ADMIN_PIN: process.env.SUPER_ADMIN_PIN,
   ANTHROPIC_API_KEY: process.env.ANTHROPIC_API_KEY || '',
   NODE_ENV: process.env.NODE_ENV || 'development',
-  CLIENT_ORIGIN: process.env.CLIENT_ORIGIN || '*',
+  CLIENT_ORIGIN:
+    process.env.CLIENT_ORIGIN ||
+    process.env.CORS_ORIGIN ||
+    (process.env.NODE_ENV === 'production' ? '*' : 'http://localhost:3000'),
 };
 
 if (Number.isNaN(env.PORT) || env.PORT <= 0) {
