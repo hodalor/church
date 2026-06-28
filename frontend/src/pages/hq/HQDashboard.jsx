@@ -58,6 +58,7 @@ export default function HQDashboard() {
   const [fromDate, setFromDate] = useState(currentMonthStartValue);
   const [toDate, setToDate] = useState(currentDateValue);
   const [branchId, setBranchId] = useState('');
+  const [showAllMetrics, setShowAllMetrics] = useState(false);
 
   const branchListQuery = useQuery({
     queryKey: ['hq-branch-list'],
@@ -225,12 +226,14 @@ export default function HQDashboard() {
 
   const isLoading =
     overviewQuery.isLoading || comparisonQuery.isLoading || growthQuery.isLoading || membersQuery.isLoading;
+  const visibleMetrics = showAllMetrics ? metrics : metrics.slice(0, 4);
 
   return (
     <AppShell>
       <AnalyticsPage
-        title="Headquarters Overview"
-        subtitle="Monitor branch performance, growth momentum, finances, and member health from one command center."
+        title="HQ Overview"
+        eyebrow="Headquarters"
+        titleClassName="text-2xl xl:text-[2rem]"
         action={
           <div className="flex flex-wrap items-center gap-2">
             <input
@@ -287,15 +290,28 @@ export default function HQDashboard() {
       >
         {isLoading ? (
           <div className="grid items-start gap-4 md:grid-cols-2 xl:grid-cols-4">
-            {Array.from({ length: 8 }).map((_, index) => (
+            {Array.from({ length: 4 }).map((_, index) => (
               <CardSkeleton key={index} />
             ))}
           </div>
         ) : (
-          <div className="grid items-start gap-4 md:grid-cols-2 xl:grid-cols-4">
-            {metrics.map((metric) => (
-              <KpiCard key={metric.label} {...metric} />
-            ))}
+          <div className="space-y-3">
+            <div className="grid items-start gap-4 md:grid-cols-2 xl:grid-cols-4">
+              {visibleMetrics.map((metric) => (
+                <KpiCard key={metric.label} {...metric} />
+              ))}
+            </div>
+            {metrics.length > 4 ? (
+              <div className="flex justify-end">
+                <button
+                  type="button"
+                  onClick={() => setShowAllMetrics((current) => !current)}
+                  className="rounded-full border border-white/10 bg-white/[0.03] px-4 py-2 text-sm font-semibold text-white/75 transition hover:border-accent/30 hover:text-white"
+                >
+                  {showAllMetrics ? 'Show Less' : 'Show More'}
+                </button>
+              </div>
+            ) : null}
           </div>
         )}
 

@@ -78,14 +78,25 @@ const KPI_CARD_THEMES = {
   },
 };
 
-export function AnalyticsPage({ title, subtitle, action, children }) {
+export function AnalyticsPage({
+  title,
+  subtitle,
+  action,
+  children,
+  eyebrow = 'Prynova Intelligence',
+  hideEyebrow = false,
+  titleClassName = '',
+  subtitleClassName = '',
+}) {
   return (
     <div className="space-y-6">
-      <div className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
+      <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
         <div>
-          <p className="text-[11px] uppercase tracking-[0.28em] text-accent">Prynova Intelligence</p>
-          <h1 className="mt-3 text-3xl font-semibold text-white">{title}</h1>
-          {subtitle ? <p className="mt-3 max-w-3xl text-sm leading-6 text-white/62">{subtitle}</p> : null}
+          {!hideEyebrow ? <p className="text-[11px] uppercase tracking-[0.28em] text-accent">{eyebrow}</p> : null}
+          <h1 className={`${hideEyebrow ? '' : 'mt-3'} text-3xl font-semibold text-white ${titleClassName}`}>{title}</h1>
+          {subtitle ? (
+            <p className={`mt-3 max-w-3xl text-sm leading-6 text-white/62 ${subtitleClassName}`}>{subtitle}</p>
+          ) : null}
         </div>
         {action ? <div className="shrink-0">{action}</div> : null}
       </div>

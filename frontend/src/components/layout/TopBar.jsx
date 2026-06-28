@@ -1,4 +1,4 @@
-import { LogOut, Menu, Plus, Search } from 'lucide-react';
+import { LogOut, Menu } from 'lucide-react';
 import Button from '../ui/Button';
 import NotificationBell from './NotificationBell';
 import { useAuth } from '../../hooks/useAuth';
@@ -39,18 +39,7 @@ export default function TopBar({ onMenuClick }) {
       </div>
 
       <div className="flex items-center gap-3">
-        <label className="hidden w-[260px] items-center gap-3 rounded-2xl border border-slate-300 bg-white px-4 py-2.5 shadow-sm lg:flex">
-          <Search className="h-4 w-4 text-slate-400" />
-          <input
-            type="text"
-            placeholder="Search members, records..."
-            className="w-full bg-transparent text-sm text-slate-900 outline-none placeholder:text-slate-500"
-          />
-        </label>
         {canViewNotifications ? <NotificationBell inboxPath="/communication/inbox" /> : null}
-        <Button variant="subtle" className="hidden h-11 w-11 px-0 lg:inline-flex">
-          <Plus className="h-4 w-4" />
-        </Button>
         <div className="hidden text-right md:block">
           <p className="text-sm font-semibold text-white">{user?.username || 'Guest User'}</p>
           <p className="text-xs text-white/40">{role || 'guest'}</p>

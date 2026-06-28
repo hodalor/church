@@ -15,7 +15,6 @@ import {
   LayoutDashboard,
   LineChart,
   Menu,
-  Search,
   Settings,
   Shield,
   Target,
@@ -400,14 +399,6 @@ export default function SuperAdminShell({ children }) {
             </div>
 
             <div className="flex items-center gap-3">
-              <label className="hidden w-[260px] items-center gap-3 rounded-2xl border border-slate-300 bg-white px-4 py-2.5 shadow-sm lg:flex">
-                <Search className="h-4 w-4 text-slate-400" />
-                <input
-                  type="text"
-                  placeholder="Search members, records..."
-                  className="w-full bg-transparent text-sm text-slate-900 outline-none placeholder:text-slate-500"
-                />
-              </label>
               <NotificationBell inboxPath="/communication/inbox" />
               <Button
                 variant="subtle"

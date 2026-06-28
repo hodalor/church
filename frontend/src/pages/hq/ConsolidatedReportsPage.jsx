@@ -100,7 +100,6 @@ export default function ConsolidatedReportsPage() {
     <AppShell>
       <AnalyticsPage
         title="Consolidated Reports"
-        subtitle="Generate premium monthly leadership reports with AI narrative, cross-module KPIs, and branch breakdowns."
         action={
           <div className="flex flex-wrap gap-2">
             <Button variant="ghost" onClick={() => window.print()}>
@@ -115,77 +114,50 @@ export default function ConsolidatedReportsPage() {
           </div>
         }
       >
-        <div className="grid gap-4 xl:grid-cols-[280px_1fr]">
-          <div className="rounded-[22px] border border-white/8 bg-[#0d1320] p-4 text-white">
-            <h3 className="text-lg font-semibold text-white">Report Generator</h3>
-            <div className="mt-4 space-y-3">
-              <select value={month} onChange={(event) => setMonth(Number(event.target.value))} className="w-full rounded-xl border border-white/10 bg-[#101827] px-3.5 py-2.5 text-sm text-white">
-                {Array.from({ length: 12 }).map((_, index) => (
-                  <option key={index + 1} value={index + 1}>
-                    {new Date(year, index, 1).toLocaleString('en-US', { month: 'long' })}
+        <div className="space-y-4">
+          <div className="flex flex-wrap items-center gap-3 rounded-[22px] border border-white/8 bg-[#0d1320] p-4 text-white">
+            <select value={month} onChange={(event) => setMonth(Number(event.target.value))} className="min-w-[170px] rounded-xl border border-white/10 bg-[#101827] px-3.5 py-2.5 text-sm text-white">
+              {Array.from({ length: 12 }).map((_, index) => (
+                <option key={index + 1} value={index + 1}>
+                  {new Date(year, index, 1).toLocaleString('en-US', { month: 'long' })}
+                </option>
+              ))}
+            </select>
+            <select value={year} onChange={(event) => setYear(Number(event.target.value))} className="min-w-[130px] rounded-xl border border-white/10 bg-[#101827] px-3.5 py-2.5 text-sm text-white">
+              {Array.from({ length: 5 }).map((_, index) => {
+                const optionYear = new Date().getFullYear() - index;
+                return (
+                  <option key={optionYear} value={optionYear}>
+                    {optionYear}
                   </option>
-                ))}
-              </select>
-              <select value={year} onChange={(event) => setYear(Number(event.target.value))} className="w-full rounded-xl border border-white/10 bg-[#101827] px-3.5 py-2.5 text-sm text-white">
-                {Array.from({ length: 5 }).map((_, index) => {
-                  const optionYear = new Date().getFullYear() - index;
-                  return (
-                    <option key={optionYear} value={optionYear}>
-                      {optionYear}
-                    </option>
-                  );
-                })}
-              </select>
-              <select value={branchId} onChange={(event) => setBranchId(event.target.value)} className="w-full rounded-xl border border-white/10 bg-[#101827] px-3.5 py-2.5 text-sm text-white">
-                <option value="">All branches</option>
-                {(branchesQuery.data?.items || []).map((branch) => (
-                  <option key={branch.branchId} value={branch.branchId}>
-                    {branch.branchName}
-                  </option>
-                ))}
-              </select>
-            </div>
+                );
+              })}
+            </select>
+            <select value={branchId} onChange={(event) => setBranchId(event.target.value)} className="min-w-[190px] rounded-xl border border-white/10 bg-[#101827] px-3.5 py-2.5 text-sm text-white">
+              <option value="">All branches</option>
+              {(branchesQuery.data?.items || []).map((branch) => (
+                <option key={branch.branchId} value={branch.branchId}>
+                  {branch.branchName}
+                </option>
+              ))}
+            </select>
+            <Button variant="secondary" onClick={() => narrativeMutation.mutate()} disabled={narrativeMutation.isPending}>
+              {narrativeMutation.isPending ? 'Generating...' : 'Generate AI Narrative'}
+            </Button>
+            <Button variant="ghost" onClick={() => navigator.clipboard.writeText(streamingText || narrative)} disabled={!streamingText && !narrative}>
+              Copy
+            </Button>
           </div>
 
           {reportQuery.isLoading ? (
             <ChartSkeleton />
           ) : (
             <div ref={reportRef} className="space-y-4">
-              <div className="rounded-[22px] border border-[#C9A84C]/30 bg-[#0d1320] p-5 text-white">
-                <p className="text-sm text-[#C9A84C]">{churchName || report.tenant?.churchName || 'Church'}</p>
-                <h2 className="mt-2 text-2xl font-semibold text-white">Executive Summary</h2>
-                <div className="mt-4 grid gap-4 md:grid-cols-2">
-                  <div>
-                    <p className="text-sm font-medium text-emerald-300">Highlights</p>
-                    <div className="mt-2 space-y-2">
-                      {(report.executiveSummary?.highlights || []).map((item, index) => (
-                        <p key={index} className="text-sm text-white/72">• {item}</p>
-                      ))}
-                    </div>
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-rose-300">Concerns</p>
-                    <div className="mt-2 space-y-2">
-                      {(report.executiveSummary?.concerns || []).map((item, index) => (
-                        <p key={index} className="text-sm text-white/72">• {item}</p>
-                      ))}
-                    </div>
-                  </div>
+              {narrativeMutation.isPending || streamingText ? (
+                <div className="rounded-[18px] border border-white/8 bg-[#0d1320] px-4 py-3 text-sm text-white/75">
+                  {streamingText || 'Writing your report narrative...'}
                 </div>
-                <div className="mt-5 flex flex-wrap gap-2">
-                  <Button variant="secondary" onClick={() => narrativeMutation.mutate()}>
-                    Generate AI Narrative
-                  </Button>
-                  <Button variant="ghost" onClick={() => navigator.clipboard.writeText(streamingText || narrative)}>
-                    Copy
-                  </Button>
-                </div>
-                {narrativeMutation.isPending || streamingText ? (
-                  <div className="mt-5 rounded-[22px] border border-white/8 bg-white/[0.03] p-4">
-                    <p className="text-sm text-white/75">{streamingText || 'Writing your report narrative...'}</p>
-                  </div>
-                ) : null}
-              </div>
+              ) : null}
 
               <FilterTabs tabs={sections} value={openSection} onChange={setOpenSection} />
               <div className="rounded-[22px] border border-white/8 bg-[#0d1320] p-4 text-white">
@@ -207,13 +179,10 @@ export default function ConsolidatedReportsPage() {
                       />
                     ))}
                 </div>
-                <p className="mt-4 text-sm text-white/58">
-                  {sections.find((item) => item.value === openSection)?.label} intelligence for {month}/{year}.
-                </p>
               </div>
 
               <div className="rounded-[22px] border border-white/8 bg-[#0d1320] p-4 text-white">
-                <h3 className="text-lg font-semibold text-white">Branch Breakdown</h3>
+                <h3 className="text-lg font-semibold text-white">{churchName || report.tenant?.churchName || 'Church'} Branch Breakdown</h3>
                 <div className="mt-4 overflow-x-auto">
                   <table className="min-w-full text-left text-sm text-white/75">
                     <thead className="text-[11px] uppercase tracking-[0.18em] text-white/40">
