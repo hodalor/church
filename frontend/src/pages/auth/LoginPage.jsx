@@ -121,7 +121,7 @@ export default function LoginPage() {
 
             <form className="mt-8 space-y-5" onSubmit={handleSubmit(onSubmit)}>
               <Input
-                label="Tenant ID"
+                label="Church ID"
                 placeholder="e.g. calvary"
                 error={errors.tenantId?.message}
                 {...register('tenantId', {
