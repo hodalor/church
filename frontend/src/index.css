@@ -160,6 +160,30 @@ select option {
   color: #475569 !important;
 }
 
+.card-surface :is(h1, h2, h3, h4, h5, h6, p, span, small, strong, em, label, td, th, li, dt, dd, div)[class~='text-white/80'],
+.card-surface :is(h1, h2, h3, h4, h5, h6, p, span, small, strong, em, label, td, th, li, dt, dd, div)[class~='text-white/75'],
+.card-surface :is(h1, h2, h3, h4, h5, h6, p, span, small, strong, em, label, td, th, li, dt, dd, div)[class~='text-white/70'],
+.card-surface :is(h1, h2, h3, h4, h5, h6, p, span, small, strong, em, label, td, th, li, dt, dd, div)[class~='text-white/65'],
+.card-surface :is(h1, h2, h3, h4, h5, h6, p, span, small, strong, em, label, td, th, li, dt, dd, div)[class~='text-white/60'],
+.card-surface :is(h1, h2, h3, h4, h5, h6, p, span, small, strong, em, label, td, th, li, dt, dd, div)[class~='text-white/55'],
+.card-surface :is(h1, h2, h3, h4, h5, h6, p, span, small, strong, em, label, td, th, li, dt, dd, div)[class~='text-white/50'],
+.card-surface :is(h1, h2, h3, h4, h5, h6, p, span, small, strong, em, label, td, th, li, dt, dd, div)[class~='text-white/45'],
+.card-surface :is(h1, h2, h3, h4, h5, h6, p, span, small, strong, em, label, td, th, li, dt, dd, div)[class~='text-white/40'],
+.card-surface :is(h1, h2, h3, h4, h5, h6, p, span, small, strong, em, label, td, th, li, dt, dd, div)[class~='text-white/35'] {
+  color: #475569 !important;
+}
+
+.card-surface :is(h1, h2, h3, h4, h5, h6, p, span, small, strong, em, label, td, th, li, dt, dd, div)[class~='text-primary'] {
+  color: #0f172a !important;
+}
+
+.card-surface :is(button, a, span, p, div)[class*='bg-white/5'],
+.card-surface :is(button, a, span, p, div)[class*='bg-[#0f1626]'],
+.card-surface :is(button, a, span, p, div)[class*='bg-[#101827]'],
+.card-surface :is(button, a, span, p, div)[class*='bg-[#0b1120]'] {
+  color: #0f172a;
+}
+
 .card-surface :is(div, section, article, aside, label, header, footer)[class*='bg-white/5'],
 .card-surface :is(div, section, article, aside, label, header, footer)[class*='bg-[#101827]'],
 .card-surface :is(div, section, article, aside, label, header, footer)[class*='bg-[#0b1120]'],

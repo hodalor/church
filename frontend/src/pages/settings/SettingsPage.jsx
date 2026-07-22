@@ -24,6 +24,7 @@ import { useBrandingStore } from '../../stores/brandingStore';
 import { getDescendantGroupingIds, getGroupingTreeRows } from '../../utils/groupings';
 import { normalizeEligibleCountries } from '../../utils/platformConfig';
 import { supabaseUpload } from '../../utils/supabaseUpload';
+import { showErrorToast, showSuccessToast } from '../../utils/toast';
 
 const platformTabs = [
   { id: 'config', label: 'Config', icon: Shield },
@@ -46,6 +47,13 @@ const emptyCountryDraft = {
   countryCode: '',
   currencyCode: '',
   currencySymbol: '',
+};
+
+const emptyPromotedApp = {
+  id: '',
+  title: '',
+  description: '',
+  href: '',
 };
 
 const shellPanelClass =
@@ -240,6 +248,96 @@ function SourceOfTruthCard({ eyebrow, title, description, tags = [], to, actionL
   );
 }
 
+function PromotedAppsEditor({ apps, onChange, disabled }) {
+  const updateApp = (index, key, value) => {
+    onChange(
+      apps.map((app, appIndex) =>
+        appIndex === index
+          ? {
+              ...app,
+              [key]: value,
+            }
+          : app,
+      ),
+    );
+  };
+
+  const addApp = () => {
+    onChange([
+      ...apps,
+      {
+        ...emptyPromotedApp,
+        id: `app-${Date.now()}`,
+      },
+    ]);
+  };
+
+  const removeApp = (index) => {
+    onChange(apps.filter((_, appIndex) => appIndex !== index));
+  };
+
+  return (
+    <div className={`space-y-4 p-4 ${innerPanelClass}`}>
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <h3 className="text-base font-semibold text-white">Promoted Apps</h3>
+          <p className="mt-1 text-sm text-white/55">
+            Add other products to advertise on the login screen. Clicking a card opens its link.
+          </p>
+        </div>
+        <Button type="button" variant="secondary" disabled={disabled} onClick={addApp}>
+          Add app
+        </Button>
+      </div>
+
+      {apps.length ? (
+        <div className="space-y-4">
+          {apps.map((app, index) => (
+            <div key={app.id || index} className="space-y-3 rounded-[18px] border border-white/10 bg-white/[0.03] p-4">
+              <div className="grid gap-3 md:grid-cols-2">
+                <Input
+                  label="App title"
+                  value={app.title || ''}
+                  disabled={disabled}
+                  onChange={(event) => updateApp(index, 'title', event.target.value)}
+                  placeholder="EduPrynova"
+                />
+                <Input
+                  label="Link"
+                  value={app.href || ''}
+                  disabled={disabled}
+                  onChange={(event) => updateApp(index, 'href', event.target.value)}
+                  placeholder="https://example.com"
+                />
+              </div>
+              <label className="block space-y-2">
+                <span className="text-sm font-medium text-white/75">Description</span>
+                <textarea
+                  rows={3}
+                  value={app.description || ''}
+                  disabled={disabled}
+                  onChange={(event) => updateApp(index, 'description', event.target.value)}
+                  className={inputClass}
+                  placeholder="Short message that explains the app."
+                />
+              </label>
+              <div className="flex justify-end">
+                <Button type="button" variant="ghost" disabled={disabled} onClick={() => removeApp(index)}>
+                  Remove
+                </Button>
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <div className="rounded-[18px] border border-dashed border-white/12 bg-white/[0.03] px-4 py-5 text-sm text-white/55">
+          No promoted apps added yet.
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function SettingsPage() {
   const { role, tenantId } = useAuth();
   const { hasCapability } = useCapabilities();
@@ -354,6 +452,13 @@ export default function SettingsPage() {
         configSource.branding?.heroSubtitle ||
         globalBranding.heroSubtitle ||
         'Sign in to the master console or your church tenant dashboard.',
+      backgroundImageUrl:
+        configSource.branding?.backgroundImageUrl || globalBranding.backgroundImageUrl || '',
+      promotedApps: Array.isArray(configSource.branding?.promotedApps)
+        ? configSource.branding.promotedApps
+        : Array.isArray(globalBranding.promotedApps)
+          ? globalBranding.promotedApps
+          : [],
     });
     setPlatformConfig({
       eligibleCountries: normalizeEligibleCountries(
@@ -388,6 +493,8 @@ export default function SettingsPage() {
           heroTitle: data.branding.heroTitle || 'Secure church operations in one elegant workspace.',
           heroSubtitle:
             data.branding.heroSubtitle || 'Sign in to the master console or your church tenant dashboard.',
+          backgroundImageUrl: data.branding.backgroundImageUrl || '',
+          promotedApps: Array.isArray(data.branding.promotedApps) ? data.branding.promotedApps : [],
         });
       }
 
@@ -494,17 +601,31 @@ export default function SettingsPage() {
       return;
     }
 
-    const extension = file.name.split('.').pop();
-    const path = `branding/${mode}-${Date.now()}.${extension}`;
-    const url = await supabaseUpload(file, 'church-media', path);
+    try {
+      const extension = file.name.split('.').pop();
+      const path = `branding/${mode}-${Date.now()}.${extension}`;
+      const url = await supabaseUpload(file, 'church-media', path);
 
-    if (mode === 'global') {
-      setGlobalForm((current) => ({ ...current, logoUrl: url }));
-    } else {
-      setBrandingForm((current) => ({ ...current, logoUrl: url }));
+      if (mode === 'global') {
+        setGlobalForm((current) => ({ ...current, logoUrl: url }));
+      } else if (mode === 'background') {
+        setGlobalForm((current) => ({ ...current, backgroundImageUrl: url }));
+      } else {
+        setBrandingForm((current) => ({ ...current, logoUrl: url }));
+      }
+
+      showSuccessToast(
+        mode === 'global'
+          ? 'Global logo uploaded.'
+          : mode === 'background'
+            ? 'Login background uploaded.'
+            : 'Tenant logo uploaded.',
+      );
+    } catch (error) {
+      showErrorToast(error.message || 'Logo upload failed.');
+    } finally {
+      event.target.value = '';
     }
-
-    event.target.value = '';
   };
 
   const handleSaveContent = () => {
@@ -654,6 +775,35 @@ export default function SettingsPage() {
                     placeholder="Sign in to the master console or your church tenant dashboard."
                   />
                 </label>
+                <Input
+                  label="Login background image URL"
+                  value={globalForm.backgroundImageUrl || ''}
+                  disabled={!canEditConfig}
+                  onChange={(event) =>
+                    setGlobalForm((current) => ({ ...current, backgroundImageUrl: event.target.value }))
+                  }
+                  placeholder="https://images.example.com/church-background.jpg"
+                />
+                <label className="block space-y-2">
+                  <span className="text-sm font-medium text-white/75">Upload Login Background</span>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    disabled={!canEditConfig}
+                    onChange={(event) => handleBrandUpload(event, 'background')}
+                    className={inputClass}
+                  />
+                </label>
+                <PromotedAppsEditor
+                  apps={globalForm.promotedApps || []}
+                  disabled={!canEditConfig}
+                  onChange={(nextApps) =>
+                    setGlobalForm((current) => ({
+                      ...current,
+                      promotedApps: nextApps,
+                    }))
+                  }
+                />
 
                 <div className={`flex items-center justify-between px-4 py-3 text-sm text-white/60 ${innerPanelClass}`}>
                   <span>{canEditConfig ? 'Changes apply to all workspaces.' : 'Read only in tenant mode.'}</span>
@@ -683,6 +833,41 @@ export default function SettingsPage() {
                   logoUrl={globalForm.logoUrl}
                   caption={globalForm.tagline || 'Church OS'}
                 />
+                <div className={`space-y-4 overflow-hidden p-4 ${violetPanelClass}`}>
+                  <div
+                    className="min-h-[180px] rounded-[18px] border border-white/10 bg-cover bg-center"
+                    style={{
+                      backgroundImage: globalForm.backgroundImageUrl
+                        ? `linear-gradient(135deg, rgba(6, 10, 22, 0.84), rgba(8, 16, 36, 0.72)), url(${globalForm.backgroundImageUrl})`
+                        : 'linear-gradient(135deg, rgba(6, 10, 22, 0.98), rgba(16, 28, 56, 0.92))',
+                    }}
+                  >
+                    <div className="flex h-full flex-col justify-end p-5">
+                      <p className="text-[11px] uppercase tracking-[0.3em] text-accent/85">Auth Preview</p>
+                      <h3 className="mt-3 text-2xl font-semibold text-white">
+                        {globalForm.heroTitle || 'Secure church operations in one elegant workspace.'}
+                      </h3>
+                      <p className="mt-2 max-w-md text-sm leading-6 text-white/72">
+                        {globalForm.heroSubtitle || 'Sign in to the master console or your church tenant dashboard.'}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <p className="text-[11px] uppercase tracking-[0.28em] text-white/45">Promoted Apps</p>
+                    {(globalForm.promotedApps || []).length ? (
+                      <div className="space-y-2">
+                        {(globalForm.promotedApps || []).slice(0, 3).map((app) => (
+                          <div key={app.id || app.href} className="rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-3">
+                            <p className="font-semibold text-white">{app.title}</p>
+                            <p className="mt-1 text-sm text-white/60">{app.description || app.href}</p>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-sm text-white/55">No promoted apps yet.</p>
+                    )}
+                  </div>
+                </div>
               </div>
             </Card>
           </div>

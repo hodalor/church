@@ -9,6 +9,8 @@ const defaultGlobalBranding = {
   tagline: 'Church OS',
   heroTitle: 'Secure church operations in one elegant workspace.',
   heroSubtitle: 'Sign in to the master console or your church tenant dashboard.',
+  backgroundImageUrl: '',
+  promotedApps: [],
 };
 
 const defaultTenantBranding = {

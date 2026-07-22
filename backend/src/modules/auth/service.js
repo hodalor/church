@@ -19,6 +19,8 @@ const DEFAULT_PUBLIC_BRANDING = {
   tagline: 'Church OS',
   heroTitle: 'Secure church operations in one elegant workspace.',
   heroSubtitle: 'Sign in to the master console or your church tenant dashboard.',
+  backgroundImageUrl: '',
+  promotedApps: [],
 };
 
 const hashRefreshToken = async (refreshToken) => bcrypt.hash(refreshToken, REFRESH_TOKEN_SALT_ROUNDS);
@@ -226,6 +228,17 @@ export const getPublicBrandingService = async () => {
     tagline: String(branding.tagline || DEFAULT_PUBLIC_BRANDING.tagline),
     heroTitle: String(branding.heroTitle || DEFAULT_PUBLIC_BRANDING.heroTitle),
     heroSubtitle: String(branding.heroSubtitle || DEFAULT_PUBLIC_BRANDING.heroSubtitle),
+    backgroundImageUrl: String(branding.backgroundImageUrl || DEFAULT_PUBLIC_BRANDING.backgroundImageUrl),
+    promotedApps: Array.isArray(branding.promotedApps)
+      ? branding.promotedApps
+          .map((item, index) => ({
+            id: String(item?.id || `app-${index + 1}`),
+            title: String(item?.title || ''),
+            description: String(item?.description || ''),
+            href: String(item?.href || ''),
+          }))
+          .filter((item) => item.title && item.href)
+      : DEFAULT_PUBLIC_BRANDING.promotedApps,
   };
 };
 

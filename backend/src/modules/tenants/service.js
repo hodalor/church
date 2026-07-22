@@ -128,6 +128,41 @@ const buildTenantBranding = (tenantOrPayload = {}) => ({
     normalizeString(tenantOrPayload.branding?.tagline) ||
     normalizeString(tenantOrPayload.tagline) ||
     'Tenant workspace',
+  heroTitle:
+    normalizeString(tenantOrPayload.branding?.heroTitle, { lowercase: false }) ||
+    normalizeString(tenantOrPayload.heroTitle, { lowercase: false }) ||
+    'Secure church operations in one elegant workspace.',
+  heroSubtitle:
+    normalizeString(tenantOrPayload.branding?.heroSubtitle, { lowercase: false }) ||
+    normalizeString(tenantOrPayload.heroSubtitle, { lowercase: false }) ||
+    'Sign in to the master console or your church tenant dashboard.',
+  backgroundImageUrl:
+    normalizeString(tenantOrPayload.branding?.backgroundImageUrl, { lowercase: false }) ||
+    normalizeString(tenantOrPayload.backgroundImageUrl, { lowercase: false }) ||
+    '',
+  promotedApps: Array.isArray(tenantOrPayload.branding?.promotedApps)
+    ? tenantOrPayload.branding.promotedApps
+        .map((item, index) => ({
+          id:
+            normalizeString(item?.id, { lowercase: false }) ||
+            `app-${index + 1}`,
+          title: normalizeString(item?.title, { lowercase: false }) || '',
+          description: normalizeString(item?.description, { lowercase: false }) || '',
+          href: normalizeString(item?.href, { lowercase: false }) || '',
+        }))
+        .filter((item) => item.title && item.href)
+    : Array.isArray(tenantOrPayload.promotedApps)
+      ? tenantOrPayload.promotedApps
+          .map((item, index) => ({
+            id:
+              normalizeString(item?.id, { lowercase: false }) ||
+              `app-${index + 1}`,
+            title: normalizeString(item?.title, { lowercase: false }) || '',
+            description: normalizeString(item?.description, { lowercase: false }) || '',
+            href: normalizeString(item?.href, { lowercase: false }) || '',
+          }))
+          .filter((item) => item.title && item.href)
+      : [],
 });
 
 const buildTenantContent = (tenantOrPayload = {}) => ({
@@ -182,6 +217,45 @@ const buildTenantBrandingPatch = (payload = {}) => {
       normalizeString(nestedBranding.tagline) ||
       normalizeString(payload.tagline) ||
       'Tenant workspace';
+  }
+
+  if (hasOwn(nestedBranding, 'heroTitle') || hasOwn(payload, 'heroTitle')) {
+    patch.heroTitle =
+      normalizeString(nestedBranding.heroTitle, { lowercase: false }) ||
+      normalizeString(payload.heroTitle, { lowercase: false }) ||
+      'Secure church operations in one elegant workspace.';
+  }
+
+  if (hasOwn(nestedBranding, 'heroSubtitle') || hasOwn(payload, 'heroSubtitle')) {
+    patch.heroSubtitle =
+      normalizeString(nestedBranding.heroSubtitle, { lowercase: false }) ||
+      normalizeString(payload.heroSubtitle, { lowercase: false }) ||
+      'Sign in to the master console or your church tenant dashboard.';
+  }
+
+  if (hasOwn(nestedBranding, 'backgroundImageUrl') || hasOwn(payload, 'backgroundImageUrl')) {
+    patch.backgroundImageUrl =
+      normalizeString(nestedBranding.backgroundImageUrl, { lowercase: false }) ||
+      normalizeString(payload.backgroundImageUrl, { lowercase: false }) ||
+      '';
+  }
+
+  if (hasOwn(nestedBranding, 'promotedApps') || hasOwn(payload, 'promotedApps')) {
+    const promotedAppsSource = hasOwn(nestedBranding, 'promotedApps')
+      ? nestedBranding.promotedApps
+      : payload.promotedApps;
+    patch.promotedApps = Array.isArray(promotedAppsSource)
+      ? promotedAppsSource
+          .map((item, index) => ({
+            id:
+              normalizeString(item?.id, { lowercase: false }) ||
+              `app-${index + 1}`,
+            title: normalizeString(item?.title, { lowercase: false }) || '',
+            description: normalizeString(item?.description, { lowercase: false }) || '',
+            href: normalizeString(item?.href, { lowercase: false }) || '',
+          }))
+          .filter((item) => item.title && item.href)
+      : [];
   }
 
   return patch;

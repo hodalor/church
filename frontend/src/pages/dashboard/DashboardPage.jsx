@@ -78,29 +78,31 @@ function AlertBanner({ tone, icon: Icon, children, onDismiss }) {
 function ModuleCard({ title, metric, helper, to, chart, tone = 'line' }) {
   const palette = {
     line: {
-      shell: 'border-slate-200 bg-white hover:bg-slate-50',
-      chart: '#A78BFA',
+      shell:
+        'border-white/10 bg-[linear-gradient(180deg,rgba(14,20,36,0.98),rgba(8,13,24,0.96))] hover:border-accent/35 hover:bg-[linear-gradient(180deg,rgba(18,26,45,0.98),rgba(10,16,28,0.96))]',
+      chart: '#D9B55D',
     },
     bar: {
-      shell: 'border-slate-200 bg-white hover:bg-slate-50',
-      chart: '#F4C95D',
+      shell:
+        'border-white/10 bg-[linear-gradient(180deg,rgba(14,20,36,0.98),rgba(8,13,24,0.96))] hover:border-accent/35 hover:bg-[linear-gradient(180deg,rgba(18,26,45,0.98),rgba(10,16,28,0.96))]',
+      chart: '#D9B55D',
     },
   };
   const theme = palette[tone] || palette.line;
   return (
     <Link
       to={to}
-      className={`block min-h-[178px] rounded-[18px] border p-3 text-slate-900 shadow-[0_12px_28px_rgba(15,23,42,0.08)] transition hover:border-accent/30 ${theme.shell}`}
+      className={`block min-h-[178px] rounded-[22px] border p-3.5 text-white shadow-[0_18px_40px_rgba(0,0,0,0.28)] transition ${theme.shell}`}
     >
       <div className="flex items-start justify-between gap-2.5">
         <div className="min-w-0">
-          <p className="inline-flex rounded-full border border-slate-200 bg-slate-50 px-2 py-0.5 text-[9px] uppercase tracking-[0.18em] text-slate-500">
+          <p className="inline-flex rounded-full border border-[#d9b55d]/20 bg-[#d9b55d]/10 px-2.5 py-0.5 text-[9px] uppercase tracking-[0.22em] text-[#ebd59b]">
             {title}
           </p>
-          <h3 className="mt-2 text-[1.3rem] font-semibold leading-tight text-slate-900">{metric}</h3>
-          <p className="mt-1 max-h-9 overflow-hidden text-[12px] leading-4 text-slate-600">{helper}</p>
+          <h3 className="mt-2 text-[1.3rem] font-semibold leading-tight text-white">{metric}</h3>
+          <p className="mt-1 max-h-9 overflow-hidden text-[12px] leading-4 text-white/60">{helper}</p>
         </div>
-        <ArrowRight className="mt-1 h-3.5 w-3.5 shrink-0 text-accent" />
+        <ArrowRight className="mt-1 h-3.5 w-3.5 shrink-0 text-[#ebd59b]" />
       </div>
       <div className="mt-2.5">
         {tone === 'bar' ? (
@@ -659,6 +661,7 @@ export default function DashboardPage() {
             ];
 
   const workspaceSubtitle = isBranchDashboard ? `${workspaceName} • ${scopedBranchName}` : workspaceName;
+  const heroBackground = tenantBranding.backgroundImageUrl || '';
   const recentHighlights = [
     ...(services
       .filter((service) => service.checkInOpen)
@@ -689,23 +692,41 @@ export default function DashboardPage() {
   return (
     <div className="space-y-6">
       <div className="grid items-start gap-4 xl:grid-cols-[minmax(0,1.4fr)_repeat(4,minmax(0,1fr))]">
-        <Card className="flex min-h-[160px] overflow-hidden bg-gradient-to-br from-white via-white to-accent/10">
-          <div className="flex flex-col justify-center">
-            <h1 className="text-[2rem] font-semibold leading-tight text-primary">
+        <Card
+          className="relative flex min-h-[190px] overflow-hidden border-white/10 bg-[linear-gradient(135deg,rgba(10,16,31,0.98),rgba(6,12,24,0.94))] text-white shadow-[0_24px_50px_rgba(0,0,0,0.3)]"
+          style={{
+            backgroundImage: heroBackground
+              ? `linear-gradient(90deg, rgba(7,12,24,0.92), rgba(7,12,24,0.72)), url(${heroBackground})`
+              : undefined,
+            backgroundSize: heroBackground ? 'cover' : undefined,
+            backgroundPosition: heroBackground ? 'center' : undefined,
+          }}
+        >
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(217,181,93,0.18),transparent_28%)]" />
+          <div className="relative flex flex-col justify-center px-2">
+            <p className="text-[11px] uppercase tracking-[0.32em] text-[#ebd59b]">{todayLabel}</p>
+            <h1 className="mt-4 font-serif text-[2.4rem] font-semibold leading-tight text-white sm:text-[2.9rem]">
               {getGreeting()}, {firstName}
             </h1>
-            <p className="mt-3 max-w-2xl text-sm leading-5 text-primary/65">{workspaceSubtitle}</p>
-            <p className="mt-2 text-sm text-primary/55">{todayLabel}</p>
+            <p className="mt-3 max-w-2xl text-base leading-7 text-white/72">{workspaceSubtitle}</p>
+            <div className="mt-5 flex flex-wrap gap-2">
+              <span className="rounded-full border border-white/10 bg-white/[0.04] px-3.5 py-2 text-sm text-white/70">
+                Kingdom impact in view
+              </span>
+              <span className="rounded-full border border-[#d9b55d]/20 bg-[#d9b55d]/10 px-3.5 py-2 text-sm text-[#ebd59b]">
+                Live ministry pulse
+              </span>
+            </div>
           </div>
         </Card>
         {kpis.map((item) => (
           <Card
             key={item.label}
-            className="flex min-h-[160px] flex-col rounded-3xl border border-primary/10 bg-white p-4 shadow-sm"
+            className="flex min-h-[170px] flex-col rounded-[24px] border border-white/10 bg-[linear-gradient(180deg,rgba(13,20,37,0.98),rgba(8,14,26,0.96))] p-4 text-white shadow-[0_20px_40px_rgba(0,0,0,0.24)]"
           >
-            <p className="text-xs uppercase tracking-[0.22em] text-primary/45">{item.label}</p>
-            <p className="mt-3 text-3xl font-semibold text-primary">{item.value}</p>
-            <p className="mt-auto pt-2 text-sm text-primary/55">{item.helper}</p>
+            <p className="text-xs uppercase tracking-[0.22em] text-[#ebd59b]/80">{item.label}</p>
+            <p className="mt-3 text-3xl font-semibold text-white">{item.value}</p>
+            <p className="mt-auto pt-2 text-sm text-white/58">{item.helper}</p>
           </Card>
         ))}
       </div>
@@ -732,10 +753,10 @@ export default function DashboardPage() {
       </div>
 
       <div className="grid items-start gap-6 xl:grid-cols-[1.2fr_0.8fr]">
-        <Card className="space-y-4">
+        <Card className="space-y-4 border-white/10 bg-[linear-gradient(180deg,rgba(12,18,34,0.98),rgba(8,13,24,0.96))] text-white shadow-[0_20px_40px_rgba(0,0,0,0.24)]">
           <div>
-            <p className="text-sm uppercase tracking-[0.25em] text-accent">Momentum</p>
-            <h2 className="mt-2 text-xl font-semibold text-slate-900">
+            <p className="text-sm uppercase tracking-[0.25em] text-[#ebd59b]">Momentum</p>
+            <h2 className="mt-2 text-xl font-semibold text-white">
               {isCareDashboard
                 ? 'Follow-up cadence'
                 : isVolunteerDashboard
@@ -762,10 +783,10 @@ export default function DashboardPage() {
           </div>
         </Card>
 
-        <Card className="space-y-4">
+        <Card className="space-y-4 border-white/10 bg-[linear-gradient(180deg,rgba(12,18,34,0.98),rgba(8,13,24,0.96))] text-white shadow-[0_20px_40px_rgba(0,0,0,0.24)]">
           <div>
-            <p className="text-sm uppercase tracking-[0.25em] text-accent">Highlights</p>
-            <h2 className="mt-2 text-xl font-semibold text-slate-900">What needs your attention</h2>
+            <p className="text-sm uppercase tracking-[0.25em] text-[#ebd59b]">Highlights</p>
+            <h2 className="mt-2 text-xl font-semibold text-white">What needs your attention</h2>
           </div>
           <div className="space-y-3">
             {recentHighlights.length ? (
@@ -776,14 +797,14 @@ export default function DashboardPage() {
                   <Link
                     key={item.id}
                     to={item.to}
-                    className="flex items-start gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 transition hover:bg-slate-100"
+                    className="flex items-start gap-3 rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 transition hover:bg-white/[0.06]"
                   >
-                    <div className="mt-0.5 rounded-xl bg-accent/10 p-2 text-accent">
+                    <div className="mt-0.5 rounded-xl bg-[#d9b55d]/10 p-2 text-[#ebd59b]">
                       <Icon className="h-4 w-4" />
                     </div>
                     <div className="min-w-0">
-                      <p className="font-medium text-slate-900">{item.title}</p>
-                      <p className="mt-1 text-sm text-slate-600">{item.helper}</p>
+                      <p className="font-medium text-white">{item.title}</p>
+                      <p className="mt-1 text-sm text-white/60">{item.helper}</p>
                     </div>
                   </Link>
                 );

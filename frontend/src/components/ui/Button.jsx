@@ -13,7 +13,7 @@ export default function Button({
     ghost:
       'border border-white/10 bg-white/[0.04] text-white hover:bg-white/[0.08] hover:border-white/15',
     subtle:
-      'border border-white/10 bg-[#0f1626] text-white/80 hover:bg-[#161f31] hover:text-white hover:border-white/15',
+      'border border-slate-300 bg-white text-slate-800 hover:border-accent/35 hover:bg-slate-50 hover:text-slate-900',
   };
 
   return (

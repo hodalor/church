@@ -505,6 +505,7 @@ export default function MembersListPage() {
             currentPage={membersQuery.data?.page || page}
             totalPages={membersQuery.data?.totalPages || 1}
             onPageChange={setPage}
+            tone="light"
           />
         </Card>
       </div>

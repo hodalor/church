@@ -53,11 +53,11 @@ export default function TenantsListPage() {
         key: 'logo',
         header: 'Logo',
         render: (tenant) => (
-          <div className="flex h-12 w-12 items-center justify-center overflow-hidden rounded-2xl bg-white/5">
+          <div className="flex h-12 w-12 items-center justify-center overflow-hidden rounded-2xl bg-slate-100">
             {tenant.logoUrl ? (
               <img src={tenant.logoUrl} alt={tenant.churchName} className="h-full w-full object-cover" />
             ) : (
-              <span className="text-xs font-semibold text-white/45">N/A</span>
+              <span className="text-xs font-semibold text-slate-500">N/A</span>
             )}
           </div>
         ),
@@ -86,7 +86,11 @@ export default function TenantsListPage() {
         header: 'Actions',
         render: (tenant) => (
           <div className="flex gap-2">
-            <Button variant="subtle" onClick={() => navigate(`/superadmin/tenants/${tenant.tenantId}`)}>
+            <Button
+              variant="ghost"
+              className="border-slate-300 bg-white text-slate-900 hover:border-accent/40 hover:bg-slate-50 hover:text-slate-900"
+              onClick={() => navigate(`/superadmin/tenants/${tenant.tenantId}`)}
+            >
               View details
             </Button>
             <Button
@@ -152,9 +156,9 @@ export default function TenantsListPage() {
             },
           ].map((item) => (
             <Card key={item.label} className="min-h-[118px] p-4">
-              <p className="text-[11px] uppercase tracking-[0.22em] text-white/55">{item.label}</p>
-              <p className="mt-4 font-serif text-3xl font-semibold leading-none text-white">{item.value}</p>
-              <p className="mt-3 text-xs text-white/40">{item.helper}</p>
+              <p className="text-[11px] uppercase tracking-[0.22em] text-slate-500">{item.label}</p>
+              <p className="mt-4 font-serif text-3xl font-semibold leading-none text-slate-900">{item.value}</p>
+              <p className="mt-3 text-xs text-slate-500">{item.helper}</p>
             </Card>
           ))}
         </div>
@@ -179,7 +183,9 @@ export default function TenantsListPage() {
                     setFilter(tab);
                   }}
                   className={`rounded-full px-4 py-2 text-sm font-semibold capitalize ${
-                    filter === tab ? 'bg-accent text-primary' : 'border border-white/10 bg-white/5 text-white/70'
+                    filter === tab
+                      ? 'bg-accent text-primary'
+                      : 'border border-slate-300 bg-white text-slate-700 hover:border-accent/40 hover:text-slate-900'
                   }`}
                 >
                   {tab}
@@ -188,12 +194,13 @@ export default function TenantsListPage() {
             </div>
           </div>
 
-          <DataTable columns={columns} data={tenantsQuery.data?.tenants || []} />
+          <DataTable columns={columns} data={tenantsQuery.data?.tenants || []} tone="light" />
 
           <Pagination
             currentPage={tenantsQuery.data?.page || 1}
             totalPages={tenantsQuery.data?.totalPages || 1}
             onPageChange={setPage}
+            tone="light"
           />
         </Card>
       </div>
