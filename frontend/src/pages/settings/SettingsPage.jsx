@@ -775,15 +775,18 @@ export default function SettingsPage() {
                     placeholder="Sign in to the master console or your church tenant dashboard."
                   />
                 </label>
-                <Input
-                  label="Login background image URL"
-                  value={globalForm.backgroundImageUrl || ''}
-                  disabled={!canEditConfig}
-                  onChange={(event) =>
-                    setGlobalForm((current) => ({ ...current, backgroundImageUrl: event.target.value }))
-                  }
-                  placeholder="https://images.example.com/church-background.jpg"
-                />
+                <label className="block space-y-2">
+                  <span className="text-sm font-medium text-white/75">Login background image</span>
+                  <input
+                    value={globalForm.backgroundImageUrl || 'No background uploaded yet.'}
+                    readOnly
+                    disabled
+                    className={inputClass}
+                  />
+                  <p className="text-xs text-white/50">
+                    Upload an image file below. The system saves the file and fills the background automatically.
+                  </p>
+                </label>
                 <label className="block space-y-2">
                   <span className="text-sm font-medium text-white/75">Upload Login Background</span>
                   <input
@@ -794,6 +797,31 @@ export default function SettingsPage() {
                     className={inputClass}
                   />
                 </label>
+                {globalForm.backgroundImageUrl ? (
+                  <div className="flex flex-wrap gap-3">
+                    <a
+                      href={globalForm.backgroundImageUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="inline-flex items-center rounded-full border border-white/10 bg-white/[0.04] px-4 py-2 text-sm font-semibold text-white/80 transition hover:border-accent/35 hover:text-white"
+                    >
+                      Open uploaded background
+                    </a>
+                    <Button
+                      variant="ghost"
+                      type="button"
+                      onClick={() =>
+                        setGlobalForm((current) => ({
+                          ...current,
+                          backgroundImageUrl: '',
+                        }))
+                      }
+                      disabled={!canEditConfig}
+                    >
+                      Remove background
+                    </Button>
+                  </div>
+                ) : null}
                 <PromotedAppsEditor
                   apps={globalForm.promotedApps || []}
                   disabled={!canEditConfig}
