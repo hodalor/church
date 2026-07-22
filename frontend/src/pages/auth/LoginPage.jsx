@@ -73,10 +73,10 @@ export default function LoginPage() {
             <div className="flex items-center gap-4">
               <img src={logo} alt={globalBranding.appName || 'Prynova'} className="h-12 w-auto" />
               <div>
-                <p className="text-xs uppercase tracking-[0.35em] text-accent/80">
+                <p className="text-xs uppercase tracking-[1em] text-accent/80">
                   {globalBranding.appName || 'Ecclesia'}
                 </p>
-                <p className="mt-1 text-sm text-white/55">{globalBranding.tagline || 'Church OS'}</p>
+                <p className="mt-1 text-sm text-white/55">{globalBranding.tagline || 'Church Managemnt System'}</p>
               </div>
             </div>
             <h1 className="mt-10 text-5xl font-semibold leading-tight text-white">
@@ -92,9 +92,7 @@ export default function LoginPage() {
           <Card className="w-full max-w-md rounded-[2rem] border border-white/10 bg-[#111827] p-8 text-white shadow-2xl shadow-black/20 sm:p-10">
             <p className="text-sm uppercase tracking-[0.35em] text-accent">Welcome back</p>
             <h2 className="mt-3 text-3xl font-semibold text-white">Sign in</h2>
-            <p className="mt-3 text-sm leading-6 text-white/60">
-              Access the platform with your tenant ID, username or phone number, and PIN.
-            </p>
+           
 
             <form className="mt-8 space-y-5" onSubmit={handleSubmit(onSubmit)}>
               <Input

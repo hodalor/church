@@ -7,7 +7,6 @@ import {
   isCapabilitySubset,
   normalizeCapabilities,
   resolveTenantCapabilities,
-  resolveUserCapabilities,
 } from '../access/capabilities.js';
 import { createHttpError } from '../../utils/httpError.js';
 
@@ -32,6 +31,17 @@ const normalizeString = (value, { lowercase = false } = {}) => {
   }
 
   return lowercase ? nextValue.toLowerCase() : nextValue;
+};
+
+const hasOwn = (value, key) =>
+  Boolean(value) && Object.prototype.hasOwnProperty.call(value, key);
+
+const toPlainObject = (value) => {
+  if (!value || typeof value !== 'object') {
+    return {};
+  }
+
+  return value.toObject ? value.toObject() : { ...value };
 };
 
 const normalizeStringList = (value) => {
@@ -147,12 +157,113 @@ const buildPlatformConfig = (tenantOrPayload = {}) => ({
     ) || [],
 });
 
+const buildTenantBrandingPatch = (payload = {}) => {
+  const patch = {};
+  const nestedBranding = payload.branding && typeof payload.branding === 'object' ? payload.branding : {};
+
+  if (
+    hasOwn(nestedBranding, 'appName') ||
+    hasOwn(payload, 'appName') ||
+    hasOwn(payload, 'churchName')
+  ) {
+    patch.appName =
+      normalizeString(nestedBranding.appName) ||
+      normalizeString(payload.appName) ||
+      normalizeString(payload.churchName) ||
+      '';
+  }
+
+  if (hasOwn(nestedBranding, 'logoUrl') || hasOwn(payload, 'logoUrl')) {
+    patch.logoUrl = normalizeString(nestedBranding.logoUrl) || normalizeString(payload.logoUrl) || '';
+  }
+
+  if (hasOwn(nestedBranding, 'tagline') || hasOwn(payload, 'tagline')) {
+    patch.tagline =
+      normalizeString(nestedBranding.tagline) ||
+      normalizeString(payload.tagline) ||
+      'Tenant workspace';
+  }
+
+  return patch;
+};
+
+const buildTenantContentPatch = (payload = {}) => {
+  const patch = {};
+  const nestedContent = payload.content && typeof payload.content === 'object' ? payload.content : {};
+
+  if (hasOwn(nestedContent, 'branches') || hasOwn(payload, 'branches')) {
+    patch.branches = normalizeStringList(nestedContent.branches || payload.branches);
+  }
+
+  if (hasOwn(nestedContent, 'departments') || hasOwn(payload, 'departments')) {
+    patch.departments = normalizeStringList(nestedContent.departments || payload.departments);
+  }
+
+  if (hasOwn(nestedContent, 'ministries') || hasOwn(payload, 'ministries')) {
+    patch.ministries = normalizeStringList(nestedContent.ministries || payload.ministries);
+  }
+
+  if (hasOwn(nestedContent, 'groupings') || hasOwn(payload, 'groupings')) {
+    patch.groupings = normalizeGroupingNodes(nestedContent.groupings || payload.groupings);
+  }
+
+  return patch;
+};
+
+const buildTenantFinancialPatch = (payload = {}) => {
+  const patch = {};
+  const nestedFinancial =
+    payload.financial && typeof payload.financial === 'object' ? payload.financial : {};
+
+  if (hasOwn(nestedFinancial, 'currencyCode') || hasOwn(payload, 'currencyCode')) {
+    patch.currencyCode =
+      normalizeString(nestedFinancial.currencyCode, { lowercase: false })?.toUpperCase() ||
+      normalizeString(payload.currencyCode, { lowercase: false })?.toUpperCase() ||
+      'USD';
+  }
+
+  if (hasOwn(nestedFinancial, 'currencySymbol') || hasOwn(payload, 'currencySymbol')) {
+    patch.currencySymbol =
+      normalizeString(nestedFinancial.currencySymbol) ||
+      normalizeString(payload.currencySymbol) ||
+      '$';
+  }
+
+  return patch;
+};
+
+const buildPlatformConfigPatch = (payload = {}) => {
+  const patch = {};
+  const nestedPlatformConfig =
+    payload.platformConfig && typeof payload.platformConfig === 'object' ? payload.platformConfig : {};
+
+  if (hasOwn(nestedPlatformConfig, 'eligibleCountries') || hasOwn(payload, 'eligibleCountries')) {
+    patch.eligibleCountries = normalizeEligibleCountries(
+      nestedPlatformConfig.eligibleCountries || payload.eligibleCountries,
+    );
+  }
+
+  return patch;
+};
+
 const serializeTenant = (tenantDocument) => {
   const tenant = tenantDocument?.toObject ? tenantDocument.toObject() : tenantDocument;
-  const branding = buildTenantBranding(tenant);
-  const content = buildTenantContent(tenant);
-  const financial = buildTenantFinancial(tenant);
-  const platformConfig = buildPlatformConfig(tenant);
+  const branding = {
+    ...toPlainObject(tenant?.branding),
+    ...buildTenantBranding(tenant),
+  };
+  const content = {
+    ...toPlainObject(tenant?.content),
+    ...buildTenantContent(tenant),
+  };
+  const financial = {
+    ...toPlainObject(tenant?.financial),
+    ...buildTenantFinancial(tenant),
+  };
+  const platformConfig = {
+    ...toPlainObject(tenant?.platformConfig),
+    ...buildPlatformConfig(tenant),
+  };
   const { kioskPasscode, ...safeTenant } = tenant || {};
 
   return {
@@ -318,41 +429,68 @@ export const updateTenant = async (tenantId, payload) => {
   const normalizedCapabilities = Array.isArray(payload.capabilities)
     ? normalizeCapabilities(payload.capabilities)
     : null;
-  const branding = payload.branding || payload.appName || payload.tagline || payload.logoUrl
-    ? buildTenantBranding(payload)
-    : null;
-  const content = payload.content || payload.branches || payload.departments || payload.ministries || payload.groupings
-    ? buildTenantContent(payload)
-    : null;
-  const financial =
-    payload.financial || payload.currencyCode || payload.currencySymbol
-      ? buildTenantFinancial(payload)
-      : null;
-  const platformConfig =
-    payload.platformConfig || payload.eligibleCountries ? buildPlatformConfig(payload) : null;
+  const brandingPatch = buildTenantBrandingPatch(payload);
+  const contentPatch = buildTenantContentPatch(payload);
+  const financialPatch = buildTenantFinancialPatch(payload);
+  const platformConfigPatch = buildPlatformConfigPatch(payload);
+  const normalizedTenantId = tenantId.trim().toLowerCase();
 
-  const tenant = await Tenant.findOneAndUpdate(
-    { tenantId: tenantId.trim().toLowerCase() },
-    {
-      ...(payload.churchName ? { churchName: payload.churchName.trim() } : {}),
-      ...(payload.email ? { email: payload.email.trim().toLowerCase() } : {}),
-      ...(payload.phone ? { phone: payload.phone.trim() } : {}),
-      ...(payload.country ? { country: payload.country.trim() } : {}),
-      ...(payload.logoUrl ? { logoUrl: payload.logoUrl.trim() } : {}),
-      ...(payload.subscriptionPlan ? { subscriptionPlan: payload.subscriptionPlan } : {}),
-      ...(payload.kioskPasscode !== undefined ? { kioskPasscode: payload.kioskPasscode?.trim() || '' } : {}),
-      ...(normalizedCapabilities ? { capabilities: normalizedCapabilities } : {}),
-      ...(branding ? { branding } : {}),
-      ...(content ? { content } : {}),
-      ...(financial ? { financial } : {}),
-      ...(platformConfig ? { platformConfig } : {}),
-    },
-    { new: true, runValidators: true },
-  );
+  const tenant = await Tenant.findOne({ tenantId: normalizedTenantId });
 
   if (!tenant) {
     throw createHttpError(404, 'Tenant not found');
   }
+
+  if (payload.churchName) {
+    tenant.churchName = payload.churchName.trim();
+  }
+  if (payload.email) {
+    tenant.email = payload.email.trim().toLowerCase();
+  }
+  if (payload.phone) {
+    tenant.phone = payload.phone.trim();
+  }
+  if (payload.country) {
+    tenant.country = payload.country.trim();
+  }
+  if (payload.logoUrl) {
+    tenant.logoUrl = payload.logoUrl.trim();
+  }
+  if (payload.subscriptionPlan) {
+    tenant.subscriptionPlan = payload.subscriptionPlan;
+  }
+  if (payload.kioskPasscode !== undefined) {
+    tenant.kioskPasscode = payload.kioskPasscode?.trim() || '';
+  }
+  if (normalizedCapabilities) {
+    tenant.capabilities = normalizedCapabilities;
+  }
+  if (Object.keys(brandingPatch).length) {
+    tenant.branding = {
+      ...toPlainObject(tenant.branding),
+      ...brandingPatch,
+    };
+  }
+  if (Object.keys(contentPatch).length) {
+    tenant.content = {
+      ...toPlainObject(tenant.content),
+      ...contentPatch,
+    };
+  }
+  if (Object.keys(financialPatch).length) {
+    tenant.financial = {
+      ...toPlainObject(tenant.financial),
+      ...financialPatch,
+    };
+  }
+  if (Object.keys(platformConfigPatch).length) {
+    tenant.platformConfig = {
+      ...toPlainObject(tenant.platformConfig),
+      ...platformConfigPatch,
+    };
+  }
+
+  await tenant.save();
 
   if (normalizedCapabilities) {
     await syncDefaultAdminCapabilities(tenant.tenantId, normalizedCapabilities);

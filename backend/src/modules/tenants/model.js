@@ -16,7 +16,7 @@ const tenantBrandingSchema = new mongoose.Schema(
       trim: true,
     },
   },
-  { _id: false },
+  { _id: false, strict: false },
 );
 
 const eligibleCountrySchema = new mongoose.Schema(
@@ -41,7 +41,7 @@ const eligibleCountrySchema = new mongoose.Schema(
       trim: true,
     },
   },
-  { _id: false },
+  { _id: false, strict: false },
 );
 
 const groupingNodeSchema = new mongoose.Schema(
@@ -71,7 +71,7 @@ const groupingNodeSchema = new mongoose.Schema(
       trim: true,
     },
   },
-  { _id: false },
+  { _id: false, strict: false },
 );
 
 const tenantContentSchema = new mongoose.Schema(
@@ -93,7 +93,7 @@ const tenantContentSchema = new mongoose.Schema(
       default: () => [],
     },
   },
-  { _id: false },
+  { _id: false, strict: false },
 );
 
 const tenantFinancialSchema = new mongoose.Schema(
@@ -110,7 +110,7 @@ const tenantFinancialSchema = new mongoose.Schema(
       default: '$',
     },
   },
-  { _id: false },
+  { _id: false, strict: false },
 );
 
 const platformConfigSchema = new mongoose.Schema(
@@ -120,7 +120,7 @@ const platformConfigSchema = new mongoose.Schema(
       default: () => [],
     },
   },
-  { _id: false },
+  { _id: false, strict: false },
 );
 
 const tenantSchema = new mongoose.Schema(

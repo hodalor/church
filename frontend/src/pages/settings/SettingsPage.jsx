@@ -318,9 +318,9 @@ export default function SettingsPage() {
       departments: content.departments || [],
       groupings: content.groupings || [],
     });
-    setTenantBranding(nextBranding);
 
     if (!isSuperAdmin) {
+      setTenantBranding(nextBranding);
       setTenant({
         tenantId: tenantQuery.data.tenantId || tenantId,
         churchName: tenantQuery.data.churchName || churchName || '',
