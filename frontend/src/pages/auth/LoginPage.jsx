@@ -184,18 +184,17 @@ export default function LoginPage() {
 
           <div className="flex items-center justify-center px-4 py-8 sm:px-6 lg:px-10">
             <Card className="w-full max-w-xl rounded-[2rem] border border-[#d9b55d]/30 bg-[linear-gradient(180deg,rgba(11,18,35,0.9),rgba(6,12,24,0.96))] p-8 text-white shadow-[0_30px_80px_rgba(0,0,0,0.45)] backdrop-blur sm:p-10">
-              <div className="flex items-center justify-center">
+              {/* <div className="flex items-center justify-center">
                 <div className="flex h-14 w-14 items-center justify-center rounded-full border border-[#d9b55d]/45 bg-[#d9b55d]/10 text-[#f4d98c]">
                   <Sparkles className="h-6 w-6" />
                 </div>
-              </div>
-              <p className="mt-5 text-center text-sm uppercase tracking-[0.35em] text-[#e3c77f]">Welcome back</p>
+              </div> */}
               <h2 className="mt-3 text-center font-serif text-4xl font-semibold text-white sm:text-5xl">Sign in</h2>
               <p className="mt-3 text-center text-base text-white/65">Access your church workspace</p>
 
               <form className="mt-8 space-y-5" onSubmit={handleSubmit(onSubmit)}>
                 <Input
-                  label="Tenant ID"
+                  label="Church ID"
                   placeholder="e.g. calvary"
                   error={errors.tenantId?.message}
                   {...register('tenantId', {

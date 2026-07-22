@@ -25,8 +25,13 @@ import {
   KpiCard,
   SummaryList,
 } from '../../components/analytics/AnalyticsWidgets';
+import DataTable from '../../components/ui/DataTable';
 import { getBranchById, getBranchMetrics } from '../../api/endpoints/branches';
+import { getServices } from '../../api/endpoints/attendance';
+import { getAllTransactions } from '../../api/endpoints/finance';
 import { getGrowthTrends, getMemberIntelligence } from '../../api/endpoints/hq';
+import { getMembers } from '../../api/endpoints/members';
+import { getVisitors } from '../../api/endpoints/visitors';
 import useAnalyticsAccess from '../../hooks/useAnalyticsAccess';
 import { useTenant } from '../../hooks/useTenant';
 import { formatAnalyticsCurrency, formatAnalyticsNumber } from '../../utils/analytics';
@@ -67,11 +72,35 @@ export default function BranchDetailPage() {
     queryFn: () => getMemberIntelligence({ branchId }),
     enabled: canViewBranchMetrics && Boolean(branchId),
   });
+  const membersDirectoryQuery = useQuery({
+    queryKey: ['branch-directory-members', branchId],
+    queryFn: () => getMembers({ branch: branchId, page: 1, limit: 8 }),
+    enabled: canViewBranchMetrics && Boolean(branchId),
+  });
+  const servicesQuery = useQuery({
+    queryKey: ['branch-services', branchId],
+    queryFn: () => getServices({ branch: branchId, page: 1, limit: 6 }),
+    enabled: canViewBranchMetrics && Boolean(branchId),
+  });
+  const transactionsQuery = useQuery({
+    queryKey: ['branch-transactions', branchId],
+    queryFn: () => getAllTransactions({ branch: branchId, page: 1, limit: 6 }),
+    enabled: canViewBranchMetrics && Boolean(branchId),
+  });
+  const visitorsQuery = useQuery({
+    queryKey: ['branch-visitors', branchId],
+    queryFn: () => getVisitors({ branch: branchId, page: 1, limit: 6 }),
+    enabled: canViewBranchMetrics && Boolean(branchId),
+  });
 
   const branch = detailQuery.data || metricsQuery.data?.branch || {};
   const liveMetrics = metricsQuery.data?.liveMetrics || {};
   const growthItems = growthQuery.data?.items || [];
   const memberIntelligence = memberQuery.data || {};
+  const branchMembers = membersDirectoryQuery.data?.members || [];
+  const branchServices = servicesQuery.data?.items || servicesQuery.data?.services || [];
+  const branchTransactions = transactionsQuery.data?.transactions || [];
+  const branchVisitors = visitorsQuery.data?.items || [];
   const attendanceSeries = growthItems.map((item) => ({
     month: item.month,
     attendance: item.attendance?.total || 0,
@@ -90,14 +119,148 @@ export default function BranchDetailPage() {
     () => memberIntelligence.atRiskMembers || [],
     [memberIntelligence.atRiskMembers],
   );
+  const memberColumns = useMemo(
+    () => [
+      {
+        key: 'fullName',
+        header: 'Member',
+        render: (member) => (
+          <div>
+            <p className="font-semibold text-slate-900">
+              {[member.firstName, member.lastName].filter(Boolean).join(' ') || member.memberId}
+            </p>
+            <p className="mt-1 text-xs text-slate-500">{member.memberId}</p>
+          </div>
+        ),
+      },
+      {
+        key: 'membershipStatus',
+        header: 'Role',
+        render: (member) => (
+          <span className="inline-flex rounded-full border border-slate-300 bg-white px-3 py-1 text-xs font-semibold capitalize text-slate-700">
+            {String(member.membershipStatus || 'member').replaceAll('_', ' ')}
+          </span>
+        ),
+      },
+      {
+        key: 'phone',
+        header: 'Phone',
+        render: (member) => member.phone || 'N/A',
+      },
+      {
+        key: 'department',
+        header: 'Department',
+        render: (member) =>
+          Array.isArray(member.department) && member.department.length ? member.department.join(', ') : 'Unassigned',
+      },
+    ],
+    [],
+  );
+  const transactionColumns = useMemo(
+    () => [
+      {
+        key: 'memberName',
+        header: 'Giver',
+        render: (row) => (
+          <div>
+            <p className="font-semibold text-slate-900">{row.memberName || 'Walk-in giver'}</p>
+            <p className="mt-1 text-xs text-slate-500">{row.transactionId}</p>
+          </div>
+        ),
+      },
+      {
+        key: 'type',
+        header: 'Type',
+        render: (row) => String(row.type || 'other').replaceAll('_', ' '),
+      },
+      {
+        key: 'paymentMethod',
+        header: 'Channel',
+        render: (row) => String(row.paymentMethod || 'cash').replaceAll('_', ' '),
+      },
+      {
+        key: 'amount',
+        header: 'Amount',
+        render: (row) => formatAnalyticsCurrency(row.amount || 0, currencyCode, currencySymbol),
+      },
+    ],
+    [currencyCode, currencySymbol],
+  );
+  const serviceColumns = useMemo(
+    () => [
+      {
+        key: 'serviceName',
+        header: 'Service',
+        render: (row) => (
+          <div>
+            <p className="font-semibold text-slate-900">{row.serviceName || row.title || 'Service'}</p>
+            <p className="mt-1 text-xs text-slate-500">{row.branch || branch.branchName || 'Branch service'}</p>
+          </div>
+        ),
+      },
+      {
+        key: 'date',
+        header: 'Date',
+        render: (row) =>
+          row.date
+            ? new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric', year: 'numeric' }).format(new Date(row.date))
+            : 'N/A',
+      },
+      {
+        key: 'headcount',
+        header: 'Headcount',
+        render: (row) => formatAnalyticsNumber(row.totalAttendance || row.headcount || row.stats?.headcount || 0),
+      },
+      {
+        key: 'status',
+        header: 'Status',
+        render: (row) => (row.checkInOpen ? 'Live' : 'Closed'),
+      },
+    ],
+    [branch.branchName],
+  );
+  const visitorColumns = useMemo(
+    () => [
+      {
+        key: 'fullName',
+        header: 'Visitor',
+        render: (row) => (
+          <div>
+            <p className="font-semibold text-slate-900">{row.fullName || row.name || 'Visitor'}</p>
+            <p className="mt-1 text-xs text-slate-500">{row.phone || 'No phone'}</p>
+          </div>
+        ),
+      },
+      {
+        key: 'stage',
+        header: 'Stage',
+        render: (row) => String(row.stage || 'new').replaceAll('_', ' '),
+      },
+      {
+        key: 'assignedToName',
+        header: 'Assigned To',
+        render: (row) => row.assignedToName || row.assignedTo || 'Unassigned',
+      },
+      {
+        key: 'converted',
+        header: 'Converted',
+        render: (row) => (row.converted ? 'Yes' : 'No'),
+      },
+    ],
+    [],
+  );
+  const lightPanelClass = 'rounded-[22px] border border-slate-200 bg-white p-4 shadow-sm';
+  const lightPanelTitleClass = 'text-lg font-semibold text-slate-900';
+  const lightPanelSubClass = 'mt-1 text-sm text-slate-500';
 
   const content = useMemo(() => {
     switch (tab) {
       case 'members':
         return (
-          <div className="grid gap-4 xl:grid-cols-[0.9fr_1.1fr]">
-            <div className="rounded-[22px] border border-white/8 bg-[#0d1320] p-4">
-              <h3 className="text-lg font-semibold text-white">Health distribution</h3>
+          <div className="grid gap-4 xl:grid-cols-[0.95fr_1.05fr]">
+            <div className={lightPanelClass}>
+              <h3 className={lightPanelTitleClass}>Health distribution</h3>
+              <p className={lightPanelSubClass}>Actual member engagement mix for this branch.</p>
               <div className="mt-4 h-[280px]">
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
@@ -111,65 +274,123 @@ export default function BranchDetailPage() {
                 </ResponsiveContainer>
               </div>
             </div>
-            <div className="rounded-[22px] border border-white/8 bg-[#0d1320] p-4">
-              <h3 className="text-lg font-semibold text-white">At-risk members</h3>
-              <div className="mt-4 space-y-3">
-                <SummaryList
-                  items={atRiskMembers}
-                  formatter={(member) => (
-                    <div className="rounded-2xl border border-white/8 bg-white/[0.02] px-4 py-3">
-                      <p className="font-medium text-white">{member.name}</p>
-                      <p className="mt-1 text-sm text-white/55">
-                        Health {formatAnalyticsNumber(member.healthScore)} • Missed {formatAnalyticsNumber(member.missedServices)} services
-                      </p>
-                    </div>
-                  )}
-                />
+            <div className="space-y-4">
+              <div className={lightPanelClass}>
+                <h3 className={lightPanelTitleClass}>Branch member directory</h3>
+                <p className={lightPanelSubClass}>Real member records from this branch workspace.</p>
+                <div className="mt-4">
+                  <DataTable
+                    columns={memberColumns}
+                    data={branchMembers}
+                    tone="light"
+                    emptyMessage={membersDirectoryQuery.isLoading ? 'Loading branch members...' : 'No members found for this branch yet.'}
+                  />
+                </div>
+              </div>
+              <div className={lightPanelClass}>
+                <h3 className={lightPanelTitleClass}>At-risk members</h3>
+                <div className="mt-4 space-y-3">
+                  <SummaryList
+                    items={atRiskMembers}
+                    formatter={(member) => (
+                      <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
+                        <p className="font-medium text-slate-900">{member.name}</p>
+                        <p className="mt-1 text-sm text-slate-500">
+                          Health {formatAnalyticsNumber(member.healthScore)} • Missed {formatAnalyticsNumber(member.missedServices)} services
+                        </p>
+                      </div>
+                    )}
+                  />
+                </div>
               </div>
             </div>
           </div>
         );
       case 'finance':
         return (
-          <div className="rounded-[22px] border border-white/8 bg-[#0d1320] p-4">
-            <h3 className="text-lg font-semibold text-white">Income and expenses</h3>
-            <div className="mt-4 h-[320px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={attendanceSeries}>
-                  <CartesianGrid stroke="rgba(255,255,255,0.08)" />
-                  <XAxis dataKey="month" stroke="#94A3B8" />
-                  <YAxis stroke="#94A3B8" />
-                  <Tooltip />
-                  <Bar dataKey="income" fill="#C9A84C" radius={[8, 8, 0, 0]} />
-                  <Bar dataKey="expenses" fill="#1E2A4A" radius={[8, 8, 0, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
+          <div className="grid gap-4 xl:grid-cols-[1.1fr_0.9fr]">
+            <div className={lightPanelClass}>
+              <h3 className={lightPanelTitleClass}>Income and expenses</h3>
+              <p className={lightPanelSubClass}>Monthly finance flow for this branch.</p>
+              <div className="mt-4 h-[320px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={attendanceSeries}>
+                    <CartesianGrid stroke="#E2E8F0" />
+                    <XAxis dataKey="month" stroke="#64748B" />
+                    <YAxis stroke="#64748B" />
+                    <Tooltip />
+                    <Bar dataKey="income" fill="#C9A84C" radius={[8, 8, 0, 0]} />
+                    <Bar dataKey="expenses" fill="#334155" radius={[8, 8, 0, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+            <div className={lightPanelClass}>
+              <h3 className={lightPanelTitleClass}>Recent transactions</h3>
+              <p className={lightPanelSubClass}>Latest giving records captured in this branch.</p>
+              <div className="mt-4">
+                <DataTable
+                  columns={transactionColumns}
+                  data={branchTransactions}
+                  tone="light"
+                  emptyMessage={transactionsQuery.isLoading ? 'Loading branch transactions...' : 'No branch transactions found yet.'}
+                />
+              </div>
             </div>
           </div>
         );
       case 'attendance':
         return (
-          <div className="rounded-[22px] border border-white/8 bg-[#0d1320] p-4">
-            <h3 className="text-lg font-semibold text-white">Attendance trend</h3>
-            <div className="mt-4 h-[320px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={attendanceSeries}>
-                  <CartesianGrid stroke="rgba(255,255,255,0.08)" />
-                  <XAxis dataKey="month" stroke="#94A3B8" />
-                  <YAxis stroke="#94A3B8" />
-                  <Tooltip />
-                  <Line type="monotone" dataKey="attendance" stroke="#C9A84C" strokeWidth={3} />
-                </LineChart>
-              </ResponsiveContainer>
+          <div className="grid gap-4 xl:grid-cols-[1fr_1fr]">
+            <div className={lightPanelClass}>
+              <h3 className={lightPanelTitleClass}>Attendance trend</h3>
+              <p className={lightPanelSubClass}>Recent service participation for this branch.</p>
+              <div className="mt-4 h-[320px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={attendanceSeries}>
+                    <CartesianGrid stroke="#E2E8F0" />
+                    <XAxis dataKey="month" stroke="#64748B" />
+                    <YAxis stroke="#64748B" />
+                    <Tooltip />
+                    <Line type="monotone" dataKey="attendance" stroke="#C9A84C" strokeWidth={3} />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+            <div className={lightPanelClass}>
+              <h3 className={lightPanelTitleClass}>Recent services</h3>
+              <p className={lightPanelSubClass}>Actual services and attendance records from the branch.</p>
+              <div className="mt-4">
+                <DataTable
+                  columns={serviceColumns}
+                  data={branchServices}
+                  tone="light"
+                  emptyMessage={servicesQuery.isLoading ? 'Loading branch services...' : 'No services found for this branch yet.'}
+                />
+              </div>
             </div>
           </div>
         );
       case 'visitors':
         return (
-          <div className="grid gap-4 md:grid-cols-3">
-            <KpiCard label="Visitors" value={formatAnalyticsNumber(liveMetrics.visitors?.total || 0)} />
-            <KpiCard label="Converted" value={formatAnalyticsNumber(liveMetrics.visitors?.converted || 0)} />
-            <KpiCard label="Pipeline Rate" value={`${Number(liveMetrics.visitors?.conversionRate || 0).toFixed(1)}%`} />
+          <div className="grid gap-4 xl:grid-cols-[0.8fr_1.2fr]">
+            <div className="grid gap-4 md:grid-cols-3">
+              <KpiCard label="Visitors" value={formatAnalyticsNumber(liveMetrics.visitors?.total || 0)} />
+              <KpiCard label="Converted" value={formatAnalyticsNumber(liveMetrics.visitors?.converted || 0)} />
+              <KpiCard label="Pipeline Rate" value={`${Number(liveMetrics.visitors?.conversionRate || 0).toFixed(1)}%`} />
+            </div>
+            <div className={lightPanelClass}>
+              <h3 className={lightPanelTitleClass}>Visitor follow-up list</h3>
+              <p className={lightPanelSubClass}>Real visitor records currently tied to this branch.</p>
+              <div className="mt-4">
+                <DataTable
+                  columns={visitorColumns}
+                  data={branchVisitors}
+                  tone="light"
+                  emptyMessage={visitorsQuery.isLoading ? 'Loading branch visitors...' : 'No visitors found for this branch yet.'}
+                />
+              </div>
+            </div>
           </div>
         );
       case 'volunteers':
@@ -189,38 +410,64 @@ export default function BranchDetailPage() {
       default:
         return (
           <div className="grid gap-4 xl:grid-cols-2">
-            <div className="rounded-[22px] border border-white/8 bg-[#0d1320] p-4">
-              <h3 className="text-lg font-semibold text-white">Attendance trend</h3>
+            <div className={lightPanelClass}>
+              <h3 className={lightPanelTitleClass}>Attendance trend</h3>
+              <p className={lightPanelSubClass}>Recent branch participation pattern.</p>
               <div className="mt-4 h-[320px]">
                 <ResponsiveContainer width="100%" height="100%">
                   <LineChart data={attendanceSeries}>
-                    <CartesianGrid stroke="rgba(255,255,255,0.08)" />
-                    <XAxis dataKey="month" stroke="#94A3B8" />
-                    <YAxis stroke="#94A3B8" />
+                    <CartesianGrid stroke="#E2E8F0" />
+                    <XAxis dataKey="month" stroke="#64748B" />
+                    <YAxis stroke="#64748B" />
                     <Tooltip />
                     <Line type="monotone" dataKey="attendance" stroke="#C9A84C" strokeWidth={3} />
                   </LineChart>
                 </ResponsiveContainer>
               </div>
             </div>
-            <div className="rounded-[22px] border border-white/8 bg-[#0d1320] p-4">
-              <h3 className="text-lg font-semibold text-white">Income trend</h3>
+            <div className={lightPanelClass}>
+              <h3 className={lightPanelTitleClass}>Income trend</h3>
+              <p className={lightPanelSubClass}>Recent giving activity for this branch.</p>
               <div className="mt-4 h-[320px]">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={attendanceSeries}>
-                    <CartesianGrid stroke="rgba(255,255,255,0.08)" />
-                    <XAxis dataKey="month" stroke="#94A3B8" />
-                    <YAxis stroke="#94A3B8" />
+                    <CartesianGrid stroke="#E2E8F0" />
+                    <XAxis dataKey="month" stroke="#64748B" />
+                    <YAxis stroke="#64748B" />
                     <Tooltip />
                     <Bar dataKey="income" fill="#1E2A4A" radius={[8, 8, 0, 0]} />
                   </BarChart>
                 </ResponsiveContainer>
               </div>
             </div>
+            <div className={lightPanelClass}>
+              <h3 className={lightPanelTitleClass}>Recent members</h3>
+              <p className={lightPanelSubClass}>Latest actual member records from this branch.</p>
+              <div className="mt-4">
+                <DataTable
+                  columns={memberColumns}
+                  data={branchMembers}
+                  tone="light"
+                  emptyMessage={membersDirectoryQuery.isLoading ? 'Loading branch members...' : 'No members found for this branch yet.'}
+                />
+              </div>
+            </div>
+            <div className={lightPanelClass}>
+              <h3 className={lightPanelTitleClass}>Recent transactions</h3>
+              <p className={lightPanelSubClass}>Latest branch finance activity.</p>
+              <div className="mt-4">
+                <DataTable
+                  columns={transactionColumns}
+                  data={branchTransactions}
+                  tone="light"
+                  emptyMessage={transactionsQuery.isLoading ? 'Loading branch transactions...' : 'No branch transactions found yet.'}
+                />
+              </div>
+            </div>
           </div>
         );
     }
-  }, [attendanceSeries, atRiskMembers, engagementData, liveMetrics.pastoral?.openCases, liveMetrics.pastoral?.resolvedCases, liveMetrics.visitors?.conversionRate, liveMetrics.visitors?.converted, liveMetrics.visitors?.total, liveMetrics.volunteers?.active, liveMetrics.volunteers?.avgReliability, tab]);
+  }, [attendanceSeries, atRiskMembers, branchMembers, branchServices, branchTransactions, branchVisitors, currencyCode, currencySymbol, engagementData, lightPanelClass, lightPanelSubClass, lightPanelTitleClass, liveMetrics.pastoral?.openCases, liveMetrics.pastoral?.resolvedCases, liveMetrics.visitors?.conversionRate, liveMetrics.visitors?.converted, liveMetrics.visitors?.total, liveMetrics.volunteers?.active, liveMetrics.volunteers?.avgReliability, memberColumns, membersDirectoryQuery.isLoading, serviceColumns, servicesQuery.isLoading, tab, transactionColumns, transactionsQuery.isLoading, visitorColumns, visitorsQuery.isLoading]);
 
   if (!canViewBranchMetrics) {
     return (

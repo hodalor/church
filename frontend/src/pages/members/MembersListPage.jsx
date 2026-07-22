@@ -176,6 +176,7 @@ export default function MembersListPage() {
     queryKey: ['member-tenants'],
     queryFn: () => getAllTenants({ page: 1, limit: 100 }),
     enabled: isSuperAdmin,
+    staleTime: 1000 * 60 * 5,
   });
 
   useEffect(() => {
@@ -190,9 +191,10 @@ export default function MembersListPage() {
   }, [isSuperAdmin, selectedTenantId, tenantsQuery.data]);
 
   const tenantScopedParams = isSuperAdmin && selectedTenantId ? { tenantId: selectedTenantId } : {};
+  const memberQueryRoleKey = isSuperAdmin ? `superadmin:${selectedTenantId || 'none'}` : role || 'default';
 
   const membersQuery = useQuery({
-    queryKey: ['members', role, selectedTenantId, page, search, membershipStatus],
+    queryKey: ['members', memberQueryRoleKey, page, search, membershipStatus],
     queryFn: () =>
       getMembers({
         page,
@@ -202,19 +204,21 @@ export default function MembersListPage() {
         ...(membershipStatus ? { membershipStatus } : {}),
       }),
     enabled: !isSuperAdmin || Boolean(selectedTenantId),
+    staleTime: 1000 * 60 * 3,
   });
 
   const statsQuery = useQuery({
-    queryKey: ['member-stats', role, selectedTenantId],
+    queryKey: ['member-stats', memberQueryRoleKey],
     queryFn: () => getMemberStats(tenantScopedParams),
     enabled: !isSuperAdmin || Boolean(selectedTenantId),
+    staleTime: 1000 * 60 * 5,
   });
 
   const rows = membersQuery.data?.members || [];
   const summary = membersQuery.data?.stats || {};
   const stats = statsQuery.data || {};
   const healthQuery = useQuery({
-    queryKey: ['members-health-status', role, selectedTenantId, healthStatus],
+    queryKey: ['members-health-status', memberQueryRoleKey, healthStatus],
     queryFn: () =>
       getMembersByHealthStatus({
         ...tenantScopedParams,
@@ -223,6 +227,7 @@ export default function MembersListPage() {
         limit: 12,
       }),
     enabled: showHealthModal && (!isSuperAdmin || Boolean(selectedTenantId)),
+    staleTime: 1000 * 60 * 3,
   });
 
   const exportMutation = useMutation({
@@ -251,10 +256,10 @@ export default function MembersListPage() {
               {`${member.firstName?.[0] || ''}${member.lastName?.[0] || ''}`.trim() || 'M'}
             </div>
             <div>
-              <p className="font-semibold text-white">
+              <p className="font-semibold text-slate-900">
                 {[member.firstName, member.lastName].filter(Boolean).join(' ')}
               </p>
-              <p className="mt-1 text-xs text-white/40">
+              <p className="mt-1 text-xs text-slate-500">
                 {(Array.isArray(member.department) ? member.department[0] : member.department) || member.memberId}
               </p>
             </div>
@@ -266,10 +271,10 @@ export default function MembersListPage() {
         header: 'Status',
         render: (member) => (
           <div className="space-y-1">
-            <span className="inline-flex rounded-full border border-white/10 bg-white/[0.04] px-3 py-1 text-xs font-semibold capitalize text-white/80">
+            <span className="inline-flex rounded-full border border-slate-300 bg-white px-3 py-1 text-xs font-semibold capitalize text-slate-700">
               {String(member.membershipStatus || 'member').replace('_', ' ')}
             </span>
-            <p className="text-xs text-white/40">{member.isActive ? 'Active account' : 'Inactive account'}</p>
+            <p className="text-xs text-slate-500">{member.isActive ? 'Active account' : 'Inactive account'}</p>
           </div>
         ),
       },
@@ -296,15 +301,15 @@ export default function MembersListPage() {
         header: 'Health',
         render: (member) => (
           <div className="w-28">
-            <div className="h-1.5 overflow-hidden rounded-full bg-white/10">
+            <div className="h-1.5 overflow-hidden rounded-full bg-slate-200">
               <div
                 className={`h-full rounded-full ${healthBarColor[member.healthScore?.status] || 'bg-sky-400'}`}
                 style={{ width: `${Math.min(Number(member.healthScore?.overall ?? 0), 100)}%` }}
               />
             </div>
             <div className="mt-2 flex items-center justify-between text-xs">
-              <span className="text-white/50">{healthTone[member.healthScore?.status] || 'New'}</span>
-              <span className="font-semibold text-white">{member.healthScore?.overall ?? 0}</span>
+              <span className="text-slate-500">{healthTone[member.healthScore?.status] || 'New'}</span>
+              <span className="font-semibold text-slate-900">{member.healthScore?.overall ?? 0}</span>
             </div>
           </div>
         ),
@@ -315,7 +320,7 @@ export default function MembersListPage() {
         render: (member) => (
           <Link
             to={`${isSuperAdmin ? '/superadmin' : ''}/members/${member.memberId}`}
-            className="font-semibold text-accent"
+            className="font-semibold text-amber-700 hover:text-amber-800"
           >
             View
           </Link>
@@ -421,9 +426,9 @@ export default function MembersListPage() {
             },
           ].map((item) => (
             <Card key={item.label} className="min-h-[110px] p-4">
-              <p className="text-[11px] uppercase tracking-[0.22em] text-white/55">{item.label}</p>
-              <p className="mt-3 font-serif text-4xl font-semibold leading-none text-white">{item.value}</p>
-              <p className="mt-2 text-xs text-white/40">{item.helper}</p>
+              <p className="text-[11px] uppercase tracking-[0.22em] text-slate-500">{item.label}</p>
+              <p className="mt-3 font-serif text-4xl font-semibold leading-none text-slate-900">{item.value}</p>
+              <p className="mt-2 text-xs text-slate-500">{item.helper}</p>
             </Card>
           ))}
         </div>
@@ -432,14 +437,14 @@ export default function MembersListPage() {
           {isSuperAdmin ? (
             <div className="grid gap-4 lg:grid-cols-[320px_1fr]">
               <label className="block space-y-2">
-                <span className="text-sm font-medium text-white/80">Church Tenant</span>
+                <span className="text-sm font-medium text-slate-700">Church Tenant</span>
                 <select
                   value={selectedTenantId}
                   onChange={(event) => {
                     setSelectedTenantId(event.target.value);
                     setPage(1);
                   }}
-                  className="w-full rounded-2xl border border-white/10 bg-[#101827] px-4 py-3 text-sm text-white outline-none focus:border-accent"
+                  className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none focus:border-accent"
                 >
                   <option value="">Select a church</option>
                   {(tenantsQuery.data?.tenants || []).map((tenant) => (
@@ -449,7 +454,7 @@ export default function MembersListPage() {
                   ))}
                 </select>
               </label>
-              <div className="rounded-2xl border border-white/10 bg-[#101827] px-4 py-3 text-sm text-white/55">
+              <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600">
                 {selectedTenantId
                   ? `Showing members for tenant "${selectedTenantId}".`
                   : 'Choose a tenant to load member records.'}
@@ -480,7 +485,7 @@ export default function MembersListPage() {
                   className={`rounded-full px-4 py-2 text-sm font-semibold transition ${
                     membershipStatus === option.value
                       ? 'bg-accent text-primary'
-                      : 'border border-white/10 bg-white/5 text-white/70 hover:bg-white/10'
+                      : 'border border-slate-300 bg-white text-slate-700 hover:border-accent/35 hover:bg-slate-50 hover:text-slate-900'
                   }`}
                 >
                   {option.label}
@@ -527,7 +532,7 @@ export default function MembersListPage() {
                 className={`rounded-full px-4 py-2 text-sm font-semibold ${
                   healthStatus === status
                     ? 'bg-accent text-primary'
-                    : 'border border-white/10 bg-white/5 text-white/70'
+                    : 'border border-slate-300 bg-white text-slate-700 hover:border-accent/35 hover:bg-slate-50'
                 }`}
               >
                 {status.replaceAll('_', ' ')}
@@ -539,25 +544,25 @@ export default function MembersListPage() {
               <Link
                 key={member.memberId}
                 to={`${isSuperAdmin ? '/superadmin' : ''}/members/${member.memberId}`}
-                className="flex items-center justify-between rounded-2xl border border-white/10 bg-white/5 px-4 py-4 transition hover:bg-white/10"
+                className="flex items-center justify-between rounded-2xl border border-slate-200 bg-white px-4 py-4 transition hover:bg-slate-50"
                 onClick={() => setShowHealthModal(false)}
               >
                 <div>
-                  <p className="font-semibold text-white">{member.fullName}</p>
-                  <p className="mt-1 text-xs uppercase tracking-[0.22em] text-white/45">
+                  <p className="font-semibold text-slate-900">{member.fullName}</p>
+                  <p className="mt-1 text-xs uppercase tracking-[0.22em] text-slate-500">
                     {member.memberId}
                   </p>
                 </div>
                 <div className="text-right">
-                  <p className="font-semibold text-white">{member.healthScore?.overall ?? 0}/100</p>
-                  <p className="mt-1 text-xs text-white/45">
+                  <p className="font-semibold text-slate-900">{member.healthScore?.overall ?? 0}/100</p>
+                  <p className="mt-1 text-xs text-slate-500">
                     {member.healthScore?.status?.replaceAll('_', ' ') || 'new'}
                   </p>
                 </div>
               </Link>
             ))}
             {!healthQuery.data?.members?.length ? (
-              <p className="rounded-2xl border border-white/10 bg-white/5 px-4 py-6 text-sm text-white/55">
+              <p className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-6 text-sm text-slate-600">
                 {healthQuery.isLoading ? 'Loading health scores...' : 'No members found for this health status.'}
               </p>
             ) : null}
@@ -576,11 +581,11 @@ export default function MembersListPage() {
         size="lg"
       >
         <div className="space-y-4">
-          <p className="rounded-2xl border border-white/10 bg-white/5 px-4 py-4 text-sm text-white/60">
+          <p className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 text-sm text-slate-600">
             Header format: <code>{csvColumns.join(',')}</code>
           </p>
           <label className="block space-y-2">
-            <span className="text-sm font-medium text-white/80">CSV File</span>
+            <span className="text-sm font-medium text-slate-700">CSV File</span>
             <input
               type="file"
               accept=".csv,text/csv"
@@ -595,11 +600,11 @@ export default function MembersListPage() {
                 setImportError('');
                 event.target.value = '';
               }}
-              className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white"
+              className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900"
             />
           </label>
           {importFileName ? (
-            <p className="text-xs uppercase tracking-[0.22em] text-white/45">
+            <p className="text-xs uppercase tracking-[0.22em] text-slate-500">
               Loaded file: {importFileName}
             </p>
           ) : null}
@@ -607,7 +612,7 @@ export default function MembersListPage() {
             rows={12}
             value={importText}
             onChange={(event) => setImportText(event.target.value)}
-            className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white"
+            className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900"
             placeholder="Paste CSV here"
           />
           {importError ? <p className="text-sm text-red-400">{importError}</p> : null}

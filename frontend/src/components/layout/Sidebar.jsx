@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import {
   BarChart3,
   Bell,
@@ -25,6 +26,9 @@ import { NavLink, useLocation } from 'react-router-dom';
 import Button from '../ui/Button';
 import { useBrandingStore } from '../../stores/brandingStore';
 import { useCapabilities } from '../../hooks/useCapabilities';
+import { getAllBranches } from '../../api/endpoints/branches';
+import { getBranchComparison, getGrowthTrends, getHQOverview, getMemberIntelligence, getOperationalHealth } from '../../api/endpoints/hq';
+import { getMembers, getMemberStats } from '../../api/endpoints/members';
 
 const financeSubItems = [
   { label: 'Overview', to: '/finance', capabilityOptions: ['finance.view', 'finance.overview.view'] },
@@ -224,6 +228,7 @@ const navigation = [
 ];
 
 export default function Sidebar({ isOpen, onToggle }) {
+  const queryClient = useQueryClient();
   const globalBranding = useBrandingStore((state) => state.globalBranding);
   const { hasAnyCapability } = useCapabilities();
   const location = useLocation();
@@ -263,6 +268,81 @@ export default function Sidebar({ isOpen, onToggle }) {
   }, [location.pathname]);
 
   const canShowItem = (item) => hasAnyCapability(item.capabilityOptions || []);
+  const prefetchByRoute = (route) => {
+    if (route === '/hq') {
+      const today = new Date();
+      const currentDateValue = today.toISOString().slice(0, 10);
+      const currentMonthStartValue = new Date(today.getFullYear(), today.getMonth(), 1).toISOString().slice(0, 10);
+      queryClient.prefetchQuery({
+        queryKey: ['hq-branch-list'],
+        queryFn: () => getAllBranches(),
+        staleTime: 1000 * 60 * 5,
+      });
+      queryClient.prefetchQuery({
+        queryKey: ['hq-overview', currentMonthStartValue, currentDateValue, ''],
+        queryFn: () =>
+          getHQOverview({
+            from: currentMonthStartValue,
+            to: currentDateValue,
+          }),
+        staleTime: 1000 * 60 * 3,
+      });
+      queryClient.prefetchQuery({
+        queryKey: ['hq-branch-comparison', currentMonthStartValue, currentDateValue, ''],
+        queryFn: () =>
+          getBranchComparison({
+            from: currentMonthStartValue,
+            to: currentDateValue,
+          }),
+        staleTime: 1000 * 60 * 3,
+      });
+      queryClient.prefetchQuery({
+        queryKey: ['hq-growth-trends', ''],
+        queryFn: () => getGrowthTrends({ months: 12 }),
+        staleTime: 1000 * 60 * 3,
+      });
+      queryClient.prefetchQuery({
+        queryKey: ['hq-operational-health', ''],
+        queryFn: () => getOperationalHealth({}),
+        staleTime: 1000 * 60 * 3,
+      });
+      queryClient.prefetchQuery({
+        queryKey: ['hq-member-intelligence-summary', ''],
+        queryFn: () => getMemberIntelligence({}),
+        staleTime: 1000 * 60 * 3,
+      });
+    }
+
+    if (route === '/hq/branches') {
+      queryClient.prefetchQuery({
+        queryKey: ['hq-branches-grid'],
+        queryFn: () => getAllBranches(),
+        staleTime: 1000 * 60 * 5,
+      });
+      queryClient.prefetchQuery({
+        queryKey: ['hq-branches-comparison-grid'],
+        queryFn: () => getBranchComparison(),
+        staleTime: 1000 * 60 * 3,
+      });
+    }
+
+    if (route === '/members') {
+      queryClient.prefetchQuery({
+        queryKey: ['members', 'default', '', 1, '', ''],
+        queryFn: () =>
+          getMembers({
+            page: 1,
+            limit: 12,
+          }),
+        staleTime: 1000 * 60 * 3,
+      });
+      queryClient.prefetchQuery({
+        queryKey: ['member-stats', 'default', ''],
+        queryFn: () => getMemberStats(),
+        staleTime: 1000 * 60 * 5,
+      });
+    }
+  };
 
   const visibleNavigation = navigation
     .map((group) => ({
@@ -289,6 +369,8 @@ export default function Sidebar({ isOpen, onToggle }) {
                 : 'border-transparent text-white/40 hover:bg-[#122033] hover:text-white/70'
             }`
           }
+          onMouseEnter={() => prefetchByRoute(subItem.to)}
+          onFocus={() => prefetchByRoute(subItem.to)}
           onClick={() => {
             if (window.innerWidth < 1024) {
               onToggle();
@@ -360,6 +442,16 @@ export default function Sidebar({ isOpen, onToggle }) {
 
           if (window.innerWidth < 1024) {
             onToggle();
+          }
+        }}
+        onMouseEnter={() => {
+          if (!disabled && to) {
+            prefetchByRoute(to);
+          }
+        }}
+        onFocus={() => {
+          if (!disabled && to) {
+            prefetchByRoute(to);
           }
         }}
       >

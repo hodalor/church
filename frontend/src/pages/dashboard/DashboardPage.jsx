@@ -2,6 +2,21 @@ import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import {
+  Area,
+  AreaChart,
+  Bar,
+  BarChart,
+  CartesianGrid,
+  Cell,
+  Legend,
+  Pie,
+  PieChart,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from 'recharts';
+import {
   ArrowRight,
   Bell,
   CalendarDays,
@@ -37,6 +52,15 @@ const careRoles = ['care_leader'];
 const volunteerRoles = ['volunteer_leader'];
 const financeRoles = ['finance_officer'];
 const mediaRoles = ['media_team'];
+const chartPalette = ['#D9B55D', '#60A5FA', '#34D399', '#F97316', '#A78BFA', '#F43F5E'];
+const axisStyle = {
+  fontSize: 12,
+  fill: 'rgba(255,255,255,0.58)',
+};
+const formatChartLabel = (value) =>
+  String(value || '')
+    .replaceAll('_', ' ')
+    .replace(/\b\w/g, (char) => char.toUpperCase());
 
 const getGreeting = () => {
   const hour = new Date().getHours();
@@ -115,12 +139,26 @@ function ModuleCard({ title, metric, helper, to, chart, tone = 'line' }) {
   );
 }
 
+function DashboardChartCard({ eyebrow, title, subtitle, children, className = '' }) {
+  return (
+    <Card
+      className={`space-y-4 border-white/10 bg-[linear-gradient(180deg,rgba(12,18,34,0.98),rgba(8,13,24,0.96))] text-white shadow-[0_20px_40px_rgba(0,0,0,0.24)] ${className}`}
+    >
+      <div>
+        <p className="text-sm uppercase tracking-[0.25em] text-[#ebd59b]">{eyebrow}</p>
+        <h2 className="mt-2 text-xl font-semibold text-white">{title}</h2>
+        {subtitle ? <p className="mt-2 text-sm text-white/58">{subtitle}</p> : null}
+      </div>
+      {children}
+    </Card>
+  );
+}
+
 export default function DashboardPage() {
   const { user, role } = useAuth();
-  const { churchName, currencyCode, currencySymbol } = useTenant();
+  const { currencyCode, currencySymbol } = useTenant();
   const tenantBranding = useBrandingStore((state) => state.tenantBranding);
   const [dismissedAlerts, setDismissedAlerts] = useState([]);
-  const workspaceName = tenantBranding.appName || churchName || 'Your Church';
   const firstName =
     user?.firstName ||
     user?.name?.split(' ')[0] ||
@@ -151,7 +189,7 @@ export default function DashboardPage() {
   const financeQuery = useQuery({
     queryKey: ['dashboard-finance-summary'],
     queryFn: () => getFinancialSummary(new Date().getFullYear()),
-    enabled: isPastorDashboard || isBranchDashboard,
+    enabled: isPastorDashboard || isBranchDashboard || isFinanceDashboard,
   });
   const financeSummaryQuery = useQuery({
     queryKey: ['dashboard-finance-summary-role', role],
@@ -464,6 +502,61 @@ export default function DashboardPage() {
     { label: 'Polls', value: communicationStats.activePolls || 0 },
     { label: 'Prayer', value: communicationStats.openPrayerRequests || prayerRequests.length || 0 },
   ]);
+  const financePerformanceSeries = (financeSummary.monthlyBreakdown || []).slice(-6);
+  const givingTypeData = Object.entries(
+    (isFinanceDashboard ? financeRoleSummary.byType : financeRoleSummary.byType || financeSummary.incomeByType) || {},
+  ).map(([name, value]) => ({
+    name: formatChartLabel(name),
+    value: Number(value || 0),
+  }));
+  const paymentMethodData = Object.entries(financeRoleSummary.byPaymentMethod || {}).map(([name, value]) => ({
+    name: formatChartLabel(name),
+    value: Number(value || 0),
+  }));
+  const memberGenderData = Object.entries(memberStats.byGender || {}).map(([name, value]) => ({
+    name: formatChartLabel(name),
+    value: Number(value || 0),
+  }));
+  const branchPerformanceData = (
+    branchRows.length
+      ? branchRows.map((branch) => ({
+          name: branch.branchName,
+          income: Number(branch.finance?.income || 0),
+          members: Number(branch.members?.total || 0),
+          attendance: Number(branch.attendance?.avg || 0),
+        }))
+      : (financeRoleSummary.byBranch || []).map((branch) => ({
+          name: branch.branch,
+          income: Number(branch.total || 0),
+          members: 0,
+          attendance: 0,
+        }))
+  )
+    .sort((left, right) => right.income - left.income)
+    .slice(0, 6);
+  const attendanceAudienceSeries = (attendanceTrends.monthly || []).slice(-6).map((item) => ({
+    label: item.label,
+    members: Number(item.members || 0),
+    visitors: Number(item.visitors || 0),
+    total: Number(item.total || 0),
+  }));
+  const givingHealthCards = [
+    {
+      label: 'Attendance Growth',
+      value: attendanceSummary.kpis?.growthRate || '+0%',
+      helper: `${attendanceSummary.kpis?.growthRate || '+0%'} turnout movement`,
+    },
+    {
+      label: 'Retention',
+      value: attendanceSummary.kpis?.memberRetentionRate || '0%',
+      helper: 'Member consistency across recent services',
+    },
+    {
+      label: 'First Timers',
+      value: attendanceSummary.kpis?.firstTimerConversionRate || '0%',
+      helper: 'Conversion rate within current range',
+    },
+  ];
 
   const moduleCards = isCareDashboard
     ? [
@@ -660,7 +753,6 @@ export default function DashboardPage() {
               },
             ];
 
-  const workspaceSubtitle = isBranchDashboard ? `${workspaceName} • ${scopedBranchName}` : workspaceName;
   const heroBackground = tenantBranding.backgroundImageUrl || '';
   const recentHighlights = [
     ...(services
@@ -691,9 +783,9 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-6">
-      <div className="grid items-start gap-4 xl:grid-cols-[minmax(0,1.4fr)_repeat(4,minmax(0,1fr))]">
+      <div className="grid items-stretch gap-4 xl:grid-cols-[minmax(0,1.12fr)_repeat(4,minmax(0,1fr))]">
         <Card
-          className="relative flex min-h-[190px] overflow-hidden border-white/10 bg-[linear-gradient(135deg,rgba(10,16,31,0.98),rgba(6,12,24,0.94))] text-white shadow-[0_24px_50px_rgba(0,0,0,0.3)]"
+          className="relative flex min-h-[170px] overflow-hidden border-white/10 bg-[linear-gradient(135deg,rgba(10,16,31,0.98),rgba(6,12,24,0.94))] text-white shadow-[0_24px_50px_rgba(0,0,0,0.3)]"
           style={{
             backgroundImage: heroBackground
               ? `linear-gradient(90deg, rgba(7,12,24,0.92), rgba(7,12,24,0.72)), url(${heroBackground})`
@@ -705,18 +797,9 @@ export default function DashboardPage() {
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(217,181,93,0.18),transparent_28%)]" />
           <div className="relative flex flex-col justify-center px-2">
             <p className="text-[11px] uppercase tracking-[0.32em] text-[#ebd59b]">{todayLabel}</p>
-            <h1 className="mt-4 font-serif text-[2.4rem] font-semibold leading-tight text-white sm:text-[2.9rem]">
+            <h1 className="mt-2 font-serif text-[1.15rem] font-semibold leading-[1.15] text-white sm:text-[1.45rem]">
               {getGreeting()}, {firstName}
             </h1>
-            <p className="mt-3 max-w-2xl text-base leading-7 text-white/72">{workspaceSubtitle}</p>
-            <div className="mt-5 flex flex-wrap gap-2">
-              <span className="rounded-full border border-white/10 bg-white/[0.04] px-3.5 py-2 text-sm text-white/70">
-                Kingdom impact in view
-              </span>
-              <span className="rounded-full border border-[#d9b55d]/20 bg-[#d9b55d]/10 px-3.5 py-2 text-sm text-[#ebd59b]">
-                Live ministry pulse
-              </span>
-            </div>
           </div>
         </Card>
         {kpis.map((item) => (
@@ -750,6 +833,247 @@ export default function DashboardPage() {
         {moduleCards.map((card) => (
           <ModuleCard key={card.title} {...card} />
         ))}
+      </div>
+
+      <div className="grid items-start gap-6 xl:grid-cols-[1.2fr_0.8fr]">
+        <DashboardChartCard
+          eyebrow="Finance Pulse"
+          title="Giving and expense movement"
+          subtitle="Monthly income and expenses using live finance records."
+        >
+          {financePerformanceSeries.length ? (
+            <div className="h-[320px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={financePerformanceSeries}>
+                  <defs>
+                    <linearGradient id="dashboardIncomeFill" x1="0" x2="0" y1="0" y2="1">
+                      <stop offset="5%" stopColor="#D9B55D" stopOpacity={0.55} />
+                      <stop offset="95%" stopColor="#D9B55D" stopOpacity={0.05} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid stroke="rgba(255,255,255,0.08)" vertical={false} />
+                  <XAxis dataKey="label" tick={axisStyle} tickLine={false} axisLine={false} />
+                  <YAxis tick={axisStyle} tickLine={false} axisLine={false} />
+                  <Tooltip
+                    contentStyle={{
+                      background: '#09111f',
+                      border: '1px solid rgba(255,255,255,0.08)',
+                      borderRadius: 16,
+                    }}
+                    formatter={(value) => formatCurrency(value)}
+                  />
+                  <Legend />
+                  <Area type="monotone" dataKey="income" stroke="#D9B55D" fill="url(#dashboardIncomeFill)" strokeWidth={3} />
+                  <Area type="monotone" dataKey="expenses" stroke="#60A5FA" fill="rgba(96,165,250,0.08)" strokeWidth={2} />
+                </AreaChart>
+              </ResponsiveContainer>
+            </div>
+          ) : (
+            <EmptyState icon="~" title="No finance trend yet" message="Income and expense charts will appear when finance records are available." />
+          )}
+        </DashboardChartCard>
+
+        <DashboardChartCard
+          eyebrow="Member Mix"
+          title="Gender distribution"
+          subtitle="Live member composition from your current membership records."
+        >
+          {memberGenderData.some((item) => item.value > 0) ? (
+            <div className="grid items-center gap-4 lg:grid-cols-[0.95fr_1.05fr]">
+              <div className="h-[280px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie data={memberGenderData} dataKey="value" nameKey="name" innerRadius={62} outerRadius={98}>
+                      {memberGenderData.map((entry, index) => (
+                        <Cell key={entry.name} fill={chartPalette[index % chartPalette.length]} />
+                      ))}
+                    </Pie>
+                    <Tooltip formatter={(value) => formatAnalyticsNumber(value)} />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+              <div className="space-y-3">
+                {memberGenderData.map((item, index) => (
+                  <div key={item.name} className="flex items-center justify-between rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3">
+                    <div className="flex items-center gap-3">
+                      <span className="h-3 w-3 rounded-full" style={{ backgroundColor: chartPalette[index % chartPalette.length] }} />
+                      <span className="text-sm text-white/70">{item.name}</span>
+                    </div>
+                    <span className="font-semibold text-white">{formatAnalyticsNumber(item.value)}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : (
+            <EmptyState icon="○" title="No member mix yet" message="Gender distribution appears after members are recorded with profile details." />
+          )}
+        </DashboardChartCard>
+      </div>
+
+      <div className="grid items-start gap-6 xl:grid-cols-[1.05fr_0.95fr]">
+        <DashboardChartCard
+          eyebrow="Attendance"
+          title="Members vs visitors"
+          subtitle="Six-month attendance trend split by returning members and visitors."
+        >
+          {attendanceAudienceSeries.length ? (
+            <div className="space-y-4">
+              <div className="h-[320px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={attendanceAudienceSeries}>
+                    <CartesianGrid stroke="rgba(255,255,255,0.08)" vertical={false} />
+                    <XAxis dataKey="label" tick={axisStyle} tickLine={false} axisLine={false} />
+                    <YAxis tick={axisStyle} tickLine={false} axisLine={false} />
+                    <Tooltip
+                      contentStyle={{
+                        background: '#09111f',
+                        border: '1px solid rgba(255,255,255,0.08)',
+                        borderRadius: 16,
+                      }}
+                    />
+                    <Legend />
+                    <Bar dataKey="members" stackId="attendance" fill="#D9B55D" radius={[8, 8, 0, 0]} />
+                    <Bar dataKey="visitors" stackId="attendance" fill="#60A5FA" radius={[8, 8, 0, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+              <div className="grid gap-3 md:grid-cols-3">
+                {givingHealthCards.map((item) => (
+                  <div key={item.label} className="rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3">
+                    <p className="text-[11px] uppercase tracking-[0.22em] text-white/42">{item.label}</p>
+                    <p className="mt-2 text-xl font-semibold text-white">{item.value}</p>
+                    <p className="mt-1 text-xs text-white/55">{item.helper}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : (
+            <EmptyState icon="~" title="No attendance trend yet" message="Attendance charts will appear once services and check-ins are available." />
+          )}
+        </DashboardChartCard>
+
+        <DashboardChartCard
+          eyebrow="Giving Channels"
+          title="Payments by method"
+          subtitle="See how members are giving across cash, mobile money, bank, and other channels."
+        >
+          {paymentMethodData.length ? (
+            <div className="grid items-center gap-4 lg:grid-cols-[0.9fr_1.1fr]">
+              <div className="h-[280px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie data={paymentMethodData} dataKey="value" nameKey="name" innerRadius={56} outerRadius={98}>
+                      {paymentMethodData.map((entry, index) => (
+                        <Cell key={entry.name} fill={chartPalette[index % chartPalette.length]} />
+                      ))}
+                    </Pie>
+                    <Tooltip formatter={(value) => formatCurrency(value)} />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+              <div className="space-y-3">
+                {paymentMethodData.map((item, index) => (
+                  <div key={item.name} className="flex items-center justify-between rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3">
+                    <div className="flex items-center gap-3">
+                      <span className="h-3 w-3 rounded-full" style={{ backgroundColor: chartPalette[index % chartPalette.length] }} />
+                      <span className="text-sm text-white/70">{item.name}</span>
+                    </div>
+                    <span className="font-semibold text-white">{formatCurrency(item.value)}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : (
+            <EmptyState icon="$" title="No payment mix yet" message="Payment-method charts appear when transaction records include real giving channels." />
+          )}
+        </DashboardChartCard>
+      </div>
+
+      <div className="grid items-start gap-6 xl:grid-cols-[1.05fr_0.95fr]">
+        <DashboardChartCard
+          eyebrow="Branch Performance"
+          title="Top performing branches"
+          subtitle="Compare branch giving performance and identify stronger ministry locations."
+        >
+          {branchPerformanceData.length ? (
+            <div className="h-[320px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={branchPerformanceData} layout="vertical" margin={{ left: 20, right: 12 }}>
+                  <CartesianGrid stroke="rgba(255,255,255,0.08)" horizontal={false} />
+                  <XAxis type="number" tick={axisStyle} tickLine={false} axisLine={false} />
+                  <YAxis
+                    type="category"
+                    dataKey="name"
+                    tick={axisStyle}
+                    tickLine={false}
+                    axisLine={false}
+                    width={140}
+                  />
+                  <Tooltip
+                    contentStyle={{
+                      background: '#09111f',
+                      border: '1px solid rgba(255,255,255,0.08)',
+                      borderRadius: 16,
+                    }}
+                    formatter={(value, key) =>
+                      key === 'income' ? formatCurrency(value) : formatAnalyticsNumber(value)
+                    }
+                  />
+                  <Legend />
+                  <Bar dataKey="income" fill="#34D399" radius={[0, 10, 10, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          ) : (
+            <EmptyState icon="↑" title="No branch comparison yet" message="Branch performance charts will appear when branch finance records are available." />
+          )}
+        </DashboardChartCard>
+
+        <DashboardChartCard
+          eyebrow="Giving Mix"
+          title="Tithes, offerings, and donations"
+          subtitle="Track the contribution mix across the main giving categories."
+        >
+          {givingTypeData.length ? (
+            <div className="space-y-4">
+              <div className="h-[280px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={givingTypeData}>
+                    <CartesianGrid stroke="rgba(255,255,255,0.08)" vertical={false} />
+                    <XAxis dataKey="name" tick={axisStyle} tickLine={false} axisLine={false} />
+                    <YAxis tick={axisStyle} tickLine={false} axisLine={false} />
+                    <Tooltip
+                      contentStyle={{
+                        background: '#09111f',
+                        border: '1px solid rgba(255,255,255,0.08)',
+                        borderRadius: 16,
+                      }}
+                      formatter={(value) => formatCurrency(value)}
+                    />
+                    <Bar dataKey="value" radius={[10, 10, 0, 0]}>
+                      {givingTypeData.map((item, index) => (
+                        <Cell key={item.name} fill={chartPalette[index % chartPalette.length]} />
+                      ))}
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+              <div className="grid gap-3 md:grid-cols-2">
+                {givingTypeData.slice(0, 4).map((item, index) => (
+                  <div key={item.name} className="rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3">
+                    <div className="flex items-center gap-2">
+                      <span className="h-3 w-3 rounded-full" style={{ backgroundColor: chartPalette[index % chartPalette.length] }} />
+                      <p className="text-sm text-white/70">{item.name}</p>
+                    </div>
+                    <p className="mt-2 text-lg font-semibold text-white">{formatCurrency(item.value)}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : (
+            <EmptyState icon="◔" title="No giving mix yet" message="Giving-type charts appear after tithes, offerings, and other transactions are recorded." />
+          )}
+        </DashboardChartCard>
       </div>
 
       <div className="grid items-start gap-6 xl:grid-cols-[1.2fr_0.8fr]">

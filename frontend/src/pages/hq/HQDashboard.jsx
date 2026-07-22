@@ -64,6 +64,7 @@ export default function HQDashboard() {
     queryKey: ['hq-branch-list'],
     queryFn: () => getAllBranches(),
     enabled: canViewHQ,
+    staleTime: 1000 * 60 * 5,
   });
   const overviewQuery = useQuery({
     queryKey: ['hq-overview', fromDate, toDate, branchId],
@@ -74,6 +75,7 @@ export default function HQDashboard() {
         branchId: branchId || undefined,
       }),
     enabled: canViewHQ,
+    staleTime: 1000 * 60 * 3,
   });
   const comparisonQuery = useQuery({
     queryKey: ['hq-branch-comparison', fromDate, toDate, branchId],
@@ -84,21 +86,25 @@ export default function HQDashboard() {
         branchId: branchId || undefined,
       }),
     enabled: canViewHQ,
+    staleTime: 1000 * 60 * 3,
   });
   const growthQuery = useQuery({
     queryKey: ['hq-growth-trends', branchId],
     queryFn: () => getGrowthTrends({ months: 12, branchId: branchId || undefined }),
     enabled: canViewHQ,
+    staleTime: 1000 * 60 * 3,
   });
   const healthQuery = useQuery({
     queryKey: ['hq-operational-health', branchId],
     queryFn: () => getOperationalHealth({ branchId: branchId || undefined }),
     enabled: canViewHQ,
+    staleTime: 1000 * 60 * 3,
   });
   const membersQuery = useQuery({
     queryKey: ['hq-member-intelligence-summary', branchId],
     queryFn: () => getMemberIntelligence({ branchId: branchId || undefined }),
     enabled: canViewHQ,
+    staleTime: 1000 * 60 * 3,
   });
   const overview = overviewQuery.data || {};
   const branchComparison = comparisonQuery.data?.items || [];

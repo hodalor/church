@@ -24,11 +24,13 @@ export default function BranchesPage() {
     queryKey: ['hq-branches-grid'],
     queryFn: () => getAllBranches(),
     enabled: canViewBranches,
+    staleTime: 1000 * 60 * 5,
   });
   const comparisonQuery = useQuery({
     queryKey: ['hq-branches-comparison-grid'],
     queryFn: () => getBranchComparison(),
     enabled: canViewBranches,
+    staleTime: 1000 * 60 * 3,
   });
 
   const branchRows = useMemo(() => {
