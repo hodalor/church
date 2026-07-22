@@ -7,6 +7,11 @@ export const login = asyncHandler(async (req, res) => {
   return success(res, data, 'Login successful.');
 });
 
+export const getPublicBranding = asyncHandler(async (_req, res) => {
+  const data = await authService.getPublicBrandingService();
+  return success(res, data, 'Public branding fetched successfully.');
+});
+
 export const refreshSession = asyncHandler(async (req, res) => {
   const data = await authService.refreshTokenService(req.body);
   return success(res, data, 'Session refreshed.');

@@ -7,6 +7,8 @@ const defaultGlobalBranding = {
   appName: 'Ecclesia',
   logoUrl: '',
   tagline: 'Church OS',
+  heroTitle: 'Secure church operations in one elegant workspace.',
+  heroSubtitle: 'Sign in to the master console or your church tenant dashboard.',
 };
 
 const defaultTenantBranding = {

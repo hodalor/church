@@ -30,6 +30,7 @@ router.post(
   validate,
   authController.login,
 );
+router.get('/branding', authController.getPublicBranding);
 router.post(
   '/refresh',
   [body('refreshToken').trim().notEmpty().withMessage('Refresh token is required.')],

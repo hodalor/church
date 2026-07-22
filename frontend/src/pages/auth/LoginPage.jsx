@@ -1,9 +1,11 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useEffect } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { Controller, useForm } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom';
 import { z } from 'zod';
 import logo from '../../assets/logo.svg';
+import { getPublicBranding } from '../../api/endpoints/auth';
 import Button from '../../components/ui/Button';
 import Card from '../../components/ui/Card';
 import Input from '../../components/ui/Input';
@@ -26,10 +28,16 @@ const loginSchema = z.object({
 export default function LoginPage() {
   const navigate = useNavigate();
   const globalBranding = useBrandingStore((state) => state.globalBranding);
+  const updateGlobalBranding = useBrandingStore((state) => state.updateGlobalBranding);
   const login = useAuthStore((state) => state.login);
   const isLoading = useAuthStore((state) => state.isLoading);
   const error = useAuthStore((state) => state.error);
   const clearError = useAuthStore((state) => state.clearError);
+  const brandingQuery = useQuery({
+    queryKey: ['public-auth-branding'],
+    queryFn: getPublicBranding,
+    staleTime: 5 * 60 * 1000,
+  });
   const {
     control,
     handleSubmit,
@@ -47,6 +55,14 @@ export default function LoginPage() {
 
   useEffect(() => () => clearError(), [clearError]);
 
+  useEffect(() => {
+    if (!brandingQuery.data) {
+      return;
+    }
+
+    updateGlobalBranding(brandingQuery.data);
+  }, [brandingQuery.data, updateGlobalBranding]);
+
   const onSubmit = async (values) => {
     clearError();
     try {
@@ -63,6 +79,15 @@ export default function LoginPage() {
     }
   };
 
+  const authBranding = {
+    appName: globalBranding.appName || 'Ecclesia',
+    logoUrl: globalBranding.logoUrl || '',
+    tagline: globalBranding.tagline || 'Church OS',
+    heroTitle: globalBranding.heroTitle || 'Secure church operations in one elegant workspace.',
+    heroSubtitle: globalBranding.heroSubtitle || 'Sign in to the master console or your church tenant dashboard.',
+  };
+  const authLogo = authBranding.logoUrl || logo;
+
   return (
     <div className="min-h-screen bg-[#070b14] text-white">
       <div className="grid min-h-screen lg:grid-cols-2">
@@ -71,19 +96,19 @@ export default function LoginPage() {
           <div className="absolute bottom-16 right-10 h-40 w-40 rounded-full bg-indigo-500/10 blur-3xl" />
           <div className="relative max-w-md">
             <div className="flex items-center gap-4">
-              <img src={logo} alt={globalBranding.appName || 'Prynova'} className="h-12 w-auto" />
+              <img src={authLogo} alt={authBranding.appName} className="h-14 w-14 rounded-2xl object-cover" />
               <div>
-                <p className="text-xs uppercase tracking-[1em] text-accent/80">
-                  {globalBranding.appName || 'Ecclesia'}
+                <p className="text-base font-semibold uppercase tracking-[0.8em] text-accent/85 sm:text-lg">
+                  {authBranding.appName}
                 </p>
-                <p className="mt-1 text-sm text-white/55">{globalBranding.tagline || 'Church Managemnt System'}</p>
+                <p className="mt-1 text-base text-white/60">{authBranding.tagline}</p>
               </div>
             </div>
             <h1 className="mt-10 text-5xl font-semibold leading-tight text-white">
-              Secure church operations in one elegant workspace.
+              {authBranding.heroTitle}
             </h1>
             <p className="mt-5 max-w-sm text-base leading-7 text-white/60">
-              Sign in to the master console or your church tenant dashboard.
+              {authBranding.heroSubtitle}
             </p>
           </div>
         </div>

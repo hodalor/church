@@ -13,6 +13,13 @@ import { normalizeBranchList } from '../../utils/branchScope.js';
 import { logAudit } from '../../utils/auditLogger.js';
 
 const REFRESH_TOKEN_SALT_ROUNDS = 10;
+const DEFAULT_PUBLIC_BRANDING = {
+  appName: 'Ecclesia',
+  logoUrl: '',
+  tagline: 'Church OS',
+  heroTitle: 'Secure church operations in one elegant workspace.',
+  heroSubtitle: 'Sign in to the master console or your church tenant dashboard.',
+};
 
 const hashRefreshToken = async (refreshToken) => bcrypt.hash(refreshToken, REFRESH_TOKEN_SALT_ROUNDS);
 
@@ -204,6 +211,21 @@ export const loginService = async ({ tenantId, username, pin }, req) => {
       allBranches: payload.allBranches,
       assignedBranches: payload.assignedBranches,
     },
+  };
+};
+
+export const getPublicBrandingService = async () => {
+  const tenant = await Tenant.findOne({ tenantId: env.SUPER_ADMIN_TENANT_ID }).lean();
+  const branding = tenant?.branding && typeof tenant.branding === 'object' ? tenant.branding : {};
+
+  return {
+    ...DEFAULT_PUBLIC_BRANDING,
+    ...branding,
+    appName: String(branding.appName || DEFAULT_PUBLIC_BRANDING.appName),
+    logoUrl: String(branding.logoUrl || DEFAULT_PUBLIC_BRANDING.logoUrl),
+    tagline: String(branding.tagline || DEFAULT_PUBLIC_BRANDING.tagline),
+    heroTitle: String(branding.heroTitle || DEFAULT_PUBLIC_BRANDING.heroTitle),
+    heroSubtitle: String(branding.heroSubtitle || DEFAULT_PUBLIC_BRANDING.heroSubtitle),
   };
 };
 

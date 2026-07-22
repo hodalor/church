@@ -5,6 +5,11 @@ export const loginUser = async (payload) => {
   return response.data?.data || response.data;
 };
 
+export const getPublicBranding = async () => {
+  const response = await api.get('/auth/branding');
+  return response.data?.data || response.data;
+};
+
 export const refreshToken = async (payload) => {
   const response = await api.post('/auth/refresh', payload);
   return response.data?.data || response.data;

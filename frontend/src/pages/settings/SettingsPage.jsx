@@ -346,6 +346,14 @@ export default function SettingsPage() {
       appName: configSource.branding?.appName || globalBranding.appName,
       logoUrl: configSource.branding?.logoUrl || globalBranding.logoUrl,
       tagline: configSource.branding?.tagline || globalBranding.tagline,
+      heroTitle:
+        configSource.branding?.heroTitle ||
+        globalBranding.heroTitle ||
+        'Secure church operations in one elegant workspace.',
+      heroSubtitle:
+        configSource.branding?.heroSubtitle ||
+        globalBranding.heroSubtitle ||
+        'Sign in to the master console or your church tenant dashboard.',
     });
     setPlatformConfig({
       eligibleCountries: normalizeEligibleCountries(
@@ -377,6 +385,9 @@ export default function SettingsPage() {
           appName: data.branding.appName || data.churchName || '',
           logoUrl: data.branding.logoUrl || '',
           tagline: data.branding.tagline || 'Church OS',
+          heroTitle: data.branding.heroTitle || 'Secure church operations in one elegant workspace.',
+          heroSubtitle:
+            data.branding.heroSubtitle || 'Sign in to the master console or your church tenant dashboard.',
         });
       }
 
@@ -622,6 +633,27 @@ export default function SettingsPage() {
                     setGlobalForm((current) => ({ ...current, tagline: event.target.value }))
                   }
                 />
+                <Input
+                  label="Login hero title"
+                  value={globalForm.heroTitle || ''}
+                  disabled={!canEditConfig}
+                  onChange={(event) =>
+                    setGlobalForm((current) => ({ ...current, heroTitle: event.target.value }))
+                  }
+                />
+                <label className="block space-y-2">
+                  <span className="text-sm font-medium text-white/75">Login hero subtitle</span>
+                  <textarea
+                    value={globalForm.heroSubtitle || ''}
+                    disabled={!canEditConfig}
+                    onChange={(event) =>
+                      setGlobalForm((current) => ({ ...current, heroSubtitle: event.target.value }))
+                    }
+                    rows={3}
+                    className={inputClass}
+                    placeholder="Sign in to the master console or your church tenant dashboard."
+                  />
+                </label>
 
                 <div className={`flex items-center justify-between px-4 py-3 text-sm text-white/60 ${innerPanelClass}`}>
                   <span>{canEditConfig ? 'Changes apply to all workspaces.' : 'Read only in tenant mode.'}</span>
