@@ -470,7 +470,7 @@ export default function SettingsPage() {
         configSource.platformConfig?.eligibleCountries,
       ),
     });
-  }, [globalBranding.appName, globalBranding.logoUrl, globalBranding.tagline, isSuperAdmin, platformConfigQuery.data, setPlatformConfig]);
+  }, [globalBranding.appName, globalBranding.backgroundImageUrl, globalBranding.heroSubtitle, globalBranding.heroTitle, globalBranding.logoUrl, globalBranding.promotedApps, globalBranding.tagline, isSuperAdmin, platformConfigQuery.data, setPlatformConfig]);
 
   const updateTenantMutation = useMutation({
     mutationFn: ({ tenantId, payload }) =>

@@ -467,7 +467,7 @@ export default function BranchDetailPage() {
           </div>
         );
     }
-  }, [attendanceSeries, atRiskMembers, branchMembers, branchServices, branchTransactions, branchVisitors, currencyCode, currencySymbol, engagementData, lightPanelClass, lightPanelSubClass, lightPanelTitleClass, liveMetrics.pastoral?.openCases, liveMetrics.pastoral?.resolvedCases, liveMetrics.visitors?.conversionRate, liveMetrics.visitors?.converted, liveMetrics.visitors?.total, liveMetrics.volunteers?.active, liveMetrics.volunteers?.avgReliability, memberColumns, membersDirectoryQuery.isLoading, serviceColumns, servicesQuery.isLoading, tab, transactionColumns, transactionsQuery.isLoading, visitorColumns, visitorsQuery.isLoading]);
+  }, [attendanceSeries, atRiskMembers, branchMembers, branchServices, branchTransactions, branchVisitors, engagementData, lightPanelClass, lightPanelSubClass, lightPanelTitleClass, liveMetrics.pastoral?.openCases, liveMetrics.pastoral?.resolvedCases, liveMetrics.visitors?.conversionRate, liveMetrics.visitors?.converted, liveMetrics.visitors?.total, liveMetrics.volunteers?.active, liveMetrics.volunteers?.avgReliability, memberColumns, membersDirectoryQuery.isLoading, serviceColumns, servicesQuery.isLoading, tab, transactionColumns, transactionsQuery.isLoading, visitorColumns, visitorsQuery.isLoading]);
 
   if (!canViewBranchMetrics) {
     return (
