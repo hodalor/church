@@ -24,7 +24,7 @@ export const supabaseUpload = async (file, bucketName, customPath) => {
 
   if (!hasConfiguredSupabase) {
     throw new Error(
-      'Logo upload is not configured yet. Add valid REACT_APP_SUPABASE_URL and REACT_APP_SUPABASE_ANON_KEY in frontend/.env, then restart the frontend.',
+      'File upload is not configured yet. Add valid REACT_APP_SUPABASE_URL and REACT_APP_SUPABASE_ANON_KEY in frontend/.env, then restart the frontend.',
     );
   }
 
