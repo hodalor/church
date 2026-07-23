@@ -4,6 +4,7 @@ import {
   healthStatuses,
   maritalStatuses,
   membershipStatuses,
+  personCategories,
 } from './member.model.js';
 
 const phoneRegex = /^[+()\-\s\d]{7,20}$/;
@@ -58,11 +59,23 @@ const commonValidators = [
     .optional({ values: 'falsy' })
     .isIn(['male', 'female', 'other'])
     .withMessage('Gender is invalid.'),
+  body('personCategory')
+    .optional({ values: 'falsy' })
+    .isIn(personCategories)
+    .withMessage('Person category is invalid.'),
   body('healthScore.status')
     .optional({ values: 'falsy' })
     .isIn(healthStatuses)
     .withMessage('Health status is invalid.'),
   body('photoUrl').optional({ values: 'falsy' }).isURL().withMessage('Photo URL must be valid.'),
+  body('identityDocuments.frontUrl')
+    .optional({ values: 'falsy' })
+    .isURL()
+    .withMessage('ID front image URL must be valid.'),
+  body('identityDocuments.backUrl')
+    .optional({ values: 'falsy' })
+    .isURL()
+    .withMessage('ID back image URL must be valid.'),
   body('digitalCardUrl')
     .optional({ values: 'falsy' })
     .isURL()

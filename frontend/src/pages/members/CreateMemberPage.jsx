@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
 import { useMutation, useQuery } from '@tanstack/react-query';
+import { Camera, ImagePlus } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import AppShell from '../../components/layout/AppShell';
 import SuperAdminShell from '../../components/layout/SuperAdminShell';
@@ -15,9 +16,12 @@ import { getAllTenants, getCurrentTenant, getTenantById } from '../../api/endpoi
 import { useAuth } from '../../hooks/useAuth';
 import { useCapabilities } from '../../hooks/useCapabilities';
 import { sanitizeGroupingPath } from '../../utils/groupings';
+import supabaseUpload from '../../utils/supabaseUpload';
+import { showErrorToast, showSuccessToast } from '../../utils/toast';
 
 const membershipOptions = ['visitor', 'new_convert', 'member', 'worker', 'leader', 'clergy'];
 const genderOptions = ['male', 'female', 'other'];
+const personCategoryOptions = ['adult', 'child'];
 
 export default function CreateMemberPage() {
   const navigate = useNavigate();
@@ -32,6 +36,13 @@ export default function CreateMemberPage() {
     email: '',
     phone: '',
     gender: '',
+    personCategory: 'adult',
+    dateOfBirth: '',
+    photoUrl: '',
+    identityDocuments: {
+      frontUrl: '',
+      backUrl: '',
+    },
     membershipStatus: 'member',
     branch: '',
     department: '',
@@ -50,6 +61,7 @@ export default function CreateMemberPage() {
   });
   const [error, setError] = useState('');
   const [activeFamilySearch, setActiveFamilySearch] = useState({ index: -1, value: '' });
+  const [uploadingField, setUploadingField] = useState('');
 
   const tenantsQuery = useQuery({
     queryKey: ['create-member-tenants'],
@@ -100,6 +112,16 @@ export default function CreateMemberPage() {
     setForm((current) => ({ ...current, [key]: value }));
   };
 
+  const updateIdentityField = (key, value) => {
+    setForm((current) => ({
+      ...current,
+      identityDocuments: {
+        ...(current.identityDocuments || {}),
+        [key]: value,
+      },
+    }));
+  };
+
   const content = tenantSettingsQuery.data?.content || {};
   const groupingOptions = useMemo(() => content.groupings || [], [content.groupings]);
   const departmentOptions = content.departments || [];
@@ -134,6 +156,44 @@ export default function CreateMemberPage() {
     [form, groupingOptions],
   );
 
+  const handleMediaUpload = async (event, mode) => {
+    const file = event.target.files?.[0];
+    if (!file) {
+      return;
+    }
+
+    try {
+      setUploadingField(mode);
+      const extension = file.name.split('.').pop();
+      const safeTenantId = (isSuperAdmin ? form.tenantId : targetTenantId || 'member').trim() || 'member';
+      const path = `members/${safeTenantId}/${mode}-${Date.now()}.${extension}`;
+      const url = await supabaseUpload(file, 'church-media', path);
+
+      if (mode === 'photo') {
+        updateField('photoUrl', url);
+      } else if (mode === 'id-front') {
+        updateIdentityField('frontUrl', url);
+      } else if (mode === 'id-back') {
+        updateIdentityField('backUrl', url);
+      }
+
+      showSuccessToast(
+        mode === 'photo'
+          ? 'Member photo uploaded.'
+          : mode === 'id-front'
+            ? 'ID front uploaded.'
+            : 'ID back uploaded.',
+      );
+    } catch (uploadError) {
+      const message = uploadError.message || 'Unable to upload file right now.';
+      setError(message);
+      showErrorToast(message);
+    } finally {
+      setUploadingField('');
+      event.target.value = '';
+    }
+  };
+
   const handleSubmit = (event) => {
     event.preventDefault();
     setError('');
@@ -145,6 +205,11 @@ export default function CreateMemberPage() {
 
     if (!form.firstName.trim() || !form.lastName.trim()) {
       setError('First name and last name are required.');
+      return;
+    }
+
+    if (form.personCategory === 'adult' && (!form.identityDocuments?.frontUrl || !form.identityDocuments?.backUrl)) {
+      setError('Adult registration requires both ID front and ID back images. Switch to child if no ID card is available.');
       return;
     }
 
@@ -211,6 +276,42 @@ export default function CreateMemberPage() {
                   </select>
                 </label>
               ) : null}
+              <div className="space-y-2 md:col-span-2">
+                <span className="text-sm font-medium text-white/80">Person Category</span>
+                <div className="grid gap-3 md:grid-cols-2">
+                  {personCategoryOptions.map((option) => (
+                    <button
+                      key={option}
+                      type="button"
+                      onClick={() => {
+                        updateField('personCategory', option);
+                        if (option === 'child') {
+                          setForm((current) => ({
+                            ...current,
+                            personCategory: 'child',
+                            identityDocuments: {
+                              frontUrl: '',
+                              backUrl: '',
+                            },
+                          }));
+                        }
+                      }}
+                      className={`rounded-2xl border px-4 py-4 text-left text-sm font-semibold capitalize transition ${
+                        form.personCategory === option
+                          ? 'border-accent/40 bg-accent/15 text-accent'
+                          : 'border-white/10 bg-white/5 text-white/70 hover:bg-white/[0.08]'
+                      }`}
+                    >
+                      {option}
+                      <p className="mt-1 text-xs font-normal normal-case text-white/45">
+                        {option === 'adult'
+                          ? 'Adult members should include national ID images.'
+                          : 'Children can be registered without ID card images.'}
+                      </p>
+                    </button>
+                  ))}
+                </div>
+              </div>
               <Input
                 label="First Name"
                 value={form.firstName}
@@ -258,6 +359,12 @@ export default function CreateMemberPage() {
                 placeholder="+233..."
               />
               <Input
+                label="Date of Birth"
+                type="date"
+                value={form.dateOfBirth}
+                onChange={(event) => updateField('dateOfBirth', event.target.value)}
+              />
+              <Input
                 label="Login Username"
                 value={form.loginUsername}
                 onChange={(event) => updateField('loginUsername', event.target.value)}
@@ -281,6 +388,113 @@ export default function CreateMemberPage() {
           <Card className="space-y-6">
             <div>
               <p className="text-sm uppercase tracking-[0.25em] text-accent">Section 2</p>
+              <h2 className="mt-2 text-2xl font-semibold text-white">Identity & Documents</h2>
+              <p className="mt-2 max-w-3xl text-sm leading-6 text-white/60">
+                Upload the member photo and supporting identity images. Children can be saved without ID card images.
+              </p>
+            </div>
+
+            <div className="grid gap-6 xl:grid-cols-[0.9fr_1.1fr]">
+              <div className="space-y-4">
+                <div className="flex flex-col items-center gap-4 rounded-3xl border border-white/10 bg-white/[0.03] p-5">
+                  {form.photoUrl ? (
+                    <img src={form.photoUrl} alt="Member preview" className="h-32 w-32 rounded-full object-cover" />
+                  ) : (
+                    <div className="flex h-32 w-32 items-center justify-center rounded-full border border-dashed border-white/10 bg-white/5 text-center text-sm text-white/45">
+                      No member photo
+                    </div>
+                  )}
+                  <div className="flex flex-wrap justify-center gap-3">
+                    <label className="inline-flex cursor-pointer items-center rounded-xl border border-white/10 bg-white/[0.04] px-3.5 py-2.5 text-sm font-semibold text-white hover:bg-white/[0.08]">
+                      <Camera className="mr-2 h-4 w-4" />
+                      {uploadingField === 'photo' ? 'Uploading...' : 'Take Photo'}
+                      <input
+                        type="file"
+                        accept="image/*"
+                        capture="user"
+                        className="hidden"
+                        onChange={(event) => handleMediaUpload(event, 'photo')}
+                      />
+                    </label>
+                    <label className="inline-flex cursor-pointer items-center rounded-xl border border-white/10 bg-white/[0.04] px-3.5 py-2.5 text-sm font-semibold text-white hover:bg-white/[0.08]">
+                      <ImagePlus className="mr-2 h-4 w-4" />
+                      {uploadingField === 'photo' ? 'Uploading...' : 'Upload Photo'}
+                      <input
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={(event) => handleMediaUpload(event, 'photo')}
+                      />
+                    </label>
+                  </div>
+                </div>
+              </div>
+
+              <div className="grid gap-5 md:grid-cols-2">
+                <div className="space-y-3 rounded-3xl border border-white/10 bg-white/[0.03] p-4">
+                  <div className="flex items-center justify-between gap-3">
+                    <div>
+                      <p className="text-sm font-semibold text-white">ID Front</p>
+                      <p className="text-xs text-white/45">
+                        {form.personCategory === 'child' ? 'Optional for children' : 'Required for adults'}
+                      </p>
+                    </div>
+                  </div>
+                  {form.identityDocuments?.frontUrl ? (
+                    <img src={form.identityDocuments.frontUrl} alt="ID front" className="h-40 w-full rounded-2xl object-cover" />
+                  ) : (
+                    <div className="flex h-40 items-center justify-center rounded-2xl border border-dashed border-white/10 bg-white/5 text-sm text-white/45">
+                      No ID front uploaded
+                    </div>
+                  )}
+                  <label className="inline-flex cursor-pointer items-center justify-center rounded-xl border border-white/10 bg-white/[0.04] px-3.5 py-2.5 text-sm font-semibold text-white hover:bg-white/[0.08]">
+                    <ImagePlus className="mr-2 h-4 w-4" />
+                    {uploadingField === 'id-front' ? 'Uploading...' : 'Upload ID Front'}
+                    <input
+                      type="file"
+                      accept="image/*"
+                      capture="environment"
+                      className="hidden"
+                      onChange={(event) => handleMediaUpload(event, 'id-front')}
+                    />
+                  </label>
+                </div>
+
+                <div className="space-y-3 rounded-3xl border border-white/10 bg-white/[0.03] p-4">
+                  <div className="flex items-center justify-between gap-3">
+                    <div>
+                      <p className="text-sm font-semibold text-white">ID Back</p>
+                      <p className="text-xs text-white/45">
+                        {form.personCategory === 'child' ? 'Optional for children' : 'Required for adults'}
+                      </p>
+                    </div>
+                  </div>
+                  {form.identityDocuments?.backUrl ? (
+                    <img src={form.identityDocuments.backUrl} alt="ID back" className="h-40 w-full rounded-2xl object-cover" />
+                  ) : (
+                    <div className="flex h-40 items-center justify-center rounded-2xl border border-dashed border-white/10 bg-white/5 text-sm text-white/45">
+                      No ID back uploaded
+                    </div>
+                  )}
+                  <label className="inline-flex cursor-pointer items-center justify-center rounded-xl border border-white/10 bg-white/[0.04] px-3.5 py-2.5 text-sm font-semibold text-white hover:bg-white/[0.08]">
+                    <ImagePlus className="mr-2 h-4 w-4" />
+                    {uploadingField === 'id-back' ? 'Uploading...' : 'Upload ID Back'}
+                    <input
+                      type="file"
+                      accept="image/*"
+                      capture="environment"
+                      className="hidden"
+                      onChange={(event) => handleMediaUpload(event, 'id-back')}
+                    />
+                  </label>
+                </div>
+              </div>
+            </div>
+          </Card>
+
+          <Card className="space-y-6">
+            <div>
+              <p className="text-sm uppercase tracking-[0.25em] text-accent">Section 3</p>
               <h2 className="mt-2 text-2xl font-semibold text-white">Church Information</h2>
             </div>
 

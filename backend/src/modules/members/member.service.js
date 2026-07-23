@@ -74,6 +74,20 @@ const normalizeChildren = (children) => {
     .filter((child) => child.name);
 };
 
+const normalizeIdentityDocuments = (documents) => {
+  const frontUrl = normalizeString(documents?.frontUrl);
+  const backUrl = normalizeString(documents?.backUrl);
+
+  if (!frontUrl && !backUrl) {
+    return undefined;
+  }
+
+  return {
+    ...(frontUrl ? { frontUrl } : {}),
+    ...(backUrl ? { backUrl } : {}),
+  };
+};
+
 const normalizeFamilyRelationships = (relationships) => {
   if (!Array.isArray(relationships)) {
     return [];
@@ -129,8 +143,11 @@ const sanitizeMemberPayload = (payload = {}, { applyDefaults = false } = {}) => 
     lastName: normalizeString(payload.lastName),
     otherName: normalizeString(payload.otherName),
     gender: normalizeString(payload.gender),
+    personCategory:
+      normalizeString(payload.personCategory) || (applyDefaults ? 'adult' : undefined),
     dateOfBirth: parseDate(payload.dateOfBirth),
     photoUrl: normalizeString(payload.photoUrl),
+    identityDocuments: normalizeIdentityDocuments(payload.identityDocuments),
     phone: normalizeString(payload.phone),
     altPhone: normalizeString(payload.altPhone),
     email: normalizeString(payload.email, { lowercase: true }),

@@ -6,6 +6,7 @@ const membershipStatuses = ['visitor', 'new_convert', 'member', 'worker', 'leade
 const baptismStatuses = ['not_baptised', 'water', 'holy_spirit', 'both'];
 const maritalStatuses = ['single', 'married', 'divorced', 'widowed'];
 const healthStatuses = ['active', 'drifting', 'at_risk', 'inactive', 'new'];
+const personCategories = ['adult', 'child'];
 
 const childSchema = new Schema(
   {
@@ -40,8 +41,13 @@ const memberSchema = new Schema(
     lastName: { type: String, required: true, trim: true },
     otherName: { type: String, trim: true },
     gender: { type: String, enum: ['male', 'female', 'other'] },
+    personCategory: { type: String, enum: personCategories, default: 'adult' },
     dateOfBirth: Date,
     photoUrl: { type: String, trim: true },
+    identityDocuments: {
+      frontUrl: { type: String, trim: true },
+      backUrl: { type: String, trim: true },
+    },
     phone: { type: String, trim: true },
     altPhone: { type: String, trim: true },
     email: { type: String, trim: true, lowercase: true },
@@ -149,5 +155,5 @@ memberSchema.pre('save', async function memberPreSave() {
 
 const Member = mongoose.model('Member', memberSchema);
 
-export { baptismStatuses, healthStatuses, maritalStatuses, membershipStatuses };
+export { baptismStatuses, healthStatuses, maritalStatuses, membershipStatuses, personCategories };
 export default Member;
