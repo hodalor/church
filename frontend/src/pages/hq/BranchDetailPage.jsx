@@ -97,10 +97,22 @@ export default function BranchDetailPage() {
   const liveMetrics = metricsQuery.data?.liveMetrics || {};
   const growthItems = growthQuery.data?.items || [];
   const memberIntelligence = memberQuery.data || {};
-  const branchMembers = membersDirectoryQuery.data?.members || [];
-  const branchServices = servicesQuery.data?.items || servicesQuery.data?.services || [];
-  const branchTransactions = transactionsQuery.data?.transactions || [];
-  const branchVisitors = visitorsQuery.data?.items || [];
+  const branchMembers = useMemo(
+    () => membersDirectoryQuery.data?.members || [],
+    [membersDirectoryQuery.data?.members],
+  );
+  const branchServices = useMemo(
+    () => servicesQuery.data?.items || servicesQuery.data?.services || [],
+    [servicesQuery.data?.items, servicesQuery.data?.services],
+  );
+  const branchTransactions = useMemo(
+    () => transactionsQuery.data?.transactions || [],
+    [transactionsQuery.data?.transactions],
+  );
+  const branchVisitors = useMemo(
+    () => visitorsQuery.data?.items || [],
+    [visitorsQuery.data?.items],
+  );
   const attendanceSeries = growthItems.map((item) => ({
     month: item.month,
     attendance: item.attendance?.total || 0,
