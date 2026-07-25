@@ -371,6 +371,7 @@ export default function SettingsPage() {
   });
   const [groupingDraft, setGroupingDraft] = useState(emptyGroupingForm);
   const [selectedTenantId, setSelectedTenantId] = useState('');
+  const [activeSaveAction, setActiveSaveAction] = useState('');
 
   const Shell = isSuperAdmin ? SuperAdminShell : AppShell;
   const pageTitle = isSuperAdmin ? 'Platform Settings' : 'Workspace Settings';
@@ -475,7 +476,11 @@ export default function SettingsPage() {
   const updateTenantMutation = useMutation({
     mutationFn: ({ tenantId, payload }) =>
       isSuperAdmin ? updateTenant(tenantId, payload) : updateCurrentTenant(payload),
-    onSuccess: (data) => {
+    onMutate: ({ saveAction }) => {
+      setActiveSaveAction(saveAction || '');
+      return { saveAction: saveAction || '' };
+    },
+    onSuccess: (data, _variables, context) => {
       if (data?.platformConfig) {
         setPlatformConfig({
           eligibleCountries: normalizeEligibleCountries(data.platformConfig.eligibleCountries),
@@ -522,6 +527,31 @@ export default function SettingsPage() {
           currencySymbol: data?.financial?.currencySymbol || '$',
         });
       }
+
+      if (context?.saveAction === 'global') {
+        showSuccessToast('Platform settings saved successfully.');
+      } else if (context?.saveAction === 'branding') {
+        showSuccessToast('Tenant branding saved successfully.');
+      } else if (context?.saveAction === 'content') {
+        showSuccessToast('Workspace master data saved successfully.');
+      }
+    },
+    onError: (error, _variables, context) => {
+      const message =
+        error?.response?.data?.message || error?.message || 'Unable to save settings right now.';
+
+      if (context?.saveAction === 'global') {
+        showErrorToast(message || 'Unable to save platform settings right now.');
+      } else if (context?.saveAction === 'branding') {
+        showErrorToast(message || 'Unable to save tenant branding right now.');
+      } else if (context?.saveAction === 'content') {
+        showErrorToast(message || 'Unable to save workspace master data right now.');
+      } else {
+        showErrorToast(message);
+      }
+    },
+    onSettled: () => {
+      setActiveSaveAction('');
     },
   });
 
@@ -529,6 +559,9 @@ export default function SettingsPage() {
     () => brandingForm.appName || churchName || 'Grace Assembly International',
     [brandingForm.appName, churchName],
   );
+  const isSavingGlobal = updateTenantMutation.isPending && activeSaveAction === 'global';
+  const isSavingBranding = updateTenantMutation.isPending && activeSaveAction === 'branding';
+  const isSavingContent = updateTenantMutation.isPending && activeSaveAction === 'content';
   const groupingTreeRows = useMemo(
     () => getGroupingTreeRows(contentForm.groupings),
     [contentForm.groupings],
@@ -541,6 +574,7 @@ export default function SettingsPage() {
 
     if (isSuperAdmin) {
       updateTenantMutation.mutate({
+        saveAction: 'global',
         tenantId,
         payload: {
           branding: globalForm,
@@ -586,10 +620,12 @@ export default function SettingsPage() {
     }
 
     if (isSuperAdmin && !selectedTenantId) {
+      showErrorToast('Select a church tenant before saving tenant branding.');
       return;
     }
 
     updateTenantMutation.mutate({
+      saveAction: 'branding',
       tenantId: selectedTenantId,
       payload: { branding: brandingForm },
     });
@@ -634,10 +670,12 @@ export default function SettingsPage() {
     }
 
     if (isSuperAdmin && !selectedTenantId) {
+      showErrorToast('Select a church tenant before saving workspace master data.');
       return;
     }
 
     updateTenantMutation.mutate({
+      saveAction: 'content',
       tenantId: selectedTenantId,
       payload: {
         content: {
@@ -835,8 +873,12 @@ export default function SettingsPage() {
 
                 <div className={`flex items-center justify-between px-4 py-3 text-sm text-white/60 ${innerPanelClass}`}>
                   <span>{canEditConfig ? 'Changes apply to all workspaces.' : 'Read only in tenant mode.'}</span>
-                  <Button variant={canEditConfig ? 'secondary' : 'subtle'} onClick={handleSaveGlobal} disabled={!canEditConfig}>
-                    Save config
+                  <Button
+                    variant={canEditConfig ? 'secondary' : 'subtle'}
+                    onClick={handleSaveGlobal}
+                    disabled={!canEditConfig || updateTenantMutation.isPending}
+                  >
+                    {isSavingGlobal ? 'Saving...' : 'Save config'}
                   </Button>
                 </div>
 
@@ -983,7 +1025,7 @@ export default function SettingsPage() {
                       (isSuperAdmin && !selectedTenantId)
                     }
                   >
-                    {updateTenantMutation.isPending ? 'Saving...' : 'Save branding'}
+                    {isSavingBranding ? 'Saving...' : 'Save branding'}
                   </Button>
                 </div>
               </div>
@@ -1048,7 +1090,7 @@ export default function SettingsPage() {
                   }
                   onClick={handleSaveContent}
                 >
-                  {updateTenantMutation.isPending ? 'Saving...' : 'Save master data'}
+                  {isSavingContent ? 'Saving...' : 'Save master data'}
                 </Button>
               </div>
             </Card>

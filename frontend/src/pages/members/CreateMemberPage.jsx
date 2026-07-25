@@ -22,6 +22,15 @@ import { showErrorToast, showSuccessToast } from '../../utils/toast';
 const membershipOptions = ['visitor', 'new_convert', 'member', 'worker', 'leader', 'clergy'];
 const genderOptions = ['male', 'female', 'other'];
 const personCategoryOptions = ['adult', 'child'];
+const biometricStatusOptions = ['not_enrolled', 'pending_capture', 'enrolled', 'disabled'];
+const fingerOptions = [
+  'right-thumb',
+  'right-index',
+  'left-thumb',
+  'left-index',
+  'right-middle',
+  'left-middle',
+];
 
 export default function CreateMemberPage() {
   const navigate = useNavigate();
@@ -42,6 +51,17 @@ export default function CreateMemberPage() {
     identityDocuments: {
       frontUrl: '',
       backUrl: '',
+    },
+    biometrics: {
+      enabled: false,
+      modality: 'fingerprint',
+      provider: 'ZKTeco',
+      deviceModel: '',
+      templateId: '',
+      fingerLabel: 'right-thumb',
+      status: 'not_enrolled',
+      enrolledAt: '',
+      notes: '',
     },
     membershipStatus: 'member',
     branch: '',
@@ -117,6 +137,16 @@ export default function CreateMemberPage() {
       ...current,
       identityDocuments: {
         ...(current.identityDocuments || {}),
+        [key]: value,
+      },
+    }));
+  };
+
+  const updateBiometricField = (key, value) => {
+    setForm((current) => ({
+      ...current,
+      biometrics: {
+        ...(current.biometrics || {}),
         [key]: value,
       },
     }));
@@ -210,6 +240,11 @@ export default function CreateMemberPage() {
 
     if (form.personCategory === 'adult' && (!form.identityDocuments?.frontUrl || !form.identityDocuments?.backUrl)) {
       setError('Adult registration requires both ID front and ID back images. Switch to child if no ID card is available.');
+      return;
+    }
+
+    if (form.biometrics?.enabled && form.biometrics?.status === 'enrolled' && !form.biometrics?.templateId?.trim()) {
+      setError('Fingerprint template ID is required when biometric enrollment is marked as enrolled.');
       return;
     }
 
@@ -495,6 +530,145 @@ export default function CreateMemberPage() {
           <Card className="space-y-6">
             <div>
               <p className="text-sm uppercase tracking-[0.25em] text-accent">Section 3</p>
+              <h2 className="mt-2 text-2xl font-semibold text-white">Biometric Sign-In</h2>
+              <p className="mt-2 max-w-3xl text-sm leading-6 text-white/60">
+                Enable fingerprint sign-in for service check-in. You can flag it now and finish enrollment later from the member profile after the ZKT scanner captures the template.
+              </p>
+            </div>
+
+            <div className="space-y-5">
+              <div className="grid gap-3 md:grid-cols-2">
+                <button
+                  type="button"
+                  onClick={() =>
+                    setForm((current) => ({
+                      ...current,
+                      biometrics: {
+                        ...(current.biometrics || {}),
+                        enabled: false,
+                        status: 'disabled',
+                        templateId: '',
+                        enrolledAt: '',
+                      },
+                    }))
+                  }
+                  className={`rounded-2xl border px-4 py-4 text-left text-sm font-semibold transition ${
+                    !form.biometrics?.enabled
+                      ? 'border-accent/40 bg-accent/15 text-accent'
+                      : 'border-white/10 bg-white/5 text-white/70 hover:bg-white/[0.08]'
+                  }`}
+                >
+                  No biometric sign-in
+                  <p className="mt-1 text-xs font-normal normal-case text-white/45">
+                    Keep attendance and service sign-in on QR, PIN, or manual lookup only.
+                  </p>
+                </button>
+                <button
+                  type="button"
+                  onClick={() =>
+                    setForm((current) => ({
+                      ...current,
+                      biometrics: {
+                        ...(current.biometrics || {}),
+                        enabled: true,
+                        modality: 'fingerprint',
+                        provider: current.biometrics?.provider || 'ZKTeco',
+                        status:
+                          current.biometrics?.status === 'disabled'
+                            ? 'pending_capture'
+                            : current.biometrics?.status || 'pending_capture',
+                      },
+                    }))
+                  }
+                  className={`rounded-2xl border px-4 py-4 text-left text-sm font-semibold transition ${
+                    form.biometrics?.enabled
+                      ? 'border-accent/40 bg-accent/15 text-accent'
+                      : 'border-white/10 bg-white/5 text-white/70 hover:bg-white/[0.08]'
+                  }`}
+                >
+                  Enable fingerprint sign-in
+                  <p className="mt-1 text-xs font-normal normal-case text-white/45">
+                    Prepare the member for ZKT scanner enrollment now and capture the template ID when available.
+                  </p>
+                </button>
+              </div>
+
+              {form.biometrics?.enabled ? (
+                <div className="grid gap-5 md:grid-cols-2">
+                  <Input label="Biometric Mode" value="Fingerprint" disabled />
+                  <label className="block space-y-2">
+                    <span className="text-sm font-medium text-white/80">Enrollment Status</span>
+                    <select
+                      value={form.biometrics?.status || 'pending_capture'}
+                      onChange={(event) => updateBiometricField('status', event.target.value)}
+                      className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white outline-none focus:border-accent"
+                    >
+                      {biometricStatusOptions.map((option) => (
+                        <option key={option} value={option}>
+                          {option.replaceAll('_', ' ')}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <Input
+                    label="Scanner Provider"
+                    value={form.biometrics?.provider || 'ZKTeco'}
+                    onChange={(event) => updateBiometricField('provider', event.target.value)}
+                    placeholder="ZKTeco"
+                  />
+                  <Input
+                    label="Scanner Model"
+                    value={form.biometrics?.deviceModel || ''}
+                    onChange={(event) => updateBiometricField('deviceModel', event.target.value)}
+                    placeholder="Live20R or SLK20R"
+                  />
+                  <label className="block space-y-2">
+                    <span className="text-sm font-medium text-white/80">Preferred Finger</span>
+                    <select
+                      value={form.biometrics?.fingerLabel || 'right-thumb'}
+                      onChange={(event) => updateBiometricField('fingerLabel', event.target.value)}
+                      className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white outline-none focus:border-accent"
+                    >
+                      {fingerOptions.map((option) => (
+                        <option key={option} value={option}>
+                          {option.replaceAll('-', ' ')}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <Input
+                    label="Template ID"
+                    value={form.biometrics?.templateId || ''}
+                    onChange={(event) => updateBiometricField('templateId', event.target.value)}
+                    placeholder="Saved after scanner enrollment"
+                  />
+                  <Input
+                    label="Enrollment Date"
+                    type="date"
+                    value={form.biometrics?.enrolledAt || ''}
+                    onChange={(event) => updateBiometricField('enrolledAt', event.target.value)}
+                  />
+                  <label className="block space-y-2 md:col-span-2">
+                    <span className="text-sm font-medium text-white/80">Biometric Notes</span>
+                    <textarea
+                      value={form.biometrics?.notes || ''}
+                      onChange={(event) => updateBiometricField('notes', event.target.value)}
+                      rows={3}
+                      className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white outline-none placeholder:text-white/35 focus:border-accent"
+                      placeholder="Example: capture pending at front desk scanner."
+                    />
+                  </label>
+                  <p className="text-sm text-white/55 md:col-span-2">
+                    Browser forms can store enrollment status and template reference, but live fingerprint capture from plug-and-play ZKT hardware still needs the scanner bridge or SDK service connected to this app.
+                  </p>
+                </div>
+              ) : null}
+            </div>
+          </Card>
+
+          <Card className="space-y-6">
+            <div>
+              <p className="text-sm uppercase tracking-[0.25em] text-accent">Section 4</p>
               <h2 className="mt-2 text-2xl font-semibold text-white">Church Information</h2>
             </div>
 
@@ -601,7 +775,7 @@ export default function CreateMemberPage() {
           <Card className="space-y-6">
             <div className="flex items-center justify-between gap-3">
               <div>
-                <p className="text-sm uppercase tracking-[0.25em] text-accent">Section 4</p>
+                <p className="text-sm uppercase tracking-[0.25em] text-accent">Section 5</p>
                 <h2 className="mt-2 text-2xl font-semibold text-white">Family Relationships</h2>
               </div>
               <Button
@@ -706,7 +880,7 @@ export default function CreateMemberPage() {
 
           <Card className="space-y-6">
             <div>
-              <p className="text-sm uppercase tracking-[0.25em] text-accent">Section 5</p>
+              <p className="text-sm uppercase tracking-[0.25em] text-accent">Section 6</p>
               <h2 className="mt-2 text-2xl font-semibold text-white">Location & Notes</h2>
             </div>
 

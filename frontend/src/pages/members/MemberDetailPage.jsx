@@ -38,8 +38,18 @@ import { formatPastoralLabel } from '../../utils/pastoral';
 
 const membershipOptions = ['visitor', 'new_convert', 'member', 'worker', 'leader', 'clergy'];
 const genderOptions = ['male', 'female', 'other'];
+const personCategoryOptions = ['adult', 'child'];
 const maritalStatusOptions = ['single', 'married', 'divorced', 'widowed'];
 const baptismOptions = ['not_baptised', 'water', 'holy_spirit', 'both'];
+const biometricStatusOptions = ['not_enrolled', 'pending_capture', 'enrolled', 'disabled'];
+const fingerOptions = [
+  'right-thumb',
+  'right-index',
+  'left-thumb',
+  'left-index',
+  'right-middle',
+  'left-middle',
+];
 
 export default function MemberDetailPage() {
   const { memberId } = useParams();
@@ -61,6 +71,7 @@ export default function MemberDetailPage() {
     phone: '',
     altPhone: '',
     gender: '',
+    personCategory: 'adult',
     dateOfBirth: '',
     membershipStatus: 'member',
     membershipDate: '',
@@ -80,6 +91,17 @@ export default function MemberDetailPage() {
     city: '',
     country: '',
     photoUrl: '',
+    biometrics: {
+      enabled: false,
+      modality: 'fingerprint',
+      provider: 'ZKTeco',
+      deviceModel: '',
+      templateId: '',
+      fingerLabel: 'right-thumb',
+      status: 'not_enrolled',
+      enrolledAt: '',
+      notes: '',
+    },
     tags: '',
     notes: '',
   });
@@ -139,6 +161,7 @@ export default function MemberDetailPage() {
       phone: member.phone || '',
       altPhone: member.altPhone || '',
       gender: member.gender || '',
+      personCategory: member.personCategory || 'adult',
       dateOfBirth: member.dateOfBirth ? new Date(member.dateOfBirth).toISOString().slice(0, 10) : '',
       membershipStatus: member.membershipStatus || 'member',
       membershipDate: member.membershipDate ? new Date(member.membershipDate).toISOString().slice(0, 10) : '',
@@ -158,6 +181,19 @@ export default function MemberDetailPage() {
       city: member.city || '',
       country: member.country || '',
       photoUrl: member.photoUrl || '',
+      biometrics: {
+        enabled: Boolean(member.biometrics?.enabled),
+        modality: member.biometrics?.modality || 'fingerprint',
+        provider: member.biometrics?.provider || 'ZKTeco',
+        deviceModel: member.biometrics?.deviceModel || '',
+        templateId: member.biometrics?.templateId || '',
+        fingerLabel: member.biometrics?.fingerLabel || 'right-thumb',
+        status: member.biometrics?.status || 'not_enrolled',
+        enrolledAt: member.biometrics?.enrolledAt
+          ? new Date(member.biometrics.enrolledAt).toISOString().slice(0, 10)
+          : '',
+        notes: member.biometrics?.notes || '',
+      },
       tags: Array.isArray(member.tags) ? member.tags.join(', ') : '',
       notes: member.notes || '',
     });
@@ -379,6 +415,20 @@ export default function MemberDetailPage() {
                     ))}
                   </select>
                 </label>
+                <label className="block space-y-2">
+                  <span className="text-sm font-medium text-white/80">Person Category</span>
+                  <select
+                    value={form.personCategory}
+                    onChange={(event) => setForm((current) => ({ ...current, personCategory: event.target.value }))}
+                    className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white"
+                  >
+                    {personCategoryOptions.map((option) => (
+                      <option key={option} value={option}>
+                        {option}
+                      </option>
+                    ))}
+                  </select>
+                </label>
                 <Input label="Email" value={form.email} onChange={(event) => setForm((current) => ({ ...current, email: event.target.value }))} />
                 <Input label="Phone" value={form.phone} onChange={(event) => setForm((current) => ({ ...current, phone: event.target.value }))} />
                 <Input label="Alt Phone" value={form.altPhone} onChange={(event) => setForm((current) => ({ ...current, altPhone: event.target.value }))} />
@@ -505,6 +555,153 @@ export default function MemberDetailPage() {
                     className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white"
                   />
                 </label>
+                <div className="space-y-4 rounded-2xl border border-white/10 bg-white/5 px-4 py-4 md:col-span-2">
+                  <div>
+                    <p className="text-xs uppercase tracking-[0.22em] text-white/55">Biometric Sign-In</p>
+                    <p className="mt-2 text-sm text-white/65">
+                      Keep the fingerprint enrollment status on the member profile. Use the template ID saved from the ZKT scanner bridge once capture is complete.
+                    </p>
+                  </div>
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <label className="block space-y-2">
+                      <span className="text-sm font-medium text-white/80">Fingerprint Enabled</span>
+                      <select
+                        value={form.biometrics?.enabled ? 'yes' : 'no'}
+                        onChange={(event) =>
+                          setForm((current) => ({
+                            ...current,
+                            biometrics: {
+                              ...(current.biometrics || {}),
+                              enabled: event.target.value === 'yes',
+                              status:
+                                event.target.value === 'yes'
+                                  ? current.biometrics?.status || 'pending_capture'
+                                  : 'disabled',
+                            },
+                          }))
+                        }
+                        className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white"
+                      >
+                        <option value="no">No</option>
+                        <option value="yes">Yes</option>
+                      </select>
+                    </label>
+                    <label className="block space-y-2">
+                      <span className="text-sm font-medium text-white/80">Enrollment Status</span>
+                      <select
+                        value={form.biometrics?.status || 'not_enrolled'}
+                        onChange={(event) =>
+                          setForm((current) => ({
+                            ...current,
+                            biometrics: {
+                              ...(current.biometrics || {}),
+                              status: event.target.value,
+                            },
+                          }))
+                        }
+                        className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white"
+                      >
+                        {biometricStatusOptions.map((option) => (
+                          <option key={option} value={option}>
+                            {option.replaceAll('_', ' ')}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                    <Input
+                      label="Scanner Provider"
+                      value={form.biometrics?.provider || ''}
+                      onChange={(event) =>
+                        setForm((current) => ({
+                          ...current,
+                          biometrics: {
+                            ...(current.biometrics || {}),
+                            provider: event.target.value,
+                          },
+                        }))
+                      }
+                    />
+                    <Input
+                      label="Scanner Model"
+                      value={form.biometrics?.deviceModel || ''}
+                      onChange={(event) =>
+                        setForm((current) => ({
+                          ...current,
+                          biometrics: {
+                            ...(current.biometrics || {}),
+                            deviceModel: event.target.value,
+                          },
+                        }))
+                      }
+                    />
+                    <label className="block space-y-2">
+                      <span className="text-sm font-medium text-white/80">Preferred Finger</span>
+                      <select
+                        value={form.biometrics?.fingerLabel || 'right-thumb'}
+                        onChange={(event) =>
+                          setForm((current) => ({
+                            ...current,
+                            biometrics: {
+                              ...(current.biometrics || {}),
+                              fingerLabel: event.target.value,
+                            },
+                          }))
+                        }
+                        className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white"
+                      >
+                        {fingerOptions.map((option) => (
+                          <option key={option} value={option}>
+                            {option.replaceAll('-', ' ')}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                    <Input
+                      label="Template ID"
+                      value={form.biometrics?.templateId || ''}
+                      onChange={(event) =>
+                        setForm((current) => ({
+                          ...current,
+                          biometrics: {
+                            ...(current.biometrics || {}),
+                            templateId: event.target.value,
+                          },
+                        }))
+                      }
+                    />
+                    <Input
+                      label="Enrollment Date"
+                      type="date"
+                      value={form.biometrics?.enrolledAt || ''}
+                      onChange={(event) =>
+                        setForm((current) => ({
+                          ...current,
+                          biometrics: {
+                            ...(current.biometrics || {}),
+                            enrolledAt: event.target.value,
+                          },
+                        }))
+                      }
+                    />
+                    <label className="block space-y-2 md:col-span-2">
+                      <span className="text-sm font-medium text-white/80">Biometric Notes</span>
+                      <textarea
+                        rows={3}
+                        value={form.biometrics?.notes || ''}
+                        onChange={(event) =>
+                          setForm((current) => ({
+                            ...current,
+                            biometrics: {
+                              ...(current.biometrics || {}),
+                              notes: event.target.value,
+                            },
+                          }))
+                        }
+                        className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white"
+                      />
+                    </label>
+                  </div>
+                </div>
                 <div className="md:col-span-2">
                   <Button variant="secondary" onClick={handleSave} disabled={updateMutation.isPending}>
                     {updateMutation.isPending ? 'Saving...' : 'Save Changes'}
@@ -517,6 +714,7 @@ export default function MemberDetailPage() {
                 <Detail label="Phone" value={member?.phone} />
                 <Detail label="Alt Phone" value={member?.altPhone} />
                 <Detail label="Gender" value={member?.gender} />
+                <Detail label="Person Category" value={member?.personCategory} />
                 <Detail label="Date of Birth" value={member?.dateOfBirth ? formatDate(member.dateOfBirth) : '—'} />
                 <Detail label="Membership Status" value={member?.membershipStatus} />
                 <Detail label="Membership Date" value={member?.membershipDate ? formatDate(member.membershipDate) : '—'} />
@@ -536,6 +734,22 @@ export default function MemberDetailPage() {
                 <Detail label="Address" value={member?.address} />
                 <Detail label="City" value={member?.city} />
                 <Detail label="Country" value={member?.country} />
+                <Detail
+                  label="Biometric Status"
+                  value={
+                    member?.biometrics?.enabled
+                      ? `${member.biometrics?.status || 'pending capture'}${member.biometrics?.templateId ? ` · ${member.biometrics.templateId}` : ''}`
+                      : 'Disabled'
+                  }
+                />
+                <Detail
+                  label="Fingerprint Device"
+                  value={
+                    [member?.biometrics?.provider, member?.biometrics?.deviceModel]
+                      .filter(Boolean)
+                      .join(' · ') || '—'
+                  }
+                />
                 <Detail label="Created By" value={member?.createdByName || member?.createdBy} />
                 <Detail label="Updated By" value={member?.updatedByName || member?.updatedBy} />
                 <Detail label="Created At" value={member?.createdAt ? formatDate(member.createdAt) : '—'} />

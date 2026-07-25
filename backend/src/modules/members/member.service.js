@@ -44,6 +44,18 @@ const parseNumber = (value) => {
   return Number.isFinite(parsed) ? parsed : undefined;
 };
 
+const parseBoolean = (value) => {
+  if (typeof value === 'boolean') {
+    return value;
+  }
+
+  if (typeof value === 'undefined' || value === null || value === '') {
+    return undefined;
+  }
+
+  return String(value).toLowerCase() === 'true';
+};
+
 const normalizeArray = (value) => {
   if (Array.isArray(value)) {
     return value
@@ -86,6 +98,36 @@ const normalizeIdentityDocuments = (documents) => {
     ...(frontUrl ? { frontUrl } : {}),
     ...(backUrl ? { backUrl } : {}),
   };
+};
+
+const normalizeBiometrics = (biometrics, { applyDefaults = false } = {}) => {
+  const enabled = parseBoolean(biometrics?.enabled);
+  const modality = normalizeString(biometrics?.modality);
+  const provider = normalizeString(biometrics?.provider);
+  const deviceModel = normalizeString(biometrics?.deviceModel);
+  const templateId = normalizeString(biometrics?.templateId);
+  const fingerLabel = normalizeString(biometrics?.fingerLabel);
+  const status = normalizeString(biometrics?.status);
+  const enrolledAt = parseDate(biometrics?.enrolledAt);
+  const notes = normalizeString(biometrics?.notes);
+
+  const nextBiometrics = {
+    ...(typeof enabled !== 'undefined'
+      ? { enabled }
+      : applyDefaults
+        ? { enabled: false }
+        : {}),
+    ...(modality ? { modality } : applyDefaults ? { modality: 'fingerprint' } : {}),
+    ...(provider ? { provider } : applyDefaults ? { provider: 'ZKTeco' } : {}),
+    ...(deviceModel ? { deviceModel } : {}),
+    ...(templateId ? { templateId } : {}),
+    ...(fingerLabel ? { fingerLabel } : {}),
+    ...(status ? { status } : applyDefaults ? { status: 'not_enrolled' } : {}),
+    ...(enrolledAt ? { enrolledAt } : {}),
+    ...(notes ? { notes } : {}),
+  };
+
+  return Object.keys(nextBiometrics).length ? nextBiometrics : undefined;
 };
 
 const normalizeFamilyRelationships = (relationships) => {
@@ -148,6 +190,7 @@ const sanitizeMemberPayload = (payload = {}, { applyDefaults = false } = {}) => 
     dateOfBirth: parseDate(payload.dateOfBirth),
     photoUrl: normalizeString(payload.photoUrl),
     identityDocuments: normalizeIdentityDocuments(payload.identityDocuments),
+    biometrics: normalizeBiometrics(payload.biometrics, { applyDefaults }),
     phone: normalizeString(payload.phone),
     altPhone: normalizeString(payload.altPhone),
     email: normalizeString(payload.email, { lowercase: true }),

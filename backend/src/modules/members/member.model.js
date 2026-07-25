@@ -7,6 +7,8 @@ const baptismStatuses = ['not_baptised', 'water', 'holy_spirit', 'both'];
 const maritalStatuses = ['single', 'married', 'divorced', 'widowed'];
 const healthStatuses = ['active', 'drifting', 'at_risk', 'inactive', 'new'];
 const personCategories = ['adult', 'child'];
+const biometricModalities = ['fingerprint'];
+const biometricStatuses = ['not_enrolled', 'pending_capture', 'enrolled', 'disabled'];
 
 const childSchema = new Schema(
   {
@@ -47,6 +49,21 @@ const memberSchema = new Schema(
     identityDocuments: {
       frontUrl: { type: String, trim: true },
       backUrl: { type: String, trim: true },
+    },
+    biometrics: {
+      enabled: { type: Boolean, default: false },
+      modality: { type: String, enum: biometricModalities, default: 'fingerprint' },
+      provider: { type: String, trim: true, default: 'ZKTeco' },
+      deviceModel: { type: String, trim: true },
+      templateId: { type: String, trim: true },
+      fingerLabel: { type: String, trim: true },
+      status: {
+        type: String,
+        enum: biometricStatuses,
+        default: 'not_enrolled',
+      },
+      enrolledAt: Date,
+      notes: { type: String, trim: true },
     },
     phone: { type: String, trim: true },
     altPhone: { type: String, trim: true },
@@ -155,5 +172,13 @@ memberSchema.pre('save', async function memberPreSave() {
 
 const Member = mongoose.model('Member', memberSchema);
 
-export { baptismStatuses, healthStatuses, maritalStatuses, membershipStatuses, personCategories };
+export {
+  baptismStatuses,
+  biometricModalities,
+  biometricStatuses,
+  healthStatuses,
+  maritalStatuses,
+  membershipStatuses,
+  personCategories,
+};
 export default Member;

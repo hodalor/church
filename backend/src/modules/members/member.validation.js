@@ -1,6 +1,8 @@
 import { body } from 'express-validator';
 import {
   baptismStatuses,
+  biometricModalities,
+  biometricStatuses,
   healthStatuses,
   maritalStatuses,
   membershipStatuses,
@@ -76,6 +78,22 @@ const commonValidators = [
     .optional({ values: 'falsy' })
     .isURL()
     .withMessage('ID back image URL must be valid.'),
+  body('biometrics.enabled')
+    .optional()
+    .isBoolean()
+    .withMessage('Biometric enabled flag must be true or false.'),
+  body('biometrics.modality')
+    .optional({ values: 'falsy' })
+    .isIn(biometricModalities)
+    .withMessage('Biometric modality is invalid.'),
+  body('biometrics.status')
+    .optional({ values: 'falsy' })
+    .isIn(biometricStatuses)
+    .withMessage('Biometric enrollment status is invalid.'),
+  body('biometrics.enrolledAt')
+    .optional({ values: 'falsy' })
+    .custom(validDate)
+    .withMessage('Biometric enrollment date must be a valid date.'),
   body('digitalCardUrl')
     .optional({ values: 'falsy' })
     .isURL()
