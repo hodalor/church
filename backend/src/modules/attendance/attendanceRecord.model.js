@@ -43,7 +43,7 @@ const attendanceRecordSchema = new Schema(
     },
     checkInMethod: {
       type: String,
-      enum: ['qr', 'manual', 'visitor_form', 'child_check_in', 'online', 'bulk'],
+      enum: ['qr', 'manual', 'visitor_form', 'child_check_in', 'online', 'bulk', 'biometric'],
       default: 'manual',
       index: true,
     },
@@ -109,6 +109,22 @@ const attendanceRecordSchema = new Schema(
     department: {
       type: [String],
       default: () => [],
+    },
+    biometricTemplateId: {
+      type: String,
+      trim: true,
+    },
+    biometricProvider: {
+      type: String,
+      trim: true,
+    },
+    biometricDeviceModel: {
+      type: String,
+      trim: true,
+    },
+    biometricFingerLabel: {
+      type: String,
+      trim: true,
     },
     checkedBy: {
       userId: { type: String, trim: true },

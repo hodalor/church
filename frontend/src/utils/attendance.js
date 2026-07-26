@@ -15,7 +15,14 @@ export const serviceTypeOptions = [
 ];
 
 export const attendanceTypeOptions = ['member', 'visitor', 'child', 'online'];
-export const attendanceMethodOptions = ['qr', 'manual', 'visitor_form', 'child_check_in', 'online'];
+export const attendanceMethodOptions = [
+  'qr',
+  'manual',
+  'visitor_form',
+  'child_check_in',
+  'online',
+  'biometric',
+];
 export const reportPeriodOptions = [
   { label: 'This Week', value: 'week' },
   { label: 'This Month', value: 'month' },

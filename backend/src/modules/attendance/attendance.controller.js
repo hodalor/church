@@ -238,6 +238,18 @@ export const childCheckIn = asyncHandler(async (req, res) => {
   return success(res, data, 'Child attendance processed successfully.');
 });
 
+export const biometricCheckIn = asyncHandler(async (req, res) => {
+  ensureAttendanceCapability(req, ['attendance.create', 'attendance.services.check_in']);
+  await ensureServiceBranchAccess(req, req.params.serviceId);
+  const data = await attendanceService.biometricCheckIn(
+    resolveScopedTenantId(req),
+    req.params.serviceId,
+    req.body,
+    attendanceActor(req),
+  );
+  return success(res, data, 'Biometric attendance processed successfully.');
+});
+
 export const getLiveCheckIns = asyncHandler(async (req, res) => {
   ensureAttendanceCapability(req, ['attendance.view', 'attendance.services.view']);
   await ensureServiceBranchAccess(req, req.params.serviceId);

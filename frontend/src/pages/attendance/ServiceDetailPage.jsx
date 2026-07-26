@@ -345,6 +345,7 @@ export default function ServiceDetailPage() {
                   <option value="">All</option>
                   <option value="qr">QR</option>
                   <option value="manual">Manual</option>
+                  <option value="biometric">Biometric</option>
                   <option value="visitor_form">Visitor Form</option>
                   <option value="child_check_in">Child Check-in</option>
                   <option value="online">Online</option>

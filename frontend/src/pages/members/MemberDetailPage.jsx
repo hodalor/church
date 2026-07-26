@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Camera } from 'lucide-react';
+import { Camera, Fingerprint } from 'lucide-react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import {
   getFamilyGroup,
@@ -32,9 +32,17 @@ import useBranchOptions from '../../hooks/useBranchOptions';
 import useMinistryOptions from '../../hooks/useMinistryOptions';
 import { useCapabilities } from '../../hooks/useCapabilities';
 import { supabaseUpload } from '../../utils/supabaseUpload';
+import {
+  enrollFingerprint,
+  extractFingerprintDeviceMeta,
+  extractFingerprintMessage,
+  extractFingerprintTemplateId,
+  getBiometricBridgeStatus,
+} from '../../utils/biometricBridge';
 import { formatDate } from '../../utils/formatDate';
 import { buildGroupingPathLabels, sanitizeGroupingPath } from '../../utils/groupings';
 import { formatPastoralLabel } from '../../utils/pastoral';
+import { showErrorToast, showInfoToast, showSuccessToast } from '../../utils/toast';
 
 const membershipOptions = ['visitor', 'new_convert', 'member', 'worker', 'leader', 'clergy'];
 const genderOptions = ['male', 'female', 'other'];
@@ -246,8 +254,93 @@ export default function MemberDetailPage() {
   const canViewMembers = isSuperAdmin || hasCapability('members.view');
   const canModifyMembers = isSuperAdmin || hasCapability('members.modify');
   const canDeleteMembers = isSuperAdmin || hasCapability('members.delete');
+  const bridgeStatusQuery = useQuery({
+    queryKey: ['biometric-bridge-status', memberId],
+    queryFn: () => getBiometricBridgeStatus(),
+    enabled: isEditing && canModifyMembers,
+    retry: false,
+    staleTime: 15000,
+  });
+
+  const biometricEnrollMutation = useMutation({
+    mutationFn: async () => {
+      if (!member?.memberId) {
+        throw new Error('Member profile is not ready for fingerprint capture yet.');
+      }
+
+      if (!form.biometrics?.enabled) {
+        throw new Error('Enable fingerprint sign-in first, then capture the member fingerprint.');
+      }
+
+      const bridgePayload = await enrollFingerprint({
+        memberId: member.memberId,
+        memberName: [member.firstName, member.otherName, member.lastName].filter(Boolean).join(' '),
+        fingerLabel: form.biometrics?.fingerLabel || 'right-thumb',
+        provider: form.biometrics?.provider || 'ZKTeco',
+        deviceModel: form.biometrics?.deviceModel || undefined,
+      });
+
+      const templateId = extractFingerprintTemplateId(bridgePayload);
+      if (!templateId) {
+        throw new Error('Scanner bridge did not return a fingerprint template ID.');
+      }
+
+      const deviceMeta = extractFingerprintDeviceMeta(bridgePayload);
+      const bridgeMessage = extractFingerprintMessage(bridgePayload);
+      const enrolledAt = new Date().toISOString().slice(0, 10);
+      const nextBiometrics = {
+        ...(form.biometrics || {}),
+        enabled: true,
+        modality: 'fingerprint',
+        status: 'enrolled',
+        templateId,
+        enrolledAt,
+        provider: deviceMeta.provider || form.biometrics?.provider || 'ZKTeco',
+        deviceModel: deviceMeta.deviceModel || form.biometrics?.deviceModel || '',
+        fingerLabel: deviceMeta.fingerLabel || form.biometrics?.fingerLabel || 'right-thumb',
+        notes: form.biometrics?.notes || bridgeMessage || '',
+      };
+
+      await updateMember(memberId, {
+        biometrics: nextBiometrics,
+      });
+
+      return {
+        templateId,
+        bridgeMessage,
+        biometrics: nextBiometrics,
+      };
+    },
+    onSuccess: ({ templateId, bridgeMessage, biometrics }) => {
+      setForm((current) => ({
+        ...current,
+        biometrics,
+      }));
+      refreshMemberQueries();
+      showSuccessToast(`Fingerprint enrolled successfully${templateId ? ` (${templateId})` : ''}.`);
+      if (bridgeMessage) {
+        showInfoToast(bridgeMessage);
+      }
+    },
+    onError: (error) => {
+      showErrorToast(error?.response?.data?.message || error.message || 'Unable to capture fingerprint.');
+    },
+  });
 
   const member = memberQuery.data;
+  const biometricCaptureDisabledReason = !form.biometrics?.enabled
+    ? 'Set Fingerprint Enabled to Yes first.'
+    : bridgeStatusQuery.isLoading || bridgeStatusQuery.isFetching
+      ? 'Checking the local fingerprint bridge...'
+      : bridgeStatusQuery.isError
+        ? 'Start the local ZKT bridge service, then refresh bridge status.'
+        : '';
+  const isBiometricCaptureDisabled =
+    biometricEnrollMutation.isPending ||
+    !form.biometrics?.enabled ||
+    bridgeStatusQuery.isLoading ||
+    bridgeStatusQuery.isFetching ||
+    bridgeStatusQuery.isError;
   const pastoralCases = pastoralCasesQuery.data || [];
   const pastoralAppointments = pastoralAppointmentsQuery.data?.items || [];
   const upcomingAppointments = pastoralAppointments.filter(
@@ -562,6 +655,43 @@ export default function MemberDetailPage() {
                       Keep the fingerprint enrollment status on the member profile. Use the template ID saved from the ZKT scanner bridge once capture is complete.
                     </p>
                   </div>
+                  <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-accent/20 bg-accent/10 px-4 py-3">
+                    <div>
+                      <p className="text-xs uppercase tracking-[0.2em] text-accent/80">Scanner Bridge</p>
+                      <p className="mt-1 text-sm text-white/80">
+                        {bridgeStatusQuery.isLoading
+                          ? 'Checking local fingerprint bridge...'
+                          : bridgeStatusQuery.isError
+                            ? 'Bridge offline. Start the local ZKT bridge service, then refresh status.'
+                            : 'Bridge online and ready for enrollment.'}
+                      </p>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      <Button
+                        variant="ghost"
+                        onClick={() => bridgeStatusQuery.refetch()}
+                        disabled={bridgeStatusQuery.isFetching}
+                      >
+                        {bridgeStatusQuery.isFetching ? 'Refreshing...' : 'Refresh Bridge'}
+                      </Button>
+                      <Button
+                        variant="secondary"
+                        onClick={() => biometricEnrollMutation.mutate()}
+                        disabled={isBiometricCaptureDisabled}
+                        title={biometricCaptureDisabledReason || 'Capture member fingerprint'}
+                      >
+                        <Fingerprint className="mr-2 h-4 w-4" />
+                        {biometricEnrollMutation.isPending ? 'Capturing...' : 'Capture Fingerprint'}
+                      </Button>
+                    </div>
+                  </div>
+                  {biometricCaptureDisabledReason ? (
+                    <p className="text-sm text-amber-200">{biometricCaptureDisabledReason}</p>
+                  ) : (
+                    <p className="text-sm text-emerald-200">
+                      Fingerprint capture is ready. Ask the member to place their finger on the scanner.
+                    </p>
+                  )}
                   <div className="grid gap-4 md:grid-cols-2">
                     <label className="block space-y-2">
                       <span className="text-sm font-medium text-white/80">Fingerprint Enabled</span>

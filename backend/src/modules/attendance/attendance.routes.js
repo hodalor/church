@@ -23,6 +23,7 @@ import {
   updateServiceValidation,
   visitorCheckInValidation,
   childCheckInValidation,
+  biometricCheckInValidation,
 } from './attendance.validation.js';
 
 const attendanceRouter = Router();
@@ -115,6 +116,12 @@ attendanceRouter.post(
   childCheckInValidation,
   validate,
   attendanceController.childCheckIn,
+);
+attendanceRouter.post(
+  '/services/:serviceId/check-in/biometric',
+  biometricCheckInValidation,
+  validate,
+  attendanceController.biometricCheckIn,
 );
 attendanceRouter.get(
   '/check-in/search',

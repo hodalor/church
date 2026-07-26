@@ -424,6 +424,24 @@ const assertUniqueContactFields = async (tenantId, { phone, email }, excludeMemb
   }
 };
 
+const assertUniqueBiometricTemplate = async (tenantId, templateId, excludeMemberId) => {
+  const normalizedTemplateId = normalizeString(templateId);
+  if (!normalizedTemplateId) {
+    return;
+  }
+
+  const duplicateMember = await Member.findOne({
+    tenantId,
+    isDeleted: false,
+    'biometrics.templateId': normalizedTemplateId,
+    ...(excludeMemberId ? { memberId: { $ne: excludeMemberId } } : {}),
+  }).select('memberId');
+
+  if (duplicateMember) {
+    throw createHttpError(409, 'This fingerprint template is already assigned to another member.');
+  }
+};
+
 const buildMemberFilters = (tenantId, query = {}) => {
   const filters = { tenantId };
   const searchValue = normalizeString(query.search);
@@ -793,6 +811,7 @@ export const createMember = async (tenantId, data, createdBy) => {
   }
 
   await assertUniqueContactFields(tenantId, payload);
+  await assertUniqueBiometricTemplate(tenantId, payload.biometrics?.templateId);
 
   const memberId = await Member.generateNextMemberId(tenantId);
   const member = new Member({
@@ -871,6 +890,8 @@ export const updateMember = async (tenantId, memberId, data, updatedBy, user) =>
   if (payload.phone || payload.email) {
     await assertUniqueContactFields(tenantId, payload, memberId);
   }
+
+  await assertUniqueBiometricTemplate(tenantId, payload.biometrics?.templateId, memberId);
 
   Object.assign(member, payload, { updatedBy });
   await member.save();

@@ -250,6 +250,37 @@ const getMemberOrThrow = async (tenantId, memberId) => {
   return member;
 };
 
+const getMemberByBiometricOrThrow = async (tenantId, payload = {}) => {
+  const templateId = normalizeString(
+    payload.templateId || payload.fingerprintTemplateId || payload.fingerprint_template_id,
+  );
+  const memberId = normalizeString(payload.memberId);
+
+  if (memberId) {
+    return getMemberOrThrow(tenantId, memberId);
+  }
+
+  if (!templateId) {
+    throw createHttpError(400, 'Fingerprint template ID is required.');
+  }
+
+  const member = await Member.findOne({
+    tenantId,
+    isDeleted: false,
+    'biometrics.enabled': true,
+    'biometrics.templateId': templateId,
+  });
+
+  if (!member) {
+    throw createHttpError(
+      404,
+      'No enrolled member matched this fingerprint. Enroll the member first, then try again.',
+    );
+  }
+
+  return member;
+};
+
 const findExistingMemberCheckIn = async (tenantId, serviceId, memberId) =>
   AttendanceRecord.findOne({
     tenantId,
@@ -991,6 +1022,52 @@ export const childCheckIn = async (tenantId, serviceId, payload = {}, actor = {}
     childName,
     parentName: record.parentName,
     pickupCode,
+    checkedInAt: record.checkInTime,
+    ...serializeRecord(record),
+  };
+};
+
+export const biometricCheckIn = async (tenantId, serviceId, payload = {}, actor = {}) => {
+  const service = await getServiceOrThrow(tenantId, serviceId);
+  ensureServiceOpen(service);
+
+  const member = await getMemberByBiometricOrThrow(tenantId, payload);
+  const existing = await findExistingMemberCheckIn(tenantId, service._id.toString(), member.memberId);
+  if (existing) {
+    return buildAlreadyCheckedInResponse(existing);
+  }
+
+  const templateId = normalizeString(
+    payload.templateId ||
+      payload.fingerprintTemplateId ||
+      payload.fingerprint_template_id ||
+      member.biometrics?.templateId,
+  );
+
+  const record = await AttendanceRecord.create(
+    buildCheckInPayload({
+      service,
+      member,
+      actor,
+      attendeeType: 'member',
+      checkInMethod: 'biometric',
+      extras: {
+        biometricTemplateId: templateId,
+        biometricProvider:
+          normalizeString(payload.provider) || normalizeString(member.biometrics?.provider),
+        biometricDeviceModel:
+          normalizeString(payload.deviceModel || payload.device_model) ||
+          normalizeString(member.biometrics?.deviceModel),
+        biometricFingerLabel:
+          normalizeString(payload.fingerLabel || payload.finger_label) ||
+          normalizeString(member.biometrics?.fingerLabel),
+      },
+    }),
+  );
+
+  await refreshServiceMetrics(tenantId, serviceId);
+  return {
+    message: 'Fingerprint check-in completed successfully.',
     checkedInAt: record.checkInTime,
     ...serializeRecord(record),
   };

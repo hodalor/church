@@ -104,7 +104,7 @@ const serviceAttendanceValidation = [
     .withMessage('Attendance type is invalid.'),
   query('method')
     .optional({ values: 'falsy' })
-    .isIn(['qr', 'manual', 'visitor_form', 'child_check_in', 'online'])
+    .isIn(['qr', 'manual', 'visitor_form', 'child_check_in', 'online', 'biometric'])
     .withMessage('Attendance method is invalid.'),
 ];
 
@@ -157,6 +157,22 @@ const childCheckInValidation = [
   body('age').optional().isInt({ min: 0 }).withMessage('Age must be zero or more.'),
 ];
 
+const biometricCheckInValidation = [
+  ...serviceIdParamValidation,
+  body()
+    .custom((value) => {
+      const templateId =
+        value?.templateId || value?.fingerprintTemplateId || value?.fingerprint_template_id;
+      const memberId = value?.memberId;
+
+      return (
+        (typeof templateId === 'string' && templateId.trim().length > 0) ||
+        (typeof memberId === 'string' && memberId.trim().length > 0)
+      );
+    })
+    .withMessage('Fingerprint template ID or member ID is required.'),
+];
+
 const liveCheckInsValidation = [
   ...serviceIdParamValidation,
   query('limit').optional().isInt({ min: 1, max: 50 }).withMessage('Limit must be between 1 and 50.'),
@@ -201,5 +217,6 @@ export {
   updateServiceValidation,
   visitorCheckInValidation,
   childCheckInValidation,
+  biometricCheckInValidation,
   manualCheckInValidation,
 };

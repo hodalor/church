@@ -1,12 +1,13 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Camera, Expand, Minimize, Search, Users } from 'lucide-react';
+import { Camera, Expand, Fingerprint, Minimize, Search, Users } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import AttendanceCounter from '../../components/attendance/AttendanceCounter';
 import CheckInSuccessOverlay from '../../components/attendance/CheckInSuccessOverlay';
 import Button from '../../components/ui/Button';
 import {
   checkInByQr,
+  biometricMemberCheckIn,
   childCheckIn,
   getLiveCheckIns,
   getServiceById,
@@ -18,6 +19,14 @@ import { searchMembers } from '../../api/endpoints/members';
 import useAttendanceAccess from '../../hooks/useAttendanceAccess';
 import useDebounce from '../../hooks/useDebounce';
 import {
+  extractFingerprintDeviceMeta,
+  extractFingerprintMemberId,
+  extractFingerprintMessage,
+  extractFingerprintTemplateId,
+  getBiometricBridgeStatus,
+  identifyFingerprint,
+} from '../../utils/biometricBridge';
+import {
   formatLongDate,
   formatTimeRange,
   getAttendanceTypeStyles,
@@ -26,6 +35,7 @@ import {
 const tabs = [
   { label: 'QR Scan', value: 'qr' },
   { label: 'Manual Search', value: 'manual' },
+  { label: 'Biometric Scan', value: 'biometric' },
   { label: 'Visitor Check-In', value: 'visitor' },
   { label: 'Child Check-In', value: 'child' },
 ];
@@ -53,6 +63,7 @@ export default function CheckInConsolePage() {
   const [visitorForm, setVisitorForm] = useState(createVisitorForm());
   const [childForm, setChildForm] = useState({ childName: '', childAge: 7 });
   const [pickupCodeState, setPickupCodeState] = useState(null);
+  const [lastBiometricMatch, setLastBiometricMatch] = useState(null);
   const debouncedManualSearch = useDebounce(manualSearch, 350);
   const debouncedParentSearch = useDebounce(childParentSearch, 350);
 
@@ -78,6 +89,13 @@ export default function CheckInConsolePage() {
     queryKey: ['attendance-child-parent-search', debouncedParentSearch],
     queryFn: () => searchMembers({ search: debouncedParentSearch, limit: 6 }),
     enabled: debouncedParentSearch.trim().length >= 2,
+  });
+  const biometricBridgeQuery = useQuery({
+    queryKey: ['attendance-biometric-bridge-status', serviceId],
+    queryFn: () => getBiometricBridgeStatus(),
+    enabled: activeTab === 'biometric',
+    retry: false,
+    staleTime: 15000,
   });
 
   const service = serviceQuery.data?.service || serviceQuery.data || {};
@@ -150,6 +168,53 @@ export default function CheckInConsolePage() {
       });
     },
     onError: (error) => showOverlay('error', { name: 'Child check-in error', message: error.message }),
+  });
+
+  const biometricMutation = useMutation({
+    mutationFn: async () => {
+      const bridgePayload = await identifyFingerprint({
+        serviceId,
+        serviceTitle: service.title,
+      });
+
+      const templateId = extractFingerprintTemplateId(bridgePayload);
+      const memberId = extractFingerprintMemberId(bridgePayload);
+      const bridgeMessage = extractFingerprintMessage(bridgePayload);
+      const deviceMeta = extractFingerprintDeviceMeta(bridgePayload);
+
+      if (!templateId && !memberId) {
+        throw new Error('Scanner bridge did not return a fingerprint match.');
+      }
+
+      const data = await biometricMemberCheckIn(serviceId, {
+        ...(templateId ? { templateId } : {}),
+        ...(memberId ? { memberId } : {}),
+        ...(deviceMeta.provider ? { provider: deviceMeta.provider } : {}),
+        ...(deviceMeta.deviceModel ? { deviceModel: deviceMeta.deviceModel } : {}),
+        ...(deviceMeta.fingerLabel ? { fingerLabel: deviceMeta.fingerLabel } : {}),
+      });
+
+      return {
+        ...data,
+        templateId,
+        bridgeMessage,
+        deviceMeta,
+      };
+    },
+    onSuccess: (data) => {
+      invalidateAttendance();
+      setLastBiometricMatch({
+        name: data?.memberName || data?.name || 'Matched member',
+        templateId: data?.templateId || '',
+        bridgeMessage: data?.bridgeMessage || '',
+      });
+      showOverlay(data?.alreadyCheckedIn ? 'warning' : 'success', {
+        ...data,
+        message: data?.bridgeMessage || data?.message,
+      });
+    },
+    onError: (error) =>
+      showOverlay('error', { name: 'Fingerprint scan error', message: error.message }),
   });
 
   const toggleMutation = useMutation({
@@ -439,6 +504,82 @@ export default function CheckInConsolePage() {
                         </button>
                       );
                     })}
+                  </div>
+                </div>
+              ) : null}
+
+              {activeTab === 'biometric' ? (
+                <div className="mx-auto flex h-full w-full max-w-3xl flex-col justify-center space-y-5">
+                  <div className="rounded-[28px] border border-white/10 bg-[#081125] p-6">
+                    <div className="flex flex-wrap items-start justify-between gap-4">
+                      <div>
+                        <p className="text-sm uppercase tracking-[0.22em] text-accent/80">Fingerprint Scanner</p>
+                        <h2 className="mt-2 text-2xl font-semibold text-white">Biometric member check-in</h2>
+                        <p className="mt-2 max-w-xl text-sm text-white/60">
+                          Scan a saved fingerprint to match the member profile and register attendance automatically for this service.
+                        </p>
+                      </div>
+                      <div className="flex flex-wrap gap-2">
+                        <Button
+                          variant="ghost"
+                          onClick={() => biometricBridgeQuery.refetch()}
+                          disabled={biometricBridgeQuery.isFetching}
+                        >
+                          {biometricBridgeQuery.isFetching ? 'Refreshing...' : 'Refresh Bridge'}
+                        </Button>
+                        <Button
+                          variant="secondary"
+                          onClick={() => biometricMutation.mutate()}
+                          disabled={biometricMutation.isPending}
+                        >
+                          <Fingerprint className="mr-2 h-4 w-4" />
+                          {biometricMutation.isPending ? 'Scanning Fingerprint...' : 'Scan Fingerprint'}
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="grid gap-4 lg:grid-cols-[0.95fr_1.05fr]">
+                    <div className="rounded-[28px] border border-white/10 bg-[#081125] p-6">
+                      <p className="text-sm uppercase tracking-[0.22em] text-white/45">Bridge Status</p>
+                      <div className="mt-4 rounded-2xl border border-white/10 bg-white/5 px-4 py-4">
+                        <p className="text-lg font-semibold text-white">
+                          {biometricBridgeQuery.isLoading
+                            ? 'Checking local scanner bridge...'
+                            : biometricBridgeQuery.isError
+                              ? 'Bridge offline'
+                              : 'Bridge online'}
+                        </p>
+                        <p className="mt-2 text-sm text-white/60">
+                          {biometricBridgeQuery.isError
+                            ? 'Start the local ZKT bridge service on this machine, then refresh the bridge status.'
+                            : 'The scanner bridge is reachable and ready to identify fingerprint matches.'}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="rounded-[28px] border border-white/10 bg-[#081125] p-6">
+                      <p className="text-sm uppercase tracking-[0.22em] text-white/45">Last Match</p>
+                      <div className="mt-4 rounded-2xl border border-white/10 bg-white/5 px-4 py-4">
+                        {lastBiometricMatch ? (
+                          <div className="space-y-2">
+                            <p className="text-lg font-semibold text-white">{lastBiometricMatch.name}</p>
+                            <p className="text-sm text-white/60">
+                              {lastBiometricMatch.templateId
+                                ? `Template ID: ${lastBiometricMatch.templateId}`
+                                : 'Fingerprint matched without template ID preview.'}
+                            </p>
+                            {lastBiometricMatch.bridgeMessage ? (
+                              <p className="text-sm text-accent/80">{lastBiometricMatch.bridgeMessage}</p>
+                            ) : null}
+                          </div>
+                        ) : (
+                          <p className="text-sm text-white/60">
+                            No fingerprint has been scanned in this session yet.
+                          </p>
+                        )}
+                      </div>
+                    </div>
                   </div>
                 </div>
               ) : null}

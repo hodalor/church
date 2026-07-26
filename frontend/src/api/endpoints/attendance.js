@@ -79,6 +79,11 @@ export const childCheckIn = async (serviceId, payload) => {
   return unwrap(response);
 };
 
+export const biometricMemberCheckIn = async (serviceId, payload) => {
+  const response = await api.post(`/attendance/services/${serviceId}/check-in/biometric`, payload);
+  return unwrap(response);
+};
+
 export const getLiveCheckIns = async (serviceId, params) => {
   const response = await api.get(`/attendance/services/${serviceId}/live`, { params });
   return unwrap(response);
