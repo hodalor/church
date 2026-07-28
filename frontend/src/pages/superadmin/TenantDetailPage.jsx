@@ -258,6 +258,7 @@ export default function TenantDetailPage() {
                   value={form.capabilities}
                   onChange={(nextValue) => setForm((current) => ({ ...current, capabilities: nextValue }))}
                   allowedCapabilities={allCapabilities}
+                  tone="light"
                 />
                 <div>
                   {saveError ? <p className="mb-3 text-sm text-red-400">{saveError}</p> : null}
