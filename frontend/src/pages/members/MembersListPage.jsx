@@ -263,6 +263,11 @@ export default function MembersListPage() {
     },
   });
 
+  const createPath = isSuperAdmin ? '/superadmin/members/new' : '/members/new';
+  const canCreateMembers = isSuperAdmin || hasCapability('members.create');
+  const canViewMembers = isSuperAdmin || hasCapability('members.view');
+  const canModifyMembers = isSuperAdmin || hasCapability('members.modify');
+
   const columns = useMemo(
     () => [
       {
@@ -364,10 +369,6 @@ export default function MembersListPage() {
   );
 
   const Shell = isSuperAdmin ? SuperAdminShell : AppShell;
-  const createPath = isSuperAdmin ? '/superadmin/members/new' : '/members/new';
-  const canCreateMembers = isSuperAdmin || hasCapability('members.create');
-  const canViewMembers = isSuperAdmin || hasCapability('members.view');
-  const canModifyMembers = isSuperAdmin || hasCapability('members.modify');
 
   if (!canViewMembers) {
     return (
