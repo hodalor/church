@@ -1,13 +1,14 @@
-import { useMemo } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useMemo, useState } from 'react';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import AppShell from '../../components/layout/AppShell';
 import Button from '../../components/ui/Button';
 import DataTable from '../../components/ui/DataTable';
 import EmptyState from '../../components/ui/EmptyState';
+import Modal from '../../components/ui/Modal';
 import { TableRowSkeleton } from '../../components/ui/Skeleton';
 import { AnalyticsPage } from '../../components/analytics/AnalyticsWidgets';
-import { getAllBranches } from '../../api/endpoints/branches';
+import { deactivateBranch, getAllBranches } from '../../api/endpoints/branches';
 import { getBranchComparison } from '../../api/endpoints/hq';
 import useAnalyticsAccess from '../../hooks/useAnalyticsAccess';
 import { useTenant } from '../../hooks/useTenant';
@@ -16,10 +17,14 @@ import {
   formatAnalyticsNumber,
   formatBranchHealthGrade,
 } from '../../utils/analytics';
+import { showErrorToast, showSuccessToast } from '../../utils/toast';
 
 export default function BranchesPage() {
+  const queryClient = useQueryClient();
   const { canViewBranches, canManageBranches } = useAnalyticsAccess();
   const { currencyCode, currencySymbol } = useTenant();
+  const [branchToDelete, setBranchToDelete] = useState(null);
+  const [forceDeleteBranch, setForceDeleteBranch] = useState(false);
   const branchesQuery = useQuery({
     queryKey: ['hq-branches-grid'],
     queryFn: () => getAllBranches(),
@@ -31,6 +36,23 @@ export default function BranchesPage() {
     queryFn: () => getBranchComparison(),
     enabled: canViewBranches,
     staleTime: 1000 * 60 * 3,
+  });
+
+  const deleteBranchMutation = useMutation({
+    mutationFn: ({ branchId, force }) =>
+      deactivateBranch(branchId, force ? { force: 'true' } : undefined),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['hq-branches-grid'] });
+      queryClient.invalidateQueries({ queryKey: ['hq-branches-comparison-grid'] });
+      setBranchToDelete(null);
+      setForceDeleteBranch(false);
+      showSuccessToast('Branch deleted successfully.');
+    },
+    onError: (error) => {
+      const message =
+        error?.response?.data?.message || error?.message || 'Unable to delete branch right now.';
+      showErrorToast(message);
+    },
   });
 
   const branchRows = useMemo(() => {
@@ -70,28 +92,39 @@ export default function BranchesPage() {
     {
       key: 'location',
       header: 'Location',
-      render: (branch) => branch.city || branch.address || 'Not set',
+      render: (branch) => <span className="text-slate-900">{branch.city || branch.address || 'Not set'}</span>,
     },
     {
       key: 'headPastor',
       header: 'Pastor',
-      render: (branch) => branch.headPastorName || 'Pending',
+      render: (branch) => <span className="text-slate-900">{branch.headPastorName || 'Pending'}</span>,
     },
     {
       key: 'members',
       header: 'Members',
-      render: (branch) => formatAnalyticsNumber(branch.analytics?.members?.total || 0),
+      render: (branch) => (
+        <span className="font-semibold text-slate-900">
+          {formatAnalyticsNumber(branch.analytics?.members?.total || 0)}
+        </span>
+      ),
     },
     {
       key: 'attendance',
       header: 'Attendance',
-      render: (branch) => formatAnalyticsNumber(branch.analytics?.attendance?.avg || 0),
+      render: (branch) => (
+        <span className="text-slate-900">
+          {formatAnalyticsNumber(branch.analytics?.attendance?.avg || 0)}
+        </span>
+      ),
     },
     {
       key: 'income',
       header: 'Income',
-      render: (branch) =>
-        formatAnalyticsCurrency(branch.analytics?.finance?.income || 0, currencyCode, currencySymbol),
+      render: (branch) => (
+        <span className="text-slate-900">
+          {formatAnalyticsCurrency(branch.analytics?.finance?.income || 0, currencyCode, currencySymbol)}
+        </span>
+      ),
     },
     {
       key: 'health',
@@ -133,12 +166,31 @@ export default function BranchesPage() {
       key: 'actions',
       header: 'Action',
       render: (branch) => (
-        <Link
-          to={`/hq/branches/${branch.branchId}`}
-          className="inline-flex items-center justify-center rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-sm font-semibold text-slate-900 transition duration-200 hover:border-accent/40 hover:bg-slate-50 hover:text-slate-900"
-        >
-          Open
-        </Link>
+        <div className="flex items-center justify-end gap-2">
+          <Link
+            to={`/hq/branches/${branch.branchId}`}
+            className="inline-flex items-center justify-center rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-sm font-semibold text-slate-900 transition duration-200 hover:border-accent/40 hover:bg-slate-50 hover:text-slate-900"
+          >
+            Open
+          </Link>
+          {canManageBranches ? (
+            <button
+              type="button"
+              disabled={
+                deleteBranchMutation.isPending && branchToDelete?.branchId === branch.branchId
+              }
+              onClick={() => {
+                setBranchToDelete(branch);
+                setForceDeleteBranch(false);
+              }}
+              className="inline-flex items-center justify-center rounded-xl border border-rose-200 bg-white px-3.5 py-2.5 text-sm font-semibold text-rose-700 transition hover:border-rose-300 hover:bg-rose-50"
+            >
+              {deleteBranchMutation.isPending && branchToDelete?.branchId === branch.branchId
+                ? 'Deleting...'
+                : 'Delete'}
+            </button>
+          ) : null}
+        </div>
       ),
     },
   ];
@@ -154,6 +206,10 @@ export default function BranchesPage() {
       </AppShell>
     );
   }
+
+  const memberCount = Number(branchToDelete?.analytics?.members?.total ?? 0);
+  const hasMembers = memberCount > 0;
+  const memberBlockMessage = `This branch currently has ${memberCount} member(s). Tick the override box below if you still want to proceed.`;
 
   return (
     <AppShell>
@@ -184,6 +240,82 @@ export default function BranchesPage() {
           />
         )}
       </AnalyticsPage>
+
+      <Modal
+        isOpen={Boolean(branchToDelete)}
+        onClose={() => {
+          if (deleteBranchMutation.isPending) {
+            return;
+          }
+          setBranchToDelete(null);
+          setForceDeleteBranch(false);
+        }}
+        title="Delete Branch"
+        description="Deleting a branch removes it from the active HQ directory. Members linked to this branch will remain if you explicitly choose to proceed anyway."
+        size="md"
+      >
+        <div className="space-y-4">
+          <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4">
+            <p className="text-sm text-slate-700">
+              Are you sure you want to delete{' '}
+              <span className="font-semibold text-slate-900">
+                {branchToDelete?.branchName || 'this branch'}
+              </span>
+              ?
+            </p>
+            {branchToDelete?.branchCode ? (
+              <p className="mt-1 text-xs uppercase tracking-[0.22em] text-slate-500">
+                Branch code: {branchToDelete.branchCode}
+              </p>
+            ) : null}
+          </div>
+          {hasMembers ? (
+            <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-4">
+              <p className="text-sm font-semibold text-amber-800">Members still linked</p>
+              <p className="mt-1 text-sm text-amber-900/80">{memberBlockMessage}</p>
+              <label className="mt-3 inline-flex items-center gap-2 text-sm text-slate-700">
+                <input
+                  type="checkbox"
+                  checked={forceDeleteBranch}
+                  onChange={(event) => setForceDeleteBranch(event.target.checked)}
+                />
+                <span>
+                  I understand there are still {memberCount} member(s) and I still want to delete this
+                  branch.
+                </span>
+              </label>
+            </div>
+          ) : null}
+          <div className="flex justify-end gap-2">
+            <Button
+              variant="subtle"
+              disabled={deleteBranchMutation.isPending}
+              onClick={() => {
+                setBranchToDelete(null);
+                setForceDeleteBranch(false);
+              }}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="secondary"
+              disabled={
+                deleteBranchMutation.isPending ||
+                !branchToDelete?.branchId ||
+                (hasMembers && !forceDeleteBranch)
+              }
+              onClick={() =>
+                deleteBranchMutation.mutate({
+                  branchId: branchToDelete.branchId,
+                  force: hasMembers ? forceDeleteBranch : false,
+                })
+              }
+            >
+              {deleteBranchMutation.isPending ? 'Deleting...' : 'Confirm Delete'}
+            </Button>
+          </div>
+        </div>
+      </Modal>
     </AppShell>
   );
 }

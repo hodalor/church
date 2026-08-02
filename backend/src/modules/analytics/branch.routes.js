@@ -7,6 +7,7 @@ import {
   analyticsQueryValidation,
   branchIdParamValidation,
   createBranchValidation,
+  deactivateBranchQueryValidation,
   updateBranchValidation,
 } from './analytics.validation.js';
 
@@ -20,7 +21,7 @@ branchesRouter.get('/:branchId', branchIdParamValidation, validate, analyticsCon
 branchesRouter.patch('/:branchId', updateBranchValidation, validate, analyticsController.updateBranch);
 branchesRouter.delete(
   '/:branchId',
-  branchIdParamValidation,
+  deactivateBranchQueryValidation,
   validate,
   analyticsController.deactivateBranch,
 );

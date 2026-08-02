@@ -401,8 +401,8 @@ export default function EventFormWizard({ eventId = null, fallbackPath = '/event
             onClick={() => setActiveStep(step.id)}
             className={`rounded-2xl border px-4 py-3 text-left transition ${
               activeStep === step.id
-                ? 'border-accent/50 bg-accent/10 text-white'
-                : 'border-white/10 bg-[#101827] text-white/55'
+                ? 'border-accent/60 bg-accent/15 text-slate-900 shadow-sm'
+                : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:bg-slate-50 hover:text-slate-900'
             }`}
           >
             <p className="text-[11px] uppercase tracking-[0.22em]">Step {step.id}</p>
@@ -419,13 +419,14 @@ export default function EventFormWizard({ eventId = null, fallbackPath = '/event
               value={form.title}
               onChange={(event) => setField('title', event.target.value)}
               placeholder="Leadership Summit 2026"
+              labelClassName="text-slate-700"
             />
             <label className="space-y-1.5">
-              <span className="text-[13px] font-medium text-white/75">Branch</span>
+              <span className="text-[13px] font-medium text-slate-700">Branch</span>
               <select
                 value={form.branch}
                 onChange={(event) => setField('branch', event.target.value)}
-                className="w-full rounded-xl border border-white/10 bg-[#101827] px-3.5 py-2.5 text-sm text-white"
+                className="w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-sm text-slate-900 outline-none focus:border-accent"
               >
                 <option value="">All branches / main church</option>
                 {branches.map((branch) => (
@@ -445,8 +446,8 @@ export default function EventFormWizard({ eventId = null, fallbackPath = '/event
                 onClick={() => setField('type', type)}
                 className={`rounded-2xl border px-4 py-3 text-left transition ${
                   form.type === type
-                    ? 'border-accent/50 bg-accent/10 text-white'
-                    : 'border-white/10 bg-[#101827] text-white/60'
+                    ? 'border-accent/60 bg-accent/15 text-slate-900 shadow-sm'
+                    : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300 hover:bg-slate-50 hover:text-slate-900'
                 }`}
               >
                 <p className="font-semibold capitalize">{formatEventType(type)}</p>
@@ -455,14 +456,14 @@ export default function EventFormWizard({ eventId = null, fallbackPath = '/event
           </div>
 
           <div className="space-y-1.5">
-            <span className="text-[13px] font-medium text-white/75">Description</span>
-            <div className="overflow-hidden rounded-xl border border-white/10 bg-white">
+            <span className="text-[13px] font-medium text-slate-700">Description</span>
+            <div className="overflow-hidden rounded-xl border border-slate-200 bg-white">
               <ReactQuill theme="snow" value={form.description} onChange={(value) => setField('description', value)} />
             </div>
           </div>
 
           <div className="space-y-2">
-            <span className="text-[13px] font-medium text-white/75">Tags</span>
+            <span className="text-[13px] font-medium text-slate-700">Tags</span>
             <div className="flex gap-2">
               <input
                 value={form.tagDraft}
@@ -473,10 +474,10 @@ export default function EventFormWizard({ eventId = null, fallbackPath = '/event
                     addTag();
                   }
                 }}
-                className="w-full rounded-xl border border-white/10 bg-[#101827] px-3.5 py-2.5 text-sm text-white"
+                className="w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-sm text-slate-900 outline-none placeholder:text-slate-500 focus:border-accent focus:ring-2 focus:ring-accent/20"
                 placeholder="Add tag"
               />
-              <Button variant="subtle" onClick={addTag}>
+              <Button variant="secondary" onClick={addTag}>
                 Add
               </Button>
             </div>
@@ -491,7 +492,7 @@ export default function EventFormWizard({ eventId = null, fallbackPath = '/event
                       tags: current.tags.filter((item) => item !== tag),
                     }))
                   }
-                  className="rounded-full border border-accent/20 bg-accent/10 px-3 py-1.5 text-xs font-semibold text-accent"
+                  className="rounded-full border border-accent/25 bg-accent/10 px-3 py-1.5 text-xs font-semibold text-accent"
                 >
                   {tag} x
                 </button>
@@ -499,10 +500,10 @@ export default function EventFormWizard({ eventId = null, fallbackPath = '/event
             </div>
           </div>
 
-          <label className="flex items-center justify-between rounded-2xl border border-white/10 bg-[#101827] px-4 py-4">
+          <label className="flex items-center justify-between rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4">
             <div>
-              <p className="font-semibold text-white">Public Event</p>
-              <p className="text-sm text-white/45">Allow the event to appear on public-facing listings.</p>
+              <p className="font-semibold text-slate-900">Public Event</p>
+              <p className="text-sm text-slate-500">Allow the event to appear on public-facing listings.</p>
             </div>
             <input
               type="checkbox"
@@ -521,31 +522,35 @@ export default function EventFormWizard({ eventId = null, fallbackPath = '/event
               type="date"
               value={form.startDate}
               onChange={(event) => setField('startDate', event.target.value)}
+              labelClassName="text-slate-700"
             />
             <Input
               label="Start Time"
               type="time"
               value={form.startTime}
               onChange={(event) => setField('startTime', event.target.value)}
+              labelClassName="text-slate-700"
             />
             <Input
               label="End Date"
               type="date"
               value={form.endDate}
               onChange={(event) => setField('endDate', event.target.value)}
+              labelClassName="text-slate-700"
             />
             <Input
               label="End Time"
               type="time"
               value={form.endTime}
               onChange={(event) => setField('endTime', event.target.value)}
+              labelClassName="text-slate-700"
             />
           </div>
 
-          <label className="flex items-center justify-between rounded-2xl border border-white/10 bg-[#101827] px-4 py-4">
+          <label className="flex items-center justify-between rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4">
             <div>
-              <p className="font-semibold text-white">Multi-Day Event</p>
-              <p className="text-sm text-white/45">Enable when the event spans more than one day.</p>
+              <p className="font-semibold text-slate-900">Multi-Day Event</p>
+              <p className="text-sm text-slate-500">Enable when the event spans more than one day.</p>
             </div>
             <input
               type="checkbox"
@@ -560,30 +565,32 @@ export default function EventFormWizard({ eventId = null, fallbackPath = '/event
               value={form.venue}
               onChange={(event) => setField('venue', event.target.value)}
               placeholder="Main Auditorium"
+              labelClassName="text-slate-700"
             />
             <Input
               label="Address"
               value={form.address}
               onChange={(event) => setField('address', event.target.value)}
               placeholder="123 Church Street"
+              labelClassName="text-slate-700"
             />
           </div>
 
           <div className="flex flex-wrap items-center gap-2">
-            <Button variant="subtle" onClick={handleUseLocation}>
+            <Button variant="secondary" onClick={handleUseLocation}>
               Use Current Location
             </Button>
             {form.gpsCoordinates ? (
-              <span className="text-sm text-white/55">
+              <span className="text-sm text-slate-600">
                 {form.gpsCoordinates.lat?.toFixed?.(5)}, {form.gpsCoordinates.lng?.toFixed?.(5)}
               </span>
             ) : null}
           </div>
 
-          <label className="flex items-center justify-between rounded-2xl border border-white/10 bg-[#101827] px-4 py-4">
+          <label className="flex items-center justify-between rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4">
             <div>
-              <p className="font-semibold text-white">Online Event</p>
-              <p className="text-sm text-white/45">Add a stream link for remote participation.</p>
+              <p className="font-semibold text-slate-900">Online Event</p>
+              <p className="text-sm text-slate-500">Add a stream link for remote participation.</p>
             </div>
             <input
               type="checkbox"
@@ -598,20 +605,21 @@ export default function EventFormWizard({ eventId = null, fallbackPath = '/event
               value={form.streamUrl}
               onChange={(event) => setField('streamUrl', event.target.value)}
               placeholder="https://..."
+              labelClassName="text-slate-700"
             />
           ) : null}
 
           <div className="space-y-2">
-            <span className="text-[13px] font-medium text-white/75">Banner Image</span>
+            <span className="text-[13px] font-medium text-slate-700">Banner Image</span>
             <input
               type="file"
               accept="image/*"
               onChange={(event) => handleBannerUpload(event.target.files?.[0])}
-              className="block w-full rounded-xl border border-white/10 bg-[#101827] px-3.5 py-2.5 text-sm text-white"
+              className="block w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-sm text-slate-900 file:mr-4 file:rounded-xl file:border-0 file:bg-accent/15 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-slate-900"
             />
-            {uploadingBanner ? <p className="text-sm text-accent">Uploading banner...</p> : null}
+            {uploadingBanner ? <p className="text-sm text-amber-700">Uploading banner...</p> : null}
             {form.bannerUrl ? (
-              <div className="rounded-2xl border border-white/10 bg-[#101827] p-3">
+              <div className="rounded-2xl border border-slate-200 bg-white p-3">
                 <img
                   src={form.bannerUrl}
                   alt={bannerFileName || form.title || 'Event banner'}
@@ -625,10 +633,10 @@ export default function EventFormWizard({ eventId = null, fallbackPath = '/event
 
       {activeStep === 3 ? (
         <Card className="space-y-5">
-          <label className="flex items-center justify-between rounded-2xl border border-white/10 bg-[#101827] px-4 py-4">
+          <label className="flex items-center justify-between rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4">
             <div>
-              <p className="font-semibold text-white">Requires Registration</p>
-              <p className="text-sm text-white/45">Collect attendee signups before the event.</p>
+              <p className="font-semibold text-slate-900">Requires Registration</p>
+              <p className="text-sm text-slate-500">Collect attendee signups before the event.</p>
             </div>
             <input
               type="checkbox"
@@ -644,6 +652,7 @@ export default function EventFormWizard({ eventId = null, fallbackPath = '/event
                 type="date"
                 value={form.registrationDeadline}
                 onChange={(event) => setField('registrationDeadline', event.target.value)}
+                labelClassName="text-slate-700"
               />
               <Input
                 label="Max Attendees"
@@ -652,10 +661,11 @@ export default function EventFormWizard({ eventId = null, fallbackPath = '/event
                 value={form.maxAttendees}
                 onChange={(event) => setField('maxAttendees', event.target.value)}
                 placeholder="0 = unlimited"
+                labelClassName="text-slate-700"
               />
-              <label className="flex items-center justify-between rounded-2xl border border-white/10 bg-[#101827] px-4 py-4 md:mt-7">
+              <label className="flex items-center justify-between rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 md:mt-7">
                 <div>
-                  <p className="font-semibold text-white">Requires Approval</p>
+                  <p className="font-semibold text-slate-900">Requires Approval</p>
                 </div>
                 <input
                   type="checkbox"
@@ -666,10 +676,10 @@ export default function EventFormWizard({ eventId = null, fallbackPath = '/event
             </div>
           ) : null}
 
-          <label className="flex items-center justify-between rounded-2xl border border-white/10 bg-[#101827] px-4 py-4">
+          <label className="flex items-center justify-between rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4">
             <div>
-              <p className="font-semibold text-white">Free Event</p>
-              <p className="text-sm text-white/45">Turn off to configure paid ticket tiers.</p>
+              <p className="font-semibold text-slate-900">Free Event</p>
+              <p className="text-sm text-slate-500">Turn off to configure paid ticket tiers.</p>
             </div>
             <input
               type="checkbox"
@@ -681,13 +691,14 @@ export default function EventFormWizard({ eventId = null, fallbackPath = '/event
           {!form.isFree ? (
             <div className="space-y-4">
               {form.ticketTiers.map((tier, index) => (
-                <div key={index} className="rounded-2xl border border-white/10 bg-[#101827] p-4">
+                <div key={index} className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
                   <div className="grid gap-4 md:grid-cols-2">
                     <Input
                       label="Tier Name"
                       value={tier.name}
                       onChange={(event) => updateTier(index, 'name', event.target.value)}
                       placeholder="VIP"
+                      labelClassName="text-slate-700"
                     />
                     <Input
                       label="Price"
@@ -696,11 +707,13 @@ export default function EventFormWizard({ eventId = null, fallbackPath = '/event
                       value={tier.price}
                       onChange={(event) => updateTier(index, 'price', event.target.value)}
                       placeholder="0"
+                      labelClassName="text-slate-700"
                     />
                     <Input
                       label="Currency"
                       value={tier.currency || form.currency}
                       onChange={(event) => updateTier(index, 'currency', event.target.value)}
+                      labelClassName="text-slate-700"
                     />
                     <Input
                       label="Quantity"
@@ -709,22 +722,23 @@ export default function EventFormWizard({ eventId = null, fallbackPath = '/event
                       value={tier.quantity}
                       onChange={(event) => updateTier(index, 'quantity', event.target.value)}
                       placeholder="100"
+                      labelClassName="text-slate-700"
                     />
                   </div>
                   <label className="mt-4 block space-y-1.5">
-                    <span className="text-[13px] font-medium text-white/75">Description</span>
+                    <span className="text-[13px] font-medium text-slate-700">Description</span>
                     <textarea
                       rows={3}
                       value={tier.description}
                       onChange={(event) => updateTier(index, 'description', event.target.value)}
-                      className="w-full rounded-xl border border-white/10 bg-[#0b1120] px-3.5 py-2.5 text-sm text-white outline-none focus:border-accent"
+                      className="w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-sm text-slate-900 outline-none placeholder:text-slate-500 focus:border-accent focus:ring-2 focus:ring-accent/20"
                       placeholder="Tier perks and notes"
                     />
                   </label>
-                  <div className="mt-4 flex items-center justify-between rounded-2xl border border-accent/20 bg-accent/5 px-4 py-3">
+                  <div className="mt-4 flex items-center justify-between rounded-2xl border border-accent/20 bg-accent/10 px-4 py-3">
                     <div>
-                      <p className="font-semibold text-white">{tier.name || 'New tier'}</p>
-                      <p className="text-sm text-white/45">
+                      <p className="font-semibold text-slate-900">{tier.name || 'New tier'}</p>
+                      <p className="text-sm text-slate-600">
                         {formatCurrency(Number(tier.price || 0), {
                           currencyCode: tier.currency || form.currency || currencyCode,
                         })}{' '}
@@ -733,7 +747,7 @@ export default function EventFormWizard({ eventId = null, fallbackPath = '/event
                     </div>
                     {form.ticketTiers.length > 1 ? (
                       <Button
-                        variant="subtle"
+                        variant="secondary"
                         onClick={() =>
                           setForm((current) => ({
                             ...current,
@@ -767,11 +781,11 @@ export default function EventFormWizard({ eventId = null, fallbackPath = '/event
         <div className="grid gap-5 xl:grid-cols-[1fr_0.9fr]">
           <Card className="space-y-5">
             <label className="space-y-1.5">
-              <span className="text-[13px] font-medium text-white/75">Organizer</span>
+              <span className="text-[13px] font-medium text-slate-700">Organizer</span>
               <select
                 value={form.organizerUserId}
                 onChange={(event) => setField('organizerUserId', event.target.value)}
-                className="w-full rounded-xl border border-white/10 bg-[#101827] px-3.5 py-2.5 text-sm text-white"
+                className="w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-sm text-slate-900 outline-none focus:border-accent focus:ring-2 focus:ring-accent/20"
               >
                 <option value="">Select organizer</option>
                 {users.map((user) => (
@@ -783,7 +797,7 @@ export default function EventFormWizard({ eventId = null, fallbackPath = '/event
             </label>
 
             <div className="space-y-2">
-              <span className="text-[13px] font-medium text-white/75">Co-Organizers</span>
+              <span className="text-[13px] font-medium text-slate-700">Co-Organizers</span>
               <div className="flex flex-wrap gap-2">
                 {coOrganizerOptions.map((user) => {
                   const userId = user._id || user.id;
@@ -803,7 +817,7 @@ export default function EventFormWizard({ eventId = null, fallbackPath = '/event
                       className={`rounded-full px-3 py-1.5 text-sm ${
                         active
                           ? 'bg-accent text-primary'
-                          : 'border border-white/10 bg-[#101827] text-white/65'
+                          : 'border border-slate-300 bg-white text-slate-700 hover:border-accent/35 hover:bg-slate-50'
                       }`}
                     >
                       {user.fullName || user.username}
@@ -814,12 +828,12 @@ export default function EventFormWizard({ eventId = null, fallbackPath = '/event
             </div>
 
             <label className="block space-y-1.5">
-              <span className="text-[13px] font-medium text-white/75">Volunteer Requirements</span>
+              <span className="text-[13px] font-medium text-slate-700">Volunteer Requirements</span>
               <textarea
                 rows={4}
                 value={form.volunteerRequirements}
                 onChange={(event) => setField('volunteerRequirements', event.target.value)}
-                className="w-full rounded-xl border border-white/10 bg-[#101827] px-3.5 py-2.5 text-sm text-white outline-none focus:border-accent"
+                className="w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-sm text-slate-900 outline-none placeholder:text-slate-500 focus:border-accent focus:ring-2 focus:ring-accent/20"
                 placeholder="Need 10 ushers, 5 media, 2 first aid volunteers..."
               />
             </label>
@@ -831,6 +845,7 @@ export default function EventFormWizard({ eventId = null, fallbackPath = '/event
                 min="0"
                 value={form.estimatedBudget}
                 onChange={(event) => setField('estimatedBudget', event.target.value)}
+                labelClassName="text-slate-700"
               />
               <Input
                 label="Actual Cost"
@@ -838,32 +853,33 @@ export default function EventFormWizard({ eventId = null, fallbackPath = '/event
                 min="0"
                 value={form.actualCost}
                 onChange={(event) => setField('actualCost', event.target.value)}
+                labelClassName="text-slate-700"
               />
             </div>
           </Card>
 
           <Card className="space-y-4">
             <div>
-              <p className="text-sm uppercase tracking-[0.24em] text-white/45">Review Summary</p>
-              <h3 className="mt-2 text-xl font-semibold text-white">{form.title || 'Untitled event'}</h3>
+              <p className="text-sm uppercase tracking-[0.24em] text-slate-500">Review Summary</p>
+              <h3 className="mt-2 text-xl font-semibold text-slate-900">{form.title || 'Untitled event'}</h3>
             </div>
 
             <div className="space-y-3">
               {reviewItems.map(([label, value]) => (
-                <div key={label} className="flex items-center justify-between rounded-2xl border border-white/10 bg-[#101827] px-4 py-3">
-                  <span className="text-sm text-white/55">{label}</span>
-                  <span className="text-sm font-semibold text-white">{value}</span>
+                <div key={label} className="flex items-center justify-between rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
+                  <span className="text-sm text-slate-500">{label}</span>
+                  <span className="text-sm font-semibold text-slate-900">{value}</span>
                 </div>
               ))}
             </div>
 
-            <div className="rounded-2xl border border-accent/20 bg-accent/5 px-4 py-4">
-              <p className="text-sm text-white/60">Organizer</p>
-              <p className="mt-1 font-semibold text-white">
+            <div className="rounded-2xl border border-accent/20 bg-accent/10 px-4 py-4">
+              <p className="text-sm text-slate-600">Organizer</p>
+              <p className="mt-1 font-semibold text-slate-900">
                 {selectedOrganizer?.fullName || selectedOrganizer?.username || 'Not selected'}
               </p>
-              <p className="mt-4 text-sm text-white/60">Estimated capacity</p>
-              <p className="mt-1 text-lg font-semibold text-white">
+              <p className="mt-4 text-sm text-slate-600">Estimated capacity</p>
+              <p className="mt-1 text-lg font-semibold text-slate-900">
                 {form.maxAttendees === '' || Number(form.maxAttendees) === 0
                   ? 'Unlimited'
                   : `${form.maxAttendees} attendees`}

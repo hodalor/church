@@ -1,5 +1,6 @@
 import { createHttpError } from '../../utils/httpError.js';
 import Tenant from '../tenants/model.js';
+import Member from '../members/member.model.js';
 import AnalyticsSnapshot from './models/analyticsSnapshot.model.js';
 import BranchProfile from './models/branchProfile.model.js';
 import {
@@ -192,12 +193,32 @@ export const updateBranch = async (tenantId, branchId, payload = {}, actor = {})
   return serializeBranchProfile(await refreshBranchCache(profile));
 };
 
-export const deactivateBranch = async (tenantId, branchId, actor = {}) => {
+export const deactivateBranch = async (tenantId, branchId, actor = {}, { force = false } = {}) => {
   const profile = await resolveBranchProfileById({ tenantId, branchId, actor });
+
+  const memberFilter = {
+    tenantId: profile.tenantId,
+    isDeleted: { $ne: true },
+    $or: [{ branch: profile.branchName }, { branch: profile.branchId }],
+  };
+
+  const memberCount = await Member.countDocuments(memberFilter);
+
+  if (!force && memberCount > 0) {
+    throw createHttpError(
+      409,
+      `This branch currently has ${memberCount} active member(s). Reassign or remove those members before deleting the branch.`,
+    );
+  }
+
   profile.isActive = false;
   profile.updatedAt = new Date();
   await profile.save();
-  return serializeBranchProfile(profile);
+  return {
+    ...serializeBranchProfile(profile),
+    movedMemberCount: 0,
+    blockedMemberCount: force ? 0 : memberCount,
+  };
 };
 
 export const getBranchMetrics = async (tenantId, branchId, actor = {}) => {

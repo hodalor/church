@@ -8,8 +8,8 @@ export const getBranchById = async (branchId, params = {}) =>
   unwrap(await api.get(`/branches/${branchId}`, { params }));
 export const updateBranch = async (branchId, data) =>
   unwrap(await api.patch(`/branches/${branchId}`, data));
-export const deactivateBranch = async (branchId) =>
-  unwrap(await api.delete(`/branches/${branchId}`));
+export const deactivateBranch = async (branchId, params = {}) =>
+  unwrap(await api.delete(`/branches/${branchId}`, { params }));
 export const getBranchMetrics = async (branchId, params = {}) =>
   unwrap(await api.get(`/branches/${branchId}/metrics`, { params }));
 export const getBranchSnapshot = async (branchId, params = {}) =>

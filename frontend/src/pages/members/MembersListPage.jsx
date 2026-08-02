@@ -17,10 +17,12 @@ import {
   getMembers,
   getMemberStats,
   getMembersByHealthStatus,
+  softDeleteMember,
 } from '../../api/endpoints/members';
 import { getAllTenants } from '../../api/endpoints/tenants';
 import { useAuth } from '../../hooks/useAuth';
 import { useCapabilities } from '../../hooks/useCapabilities';
+import { showErrorToast, showSuccessToast } from '../../utils/toast';
 
 const membershipStatuses = [
   { label: 'All', value: '' },
@@ -171,6 +173,7 @@ export default function MembersListPage() {
   const [importText, setImportText] = useState('');
   const [importFileName, setImportFileName] = useState('');
   const [importError, setImportError] = useState('');
+  const [memberToDelete, setMemberToDelete] = useState(null);
 
   const tenantsQuery = useQuery({
     queryKey: ['member-tenants'],
@@ -245,6 +248,21 @@ export default function MembersListPage() {
     },
   });
 
+  const deleteMemberMutation = useMutation({
+    mutationFn: (memberId) => softDeleteMember(memberId),
+    onSuccess: () => {
+      setMemberToDelete(null);
+      queryClient.invalidateQueries({ queryKey: ['members'] });
+      queryClient.invalidateQueries({ queryKey: ['member-stats'] });
+      showSuccessToast('Member deleted successfully.');
+    },
+    onError: (error) => {
+      const message =
+        error?.response?.data?.message || error?.message || 'Unable to delete member right now.';
+      showErrorToast(message);
+    },
+  });
+
   const columns = useMemo(
     () => [
       {
@@ -281,20 +299,23 @@ export default function MembersListPage() {
       {
         key: 'branch',
         header: 'Branch',
-        render: (member) => member.branch || 'Main branch',
+        render: (member) => <span className="text-slate-900">{member.branch || 'Main branch'}</span>,
       },
       {
         key: 'department',
         header: 'Department',
-        render: (member) =>
-          Array.isArray(member.department) && member.department.length
-            ? member.department.join(', ')
-            : 'Unassigned',
+        render: (member) => (
+          <span className="text-slate-900">
+            {Array.isArray(member.department) && member.department.length
+              ? member.department.join(', ')
+              : 'Unassigned'}
+          </span>
+        ),
       },
       {
         key: 'phone',
         header: 'Phone',
-        render: (member) => member.phone || 'No phone',
+        render: (member) => <span className="text-slate-900">{member.phone || 'No phone'}</span>,
       },
       {
         key: 'health',
@@ -318,16 +339,28 @@ export default function MembersListPage() {
         key: 'actions',
         header: 'Actions',
         render: (member) => (
-          <Link
-            to={`${isSuperAdmin ? '/superadmin' : ''}/members/${member.memberId}`}
-            className="font-semibold text-amber-700 hover:text-amber-800"
-          >
-            View
-          </Link>
+          <div className="flex items-center justify-end gap-2">
+            <Link
+              to={`${isSuperAdmin ? '/superadmin' : ''}/members/${member.memberId}`}
+              className="inline-flex items-center justify-center rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-sm font-semibold text-amber-700 transition hover:border-amber-300 hover:bg-amber-50 hover:text-amber-800"
+            >
+              View
+            </Link>
+            {canModifyMembers ? (
+              <button
+                type="button"
+                disabled={deleteMemberMutation.isPending && memberToDelete?.memberId === member.memberId}
+                onClick={() => setMemberToDelete(member)}
+                className="inline-flex items-center justify-center rounded-xl border border-rose-200 bg-white px-3.5 py-2.5 text-sm font-semibold text-rose-700 transition hover:border-rose-300 hover:bg-rose-50"
+              >
+                {deleteMemberMutation.isPending && memberToDelete?.memberId === member.memberId ? 'Deleting...' : 'Delete'}
+              </button>
+            ) : null}
+          </div>
         ),
       },
     ],
-    [isSuperAdmin],
+    [canModifyMembers, deleteMemberMutation.isPending, isSuperAdmin, memberToDelete],
   );
 
   const Shell = isSuperAdmin ? SuperAdminShell : AppShell;
@@ -497,6 +530,7 @@ export default function MembersListPage() {
           <DataTable
             columns={columns}
             data={rows}
+            tone="light"
             emptyMessage={
               isSuperAdmin && !selectedTenantId
                 ? 'Select a tenant to view members.'
@@ -635,6 +669,54 @@ export default function MembersListPage() {
               }}
             >
               {importMutation.isPending ? 'Importing...' : 'Import Members'}
+            </Button>
+          </div>
+        </div>
+      </Modal>
+
+      <Modal
+        isOpen={Boolean(memberToDelete)}
+        onClose={() => {
+          if (deleteMemberMutation.isPending) {
+            return;
+          }
+          setMemberToDelete(null);
+        }}
+        title="Delete Member"
+        description="This will remove the selected member from the directory. Attendance and finance records linked to this profile may be preserved by the system."
+        size="md"
+      >
+        <div className="space-y-4">
+          <div className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-4">
+            <p className="text-sm text-slate-700">
+              Are you sure you want to delete{' '}
+              <span className="font-semibold text-rose-700">
+                {[memberToDelete?.firstName, memberToDelete?.lastName]
+                  .filter(Boolean)
+                  .join(' ') || memberToDelete?.memberId || 'this member'}
+              </span>
+              ?
+            </p>
+            {memberToDelete?.memberId ? (
+              <p className="mt-1 text-xs uppercase tracking-[0.22em] text-slate-500">
+                Member ID: {memberToDelete.memberId}
+              </p>
+            ) : null}
+          </div>
+          <div className="flex justify-end gap-2">
+            <Button
+              variant="subtle"
+              disabled={deleteMemberMutation.isPending}
+              onClick={() => setMemberToDelete(null)}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="secondary"
+              disabled={deleteMemberMutation.isPending || !memberToDelete?.memberId}
+              onClick={() => deleteMemberMutation.mutate(memberToDelete.memberId)}
+            >
+              {deleteMemberMutation.isPending ? 'Deleting...' : 'Confirm Delete'}
             </Button>
           </div>
         </div>

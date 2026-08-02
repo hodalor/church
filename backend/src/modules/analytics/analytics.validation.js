@@ -6,6 +6,14 @@ export const branchIdParamValidation = [
   param('branchId').trim().notEmpty().withMessage('Branch ID is required.'),
 ];
 
+export const deactivateBranchQueryValidation = [
+  ...branchIdParamValidation,
+  query('force')
+    .optional({ values: 'falsy' })
+    .isIn(['true', 'false'])
+    .withMessage('Force flag must be true or false.'),
+];
+
 export const insightIdParamValidation = [
   param('insightId').isMongoId().withMessage('Insight ID is invalid.'),
 ];

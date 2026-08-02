@@ -131,19 +131,40 @@ export default function LoginPage() {
                     <p className="text-lg text-[#ebd59b]">{authBranding.tagline}</p>
                   </div>
                 </div>
-                <div className="mt-12 max-w-3xl">
-                  <h1 className="text-4xl font-semibold leading-tight text-white sm:text-5xl lg:text-6xl">
+                {/* <div className="mt-12 max-w-3xl">
+                  <h1 className="text-2xl font-semibold leading-tight text-white sm:text-2xl lg:text-3xl">
                     {authBranding.heroTitle}
                   </h1>
                   <p className="mt-5 max-w-xl text-base leading-8 text-white/70 sm:text-lg">
                     {authBranding.heroSubtitle}
                   </p>
-                </div>
+                </div> */}
               </div>
 
               <div className="mt-12 max-w-xl">
                 <p className="text-[11px] uppercase tracking-[0.36em] text-white/42">More solutions by Prynova</p>
                 <div className="mt-5 space-y-3">
+                  {promotedApps.map((app) => (
+                    <a
+                      key={app.id || app.href}
+                      href={app.href}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="group flex items-center gap-4 rounded-[22px] border border-white/10 bg-white/[0.03] px-4 py-4 backdrop-blur transition hover:border-[#d9b55d]/45 hover:bg-white/[0.05]"
+                    >
+                      <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl border border-[#d9b55d]/25 bg-[#d9b55d]/10 text-[#f4d98c]">
+                        <Sparkles className="h-5 w-5" />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="font-semibold text-white">{app.title}</p>
+                        <p className="mt-1 text-sm leading-6 text-white/62">{app.description}</p>
+                      </div>
+                      <ArrowRight className="h-4 w-4 shrink-0 text-white/55 transition group-hover:text-[#f4d98c]" />
+                    </a>
+                  ))}
+                </div>
+
+                 <div className="mt-5 space-y-3">
                   {promotedApps.map((app) => (
                     <a
                       key={app.id || app.href}
@@ -178,6 +199,7 @@ export default function LoginPage() {
                     Reliable Support
                   </span>
                 </div>
+
               </div>
             </div>
           </div>

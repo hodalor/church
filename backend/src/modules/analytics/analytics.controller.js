@@ -53,12 +53,22 @@ export const updateBranch = asyncHandler(async (req, res) => {
 
 export const deactivateBranch = asyncHandler(async (req, res) => {
   ensureAnalyticsCapability(req, ['branches.delete']);
+  const force = String(req.query?.force || req.body?.force || 'false')
+    .toLowerCase()
+    .trim() === 'true';
   const data = await branchService.deactivateBranch(
     resolveScopedTenantId(req),
     req.params.branchId,
     analyticsActor(req),
+    { force },
   );
-  return success(res, data, 'Branch deactivated successfully.');
+  return success(
+    res,
+    data,
+    force
+      ? 'Branch deactivated successfully with member override.'
+      : 'Branch deactivated successfully.',
+  );
 });
 
 export const getBranchMetrics = asyncHandler(async (req, res) => {
