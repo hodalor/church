@@ -249,91 +249,81 @@ function SourceOfTruthCard({ eyebrow, title, description, tags = [], to, actionL
 }
 
 function PromotedAppsEditor({ apps, onChange, disabled }) {
-  const updateApp = (index, key, value) => {
-    onChange(
-      apps.map((app, appIndex) =>
-        appIndex === index
-          ? {
-              ...app,
-              [key]: value,
-            }
-          : app,
-      ),
+  const slotCount = 3;
+  const safeApps = Array.isArray(apps) ? [...apps] : [];
+  while (safeApps.length < slotCount) {
+    safeApps.push({ ...emptyPromotedApp, id: `app-${Date.now()}-${safeApps.length}` });
+  }
+  const fixedSlots = safeApps.slice(0, slotCount);
+
+  const updateSlot = (index, key, value) => {
+    const next = fixedSlots.map((app, appIndex) =>
+      appIndex === index
+        ? {
+            ...app,
+            id: app.id || `app-${index + 1}`,
+            [key]: value,
+          }
+        : app,
     );
-  };
-
-  const addApp = () => {
-    onChange([
-      ...apps,
-      {
-        ...emptyPromotedApp,
-        id: `app-${Date.now()}`,
-      },
-    ]);
-  };
-
-  const removeApp = (index) => {
-    onChange(apps.filter((_, appIndex) => appIndex !== index));
+    onChange(next);
   };
 
   return (
     <div className={`space-y-4 p-4 ${innerPanelClass}`}>
-      <div className="flex items-start justify-between gap-3">
-        <div>
-          <h3 className="text-base font-semibold text-white">Promoted Apps</h3>
-          <p className="mt-1 text-sm text-white/55">
-            Add other products to advertise on the login screen. Clicking a card opens its link.
-          </p>
-        </div>
-        <Button type="button" variant="secondary" disabled={disabled} onClick={addApp}>
-          Add app
-        </Button>
+      <div>
+        <h3 className="text-base font-semibold text-white">Promoted Solutions (3 slots)</h3>
+        <p className="mt-1 text-sm text-white/55">
+          These three cards appear on the login screen. Set the link for each one so clicking opens that solution.
+        </p>
       </div>
 
-      {apps.length ? (
-        <div className="space-y-4">
-          {apps.map((app, index) => (
-            <div key={app.id || index} className="space-y-3 rounded-[18px] border border-white/10 bg-white/[0.03] p-4">
-              <div className="grid gap-3 md:grid-cols-2">
-                <Input
-                  label="App title"
-                  value={app.title || ''}
-                  disabled={disabled}
-                  onChange={(event) => updateApp(index, 'title', event.target.value)}
-                  placeholder="EduPrynova"
-                />
-                <Input
-                  label="Link"
-                  value={app.href || ''}
-                  disabled={disabled}
-                  onChange={(event) => updateApp(index, 'href', event.target.value)}
-                  placeholder="https://example.com"
-                />
-              </div>
-              <label className="block space-y-2">
-                <span className="text-sm font-medium text-white/75">Description</span>
-                <textarea
-                  rows={3}
-                  value={app.description || ''}
-                  disabled={disabled}
-                  onChange={(event) => updateApp(index, 'description', event.target.value)}
-                  className={inputClass}
-                  placeholder="Short message that explains the app."
-                />
-              </label>
-              <div className="flex justify-end">
-                <Button type="button" variant="ghost" disabled={disabled} onClick={() => removeApp(index)}>
-                  Remove
-                </Button>
-              </div>
+      <div className="space-y-4">
+        {fixedSlots.map((app, index) => (
+          <div key={app.id || index} className="space-y-3 rounded-[18px] border border-white/10 bg-white/[0.03] p-4">
+            <div className="flex items-center justify-between">
+              <p className="text-[11px] uppercase tracking-[0.26em] text-accent/80">Slot {index + 1}</p>
+              {app.href ? (
+                <a
+                  href={app.href}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-xs font-semibold text-white/70 underline-offset-4 hover:text-accent hover:underline"
+                >
+                  Preview link
+                </a>
+              ) : null}
             </div>
-          ))}
-        </div>
-      ) : (
-        <div className="rounded-[18px] border border-dashed border-white/12 bg-white/[0.03] px-4 py-5 text-sm text-white/55">
-          No promoted apps added yet.
-        </div>
-      )}
+            <div className="grid gap-3 md:grid-cols-2">
+              <Input
+                label="Solution name"
+                value={app.title || ''}
+                disabled={disabled}
+                onChange={(event) => updateSlot(index, 'title', event.target.value)}
+                placeholder="EduPrynova"
+              />
+              <Input
+                label="Link (opens when card is clicked)"
+                value={app.href || ''}
+                disabled={disabled}
+                onChange={(event) => updateSlot(index, 'href', event.target.value)}
+                placeholder="https://example.com"
+              />
+            </div>
+            <label className="block space-y-2">
+              <span className="text-sm font-medium text-white/75">Short description</span>
+              <textarea
+                rows={2}
+                value={app.description || ''}
+                disabled={disabled}
+                onChange={(event) => updateSlot(index, 'description', event.target.value)}
+                className={inputClass}
+                placeholder="Short message that describes this solution."
+              />
+            </label>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
