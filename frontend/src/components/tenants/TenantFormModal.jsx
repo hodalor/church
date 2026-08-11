@@ -13,7 +13,7 @@ import {
 } from '../../constants/capabilities';
 import { useBrandingStore } from '../../stores/brandingStore';
 import { getCountryOptionByName, normalizeEligibleCountries } from '../../utils/platformConfig';
-import { supabaseUpload } from '../../utils/supabaseUpload';
+import { supabaseUpload, DEFAULT_SUPABASE_BUCKET } from '../../utils/supabaseUpload';
 
 const plans = [
   { id: 'small', title: 'Small', description: 'For growing churches managing core operations.' },
@@ -110,7 +110,7 @@ export default function TenantFormModal({ isOpen, onClose, onCreated }) {
     try {
       const extension = file.name.split('.').pop();
       const filePath = `${form.tenantId || 'tenant'}/logo.${extension}`;
-      const url = await supabaseUpload(file, 'church-media', filePath);
+      const url = await supabaseUpload(file, DEFAULT_SUPABASE_BUCKET, filePath);
       setFilePreview(URL.createObjectURL(file));
       updateField('logoUrl', url);
     } catch {

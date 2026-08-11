@@ -13,7 +13,7 @@ import { AnalyticsPage } from '../../components/analytics/AnalyticsWidgets';
 import { createBranch, getAllBranches } from '../../api/endpoints/branches';
 import { getUsers } from '../../api/endpoints/users';
 import useAnalyticsAccess from '../../hooks/useAnalyticsAccess';
-import { supabaseUpload } from '../../utils/supabaseUpload';
+import { supabaseUpload, DEFAULT_SUPABASE_BUCKET } from '../../utils/supabaseUpload';
 import { showErrorToast, showSuccessToast } from '../../utils/toast';
 
 const schema = z.object({
@@ -81,7 +81,7 @@ export default function CreateBranchPage() {
     if (!file) return;
     try {
       setUploading(true);
-      const uploadedUrl = await supabaseUpload(file, 'church-media', `branches/${Date.now()}-${file.name}`);
+      const uploadedUrl = await supabaseUpload(file, DEFAULT_SUPABASE_BUCKET, `branches/${Date.now()}-${file.name}`);
       setLogoUrl(uploadedUrl);
       showSuccessToast('Branch logo uploaded.');
     } catch (error) {

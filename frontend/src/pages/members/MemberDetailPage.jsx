@@ -31,7 +31,7 @@ import { useAuth } from '../../hooks/useAuth';
 import useBranchOptions from '../../hooks/useBranchOptions';
 import useMinistryOptions from '../../hooks/useMinistryOptions';
 import { useCapabilities } from '../../hooks/useCapabilities';
-import { supabaseUpload } from '../../utils/supabaseUpload';
+import { supabaseUpload, DEFAULT_SUPABASE_BUCKET } from '../../utils/supabaseUpload';
 import {
   enrollFingerprint,
   extractFingerprintDeviceMeta,
@@ -243,7 +243,7 @@ export default function MemberDetailPage() {
       const extension = file.name.split('.').pop();
       const url = await supabaseUpload(
         file,
-        'church-media',
+        DEFAULT_SUPABASE_BUCKET,
         `images/members/${memberId}-${Date.now()}.${extension}`,
       );
       return updateMemberPhoto(memberId, url);

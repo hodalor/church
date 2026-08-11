@@ -17,7 +17,7 @@ import { useTenantStore } from '../../stores/tenantStore';
 import useCurrency from '../../hooks/useCurrency';
 import useEventsAccess from '../../hooks/useEventsAccess';
 import { eventTypes, formatEventType } from '../../utils/events';
-import { supabaseUpload } from '../../utils/supabaseUpload';
+import { supabaseUpload, DEFAULT_SUPABASE_BUCKET } from '../../utils/supabaseUpload';
 import { showErrorToast, showInfoToast, showSuccessToast } from '../../utils/toast';
 import Button from '../ui/Button';
 import Card from '../ui/Card';
@@ -300,7 +300,7 @@ export default function EventFormWizard({ eventId = null, fallbackPath = '/event
 
     try {
       setUploadingBanner(true);
-      const uploadedUrl = await supabaseUpload(file, 'church-media', `events/${Date.now()}-${file.name}`);
+      const uploadedUrl = await supabaseUpload(file, DEFAULT_SUPABASE_BUCKET, `events/${Date.now()}-${file.name}`);
       setBannerFileName(file.name);
       setField('bannerUrl', uploadedUrl);
     } catch (error) {

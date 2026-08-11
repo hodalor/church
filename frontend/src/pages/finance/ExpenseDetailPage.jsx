@@ -18,7 +18,7 @@ import {
   rejectExpense,
   updateExpense,
 } from '../../api/endpoints/finance';
-import { supabaseUpload } from '../../utils/supabaseUpload';
+import { supabaseUpload, DEFAULT_SUPABASE_BUCKET } from '../../utils/supabaseUpload';
 
 const categoryOptions = [
   'salaries',
@@ -133,7 +133,7 @@ export default function ExpenseDetailPage() {
     const extension = file.name.split('.').pop();
     const url = await supabaseUpload(
       file,
-      'church-media',
+      DEFAULT_SUPABASE_BUCKET,
       `documents/expenses/${expenseId}-${Date.now()}.${extension}`,
     );
     setForm((current) => ({ ...current, receiptUrl: url }));

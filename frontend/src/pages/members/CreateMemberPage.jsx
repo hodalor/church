@@ -16,7 +16,7 @@ import { getAllTenants, getCurrentTenant, getTenantById } from '../../api/endpoi
 import { useAuth } from '../../hooks/useAuth';
 import { useCapabilities } from '../../hooks/useCapabilities';
 import { sanitizeGroupingPath } from '../../utils/groupings';
-import supabaseUpload from '../../utils/supabaseUpload';
+import supabaseUpload, { DEFAULT_SUPABASE_BUCKET } from '../../utils/supabaseUpload';
 import { showErrorToast, showSuccessToast } from '../../utils/toast';
 
 const membershipOptions = ['visitor', 'new_convert', 'member', 'worker', 'leader', 'clergy'];
@@ -197,7 +197,7 @@ export default function CreateMemberPage() {
       const extension = file.name.split('.').pop();
       const safeTenantId = (isSuperAdmin ? form.tenantId : targetTenantId || 'member').trim() || 'member';
       const path = `members/${safeTenantId}/${mode}-${Date.now()}.${extension}`;
-      const url = await supabaseUpload(file, 'church-media', path);
+      const url = await supabaseUpload(file, DEFAULT_SUPABASE_BUCKET, path);
 
       if (mode === 'photo') {
         updateField('photoUrl', url);

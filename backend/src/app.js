@@ -36,6 +36,7 @@ import familyAnalyticsRouter from './modules/family/familyAnalytics.routes.js';
 import { adminLeadershipRouter, leadershipRouter } from './modules/leadership/leadership.routes.js';
 import { adminMinistryRouter, ministryRouter } from './modules/ministry/ministry.routes.js';
 import { adminStrategicRouter, strategicRouter } from './modules/strategic/strategic.routes.js';
+import storageRouter from './modules/storage/storage.routes.js';
 import errorHandler from './middleware/errorHandler.js';
 import { error } from './utils/apiResponse.js';
 
@@ -101,6 +102,7 @@ apiRouter.use('/cbs', cbsRouter);
 apiRouter.use('/leadership', leadershipRouter);
 apiRouter.use('/strategic', strategicRouter);
 apiRouter.use('/family-analytics', familyAnalyticsRouter);
+apiRouter.use('/storage', storageRouter);
 apiRouter.use('/public/events', publicEventsRouter);
 apiRouter.use('/rosters', rostersRouter);
 apiRouter.use('/visitors', visitorsRouter);

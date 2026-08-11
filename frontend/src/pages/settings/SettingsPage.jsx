@@ -23,7 +23,7 @@ import { useTenantStore } from '../../stores/tenantStore';
 import { useBrandingStore } from '../../stores/brandingStore';
 import { getDescendantGroupingIds, getGroupingTreeRows } from '../../utils/groupings';
 import { normalizeEligibleCountries } from '../../utils/platformConfig';
-import { supabaseUpload } from '../../utils/supabaseUpload';
+import { supabaseUpload, DEFAULT_SUPABASE_BUCKET } from '../../utils/supabaseUpload';
 import { showErrorToast, showSuccessToast } from '../../utils/toast';
 
 const platformTabs = [
@@ -640,7 +640,7 @@ export default function SettingsPage() {
     try {
       const extension = file.name.split('.').pop();
       const path = `branding/${mode}-${Date.now()}.${extension}`;
-      const url = await supabaseUpload(file, 'church-media', path);
+      const url = await supabaseUpload(file, DEFAULT_SUPABASE_BUCKET, path);
 
       if (mode === 'global') {
         setGlobalForm((current) => ({ ...current, logoUrl: url }));

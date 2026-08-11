@@ -9,7 +9,7 @@ import { getCurrentTenant } from '../../api/endpoints/tenants';
 import useBranchOptions from '../../hooks/useBranchOptions';
 import useCurrency from '../../hooks/useCurrency';
 import { recordExpense } from '../../api/endpoints/finance';
-import { supabaseUpload } from '../../utils/supabaseUpload';
+import { supabaseUpload, DEFAULT_SUPABASE_BUCKET } from '../../utils/supabaseUpload';
 
 export default function RecordExpensePage() {
   const navigate = useNavigate();
@@ -57,7 +57,7 @@ export default function RecordExpensePage() {
     const extension = file.name.split('.').pop();
     const url = await supabaseUpload(
       file,
-      'church-media',
+      DEFAULT_SUPABASE_BUCKET,
       `documents/expenses/${Date.now()}.${extension}`,
     );
     updateField('receiptUrl', url);
