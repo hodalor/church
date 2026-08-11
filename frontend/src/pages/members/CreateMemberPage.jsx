@@ -238,11 +238,6 @@ export default function CreateMemberPage() {
       return;
     }
 
-    if (form.personCategory === 'adult' && (!form.identityDocuments?.frontUrl || !form.identityDocuments?.backUrl)) {
-      setError('Adult registration requires both ID front and ID back images. Switch to child if no ID card is available.');
-      return;
-    }
-
     if (form.biometrics?.enabled && form.biometrics?.status === 'enrolled' && !form.biometrics?.templateId?.trim()) {
       setError('Fingerprint template ID is required when biometric enrollment is marked as enrolled.');
       return;
@@ -425,7 +420,7 @@ export default function CreateMemberPage() {
               <p className="text-sm uppercase tracking-[0.25em] text-accent">Section 2</p>
               <h2 className="mt-2 text-2xl font-semibold text-white">Identity & Documents</h2>
               <p className="mt-2 max-w-3xl text-sm leading-6 text-white/60">
-                Upload the member photo and supporting identity images. Children can be saved without ID card images.
+                Upload a member photo and supporting identity images. Everything in this section is optional — you can always add or replace them later from the member profile.
               </p>
             </div>
 
