@@ -330,6 +330,7 @@ export default function ExpenseDetailPage() {
                   <span className="text-sm text-white/75">Replace Receipt</span>
                   <input
                     type="file"
+                    accept="image/*,.jpg,.jpeg,.png,.gif,.webp,.bmp,.ico,.tif,.tiff,.heic,.heif,.avif,.svg,application/pdf"
                     onChange={handleUpload}
                     className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white"
                   />

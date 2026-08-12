@@ -534,7 +534,7 @@ export default function RegisterVisitorPage() {
                   <label className="inline-flex cursor-pointer items-center rounded-xl border border-white/10 bg-white/[0.04] px-3.5 py-2.5 text-sm font-semibold text-white hover:bg-white/[0.08]">
                     <ImagePlus className="mr-2 h-4 w-4" />
                     Upload
-                    <input type="file" accept="image/*" className="hidden" onChange={handlePhotoFile} />
+                    <input type="file" accept="image/*,.jpg,.jpeg,.png,.gif,.webp,.bmp,.ico,.tif,.tiff,.heic,.heif,.avif,.svg" className="hidden" onChange={handlePhotoFile} />
                   </label>
                 </div>
               </div>

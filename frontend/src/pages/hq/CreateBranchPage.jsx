@@ -179,7 +179,7 @@ export default function CreateBranchPage() {
               <span className="text-[13px] font-medium text-white/75">Logo Upload</span>
               <input
                 type="file"
-                accept="image/*"
+                accept="image/*,.jpg,.jpeg,.png,.gif,.webp,.bmp,.ico,.tif,.tiff,.heic,.heif,.avif,.svg"
                 className="w-full rounded-xl border border-white/10 bg-[#101827] px-3.5 py-2.5 text-sm text-white"
                 onChange={(event) => handleLogoUpload(event.target.files?.[0])}
               />

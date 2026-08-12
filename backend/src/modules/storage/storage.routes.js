@@ -114,6 +114,12 @@ const inferMimeFromName = (name) => {
   if (lower.endsWith('.gif')) return 'image/gif';
   if (lower.endsWith('.webp')) return 'image/webp';
   if (lower.endsWith('.svg')) return 'image/svg+xml';
+  if (lower.endsWith('.bmp')) return 'image/bmp';
+  if (lower.endsWith('.ico')) return 'image/x-icon';
+  if (lower.endsWith('.tif') || lower.endsWith('.tiff')) return 'image/tiff';
+  if (lower.endsWith('.heic')) return 'image/heic';
+  if (lower.endsWith('.heif')) return 'image/heif';
+  if (lower.endsWith('.avif')) return 'image/avif';
   if (lower.endsWith('.pdf')) return 'application/pdf';
   return '';
 };

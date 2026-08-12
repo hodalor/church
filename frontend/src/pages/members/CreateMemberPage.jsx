@@ -440,7 +440,7 @@ export default function CreateMemberPage() {
                       {uploadingField === 'photo' ? 'Uploading...' : 'Take Photo'}
                       <input
                         type="file"
-                        accept="image/*"
+                        accept="image/*,.jpg,.jpeg,.png,.gif,.webp,.bmp,.ico,.tif,.tiff,.heic,.heif,.avif,.svg"
                         capture="user"
                         className="hidden"
                         onChange={(event) => handleMediaUpload(event, 'photo')}
@@ -451,7 +451,7 @@ export default function CreateMemberPage() {
                       {uploadingField === 'photo' ? 'Uploading...' : 'Upload Photo'}
                       <input
                         type="file"
-                        accept="image/*"
+                        accept="image/*,.jpg,.jpeg,.png,.gif,.webp,.bmp,.ico,.tif,.tiff,.heic,.heif,.avif,.svg"
                         className="hidden"
                         onChange={(event) => handleMediaUpload(event, 'photo')}
                       />
@@ -465,9 +465,7 @@ export default function CreateMemberPage() {
                   <div className="flex items-center justify-between gap-3">
                     <div>
                       <p className="text-sm font-semibold text-white">ID Front</p>
-                      <p className="text-xs text-white/45">
-                        {form.personCategory === 'child' ? 'Optional for children' : 'Required for adults'}
-                      </p>
+                      <p className="text-xs text-white/45">Optional — add when you have a photo of their ID card.</p>
                     </div>
                   </div>
                   {form.identityDocuments?.frontUrl ? (
@@ -482,7 +480,7 @@ export default function CreateMemberPage() {
                     {uploadingField === 'id-front' ? 'Uploading...' : 'Upload ID Front'}
                     <input
                       type="file"
-                      accept="image/*"
+                      accept="image/*,.jpg,.jpeg,.png,.gif,.webp,.bmp,.ico,.tif,.tiff,.heic,.heif,.avif,.svg"
                       capture="environment"
                       className="hidden"
                       onChange={(event) => handleMediaUpload(event, 'id-front')}
@@ -494,9 +492,7 @@ export default function CreateMemberPage() {
                   <div className="flex items-center justify-between gap-3">
                     <div>
                       <p className="text-sm font-semibold text-white">ID Back</p>
-                      <p className="text-xs text-white/45">
-                        {form.personCategory === 'child' ? 'Optional for children' : 'Required for adults'}
-                      </p>
+                      <p className="text-xs text-white/45">Optional — add the back of the ID card when available.</p>
                     </div>
                   </div>
                   {form.identityDocuments?.backUrl ? (
@@ -511,7 +507,7 @@ export default function CreateMemberPage() {
                     {uploadingField === 'id-back' ? 'Uploading...' : 'Upload ID Back'}
                     <input
                       type="file"
-                      accept="image/*"
+                      accept="image/*,.jpg,.jpeg,.png,.gif,.webp,.bmp,.ico,.tif,.tiff,.heic,.heif,.avif,.svg"
                       capture="environment"
                       className="hidden"
                       onChange={(event) => handleMediaUpload(event, 'id-back')}

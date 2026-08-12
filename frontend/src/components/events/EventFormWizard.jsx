@@ -613,7 +613,7 @@ export default function EventFormWizard({ eventId = null, fallbackPath = '/event
             <span className="text-[13px] font-medium text-slate-700">Banner Image</span>
             <input
               type="file"
-              accept="image/*"
+              accept="image/*,.jpg,.jpeg,.png,.gif,.webp,.bmp,.ico,.tif,.tiff,.heic,.heif,.avif,.svg,application/pdf"
               onChange={(event) => handleBannerUpload(event.target.files?.[0])}
               className="block w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-sm text-slate-900 file:mr-4 file:rounded-xl file:border-0 file:bg-accent/15 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-slate-900"
             />

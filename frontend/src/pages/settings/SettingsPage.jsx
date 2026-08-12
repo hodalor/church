@@ -768,7 +768,7 @@ export default function SettingsPage() {
                   <span className="text-sm font-medium text-white/75">Upload Global Logo</span>
                   <input
                     type="file"
-                    accept="image/*"
+                    accept="image/*,.jpg,.jpeg,.png,.gif,.webp,.bmp,.ico,.tif,.tiff,.heic,.heif,.avif,.svg"
                     disabled={!canEditConfig}
                     onChange={(event) => handleBrandUpload(event, 'global')}
                     className={inputClass}
@@ -819,7 +819,7 @@ export default function SettingsPage() {
                   <span className="text-sm font-medium text-white/75">Upload Login Background</span>
                   <input
                     type="file"
-                    accept="image/*"
+                    accept="image/*,.jpg,.jpeg,.png,.gif,.webp,.bmp,.ico,.tif,.tiff,.heic,.heif,.avif,.svg"
                     disabled={!canEditConfig}
                     onChange={(event) => handleBrandUpload(event, 'background')}
                     className={inputClass}
@@ -983,7 +983,7 @@ export default function SettingsPage() {
                   <span className="text-sm font-medium text-white/75">Upload Client Logo</span>
                   <input
                     type="file"
-                    accept="image/*"
+                    accept="image/*,.jpg,.jpeg,.png,.gif,.webp,.bmp,.ico,.tif,.tiff,.heic,.heif,.avif,.svg"
                     disabled={!canEditTenantBranding}
                     onChange={(event) => handleBrandUpload(event, 'tenant')}
                     className={inputClass}

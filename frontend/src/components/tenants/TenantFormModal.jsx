@@ -232,7 +232,7 @@ export default function TenantFormModal({ isOpen, onClose, onCreated }) {
                 <span className="text-sm font-medium text-slate-700">Logo</span>
                 <input
                   type="file"
-                  accept="image/*"
+                  accept="image/*,.jpg,.jpeg,.png,.gif,.webp,.bmp,.ico,.tif,.tiff,.heic,.heif,.avif,.svg"
                   onChange={handleLogoUpload}
                   className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-600"
                 />

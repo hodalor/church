@@ -146,7 +146,7 @@ export default function RecordExpensePage() {
               </label>
               <label className="space-y-2">
                 <span className="text-sm text-white/80">Receipt Upload</span>
-                <input type="file" onChange={handleUpload} className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white" />
+                <input type="file" accept="image/*,.jpg,.jpeg,.png,.gif,.webp,.bmp,.ico,.tif,.tiff,.heic,.heif,.avif,.svg,application/pdf" onChange={handleUpload} className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white" />
               </label>
             </div>
 

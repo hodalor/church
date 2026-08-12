@@ -473,7 +473,7 @@ export default function MemberDetailPage() {
                     <input
                       ref={photoInputRef}
                       type="file"
-                      accept="image/*"
+                      accept="image/*,.jpg,.jpeg,.png,.gif,.webp,.bmp,.ico,.tif,.tiff,.heic,.heif,.avif,.svg"
                       onChange={handlePhotoSelected}
                       className="hidden"
                     />

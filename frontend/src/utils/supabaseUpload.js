@@ -1,25 +1,7 @@
-import { createClient } from '@supabase/supabase-js';
 import api from '../api/axios.js';
 
-const supabaseUrl = process.env.REACT_APP_SUPABASE_URL;
-const supabaseAnonKey = process.env.REACT_APP_SUPABASE_ANON_KEY;
 export const DEFAULT_SUPABASE_BUCKET =
   process.env.REACT_APP_SUPABASE_BUCKET || 'ecclesia';
-
-const hasConfiguredSupabase =
-  Boolean(supabaseUrl) &&
-  Boolean(supabaseAnonKey) &&
-  supabaseUrl !== 'https://your-project.supabase.co' &&
-  supabaseAnonKey !== 'your-supabase-anon-key';
-
-if (!hasConfiguredSupabase) {
-  console.warn('Supabase env vars are missing. Uploads will fail until they are configured.');
-}
-
-const supabase = createClient(
-  supabaseUrl || 'https://placeholder.supabase.co',
-  supabaseAnonKey || 'placeholder-key',
-);
 
 const BUCKET_SETUP_HELP =
   'Open https://supabase.com/dashboard, select your project, go to SQL Editor, paste the SQL from supabase/migrations/create_church_media_bucket.sql, then click Run.';
@@ -61,15 +43,50 @@ const uploadViaBackend = async ({ file, bucketName, customPath }) => {
     bucketName,
     path: customPath || undefined,
     fileName: file.name,
-    mimeType: file.type || undefined,
+    mimeType: file.type || 'application/octet-stream',
     fileB64: dataUrl,
   });
   return resp?.data?.data?.publicUrl || resp?.data?.publicUrl;
 };
 
+const ACCEPTED_IMAGE_MIMES = [
+  'image/jpeg',
+  'image/jpg',
+  'image/png',
+  'image/gif',
+  'image/webp',
+  'image/bmp',
+  'image/vnd.microsoft.icon',
+  'image/x-icon',
+  'image/tiff',
+  'image/tif',
+  'image/heic',
+  'image/heif',
+  'image/avif',
+  'image/svg+xml',
+  'application/pdf',
+];
+
+const isAcceptedImage = (file) => {
+  if (!file) return false;
+  if (!file.type) return true;
+  if (file.type.startsWith('image/')) return true;
+  const nameLower = String(file.name || '').toLowerCase();
+  const hasImageExt = /\.(jpe?g|png|gif|webp|bmp|ico|tiff?|heic|heif|avif|svg|pdf)$/i.test(nameLower);
+  if (hasImageExt) return true;
+  if (file.type.toLowerCase() === 'application/pdf') return true;
+  return ACCEPTED_IMAGE_MIMES.includes(file.type.toLowerCase());
+};
+
 export const supabaseUpload = async (file, bucketName, customPath) => {
   if (!file) {
     throw new Error('A file is required for upload.');
+  }
+
+  if (!isAcceptedImage(file)) {
+    throw new Error(
+      'Unsupported file type. Accepted formats: JPEG, PNG, GIF, WEBP, BMP, TIFF, HEIC, HEIF, AVIF, SVG, ICO, PDF.',
+    );
   }
 
   const resolvedBucket = bucketName || DEFAULT_SUPABASE_BUCKET;
@@ -85,31 +102,10 @@ export const supabaseUpload = async (file, bucketName, customPath) => {
     if (url) {
       return url;
     }
+    throw new Error('Backend upload did not return a public URL.');
   } catch (backendError) {
-    const backendFriendly = buildUploadErrorMessage(backendError, resolvedBucket);
-    if (/401|403|Authorization|auth|policy|row-level|violates|bucket not found|does not exist/i.test(backendFriendly)) {
-      throw new Error(backendFriendly);
-    }
-    console.warn('Backend storage upload failed, falling back to Supabase direct upload:', backendFriendly);
+    throw new Error(buildUploadErrorMessage(backendError, resolvedBucket));
   }
-
-  if (!hasConfiguredSupabase) {
-    throw new Error(
-      'File upload is not configured yet. Add valid REACT_APP_SUPABASE_URL and REACT_APP_SUPABASE_ANON_KEY in frontend/.env, then restart the frontend.',
-    );
-  }
-
-  const { error } = await supabase.storage.from(resolvedBucket).upload(filePath, file, {
-    cacheControl: '3600',
-    upsert: false,
-  });
-
-  if (error) {
-    throw new Error(buildUploadErrorMessage(error, resolvedBucket));
-  }
-
-  const { data } = supabase.storage.from(resolvedBucket).getPublicUrl(filePath);
-  return data.publicUrl;
 };
 
 export default supabaseUpload;
