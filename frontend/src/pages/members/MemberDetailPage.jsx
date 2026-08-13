@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Camera, Fingerprint } from 'lucide-react';
+import { Camera, Fingerprint, Search, X } from 'lucide-react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import {
   getFamilyGroup,
@@ -8,6 +8,7 @@ import {
   getMemberQrCode,
   recalculateHealthScore,
   restoreMember,
+  searchMembers,
   softDeleteMember,
   updateMember,
   updateMemberPhoto,
@@ -58,6 +59,37 @@ const fingerOptions = [
   'right-middle',
   'left-middle',
 ];
+const RELATIONSHIP_OPTIONS = [
+  'spouse',
+  'wife',
+  'husband',
+  'parent',
+  'mother',
+  'father',
+  'child',
+  'son',
+  'daughter',
+  'sibling',
+  'brother',
+  'sister',
+  'grandparent',
+  'grandchild',
+  'aunt',
+  'uncle',
+  'niece',
+  'nephew',
+  'cousin',
+  'in-law',
+  'mother-in-law',
+  'father-in-law',
+  'son-in-law',
+  'daughter-in-law',
+  'brother-in-law',
+  'sister-in-law',
+  'guardian',
+  'ward',
+  'other',
+];
 
 export default function MemberDetailPage() {
   const { memberId } = useParams();
@@ -71,6 +103,7 @@ export default function MemberDetailPage() {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [showQrModal, setShowQrModal] = useState(false);
   const photoInputRef = useRef(null);
+  const [activeFamilySearch, setActiveFamilySearch] = useState({ index: -1, value: '' });
   const [form, setForm] = useState({
     firstName: '',
     lastName: '',
@@ -112,6 +145,7 @@ export default function MemberDetailPage() {
     },
     tags: '',
     notes: '',
+    familyRelationships: [],
   });
 
   const memberQuery = useQuery({
@@ -138,6 +172,37 @@ export default function MemberDetailPage() {
     queryFn: () => getFamilyGroup(familyGroupId),
     enabled: Boolean(familyGroupId),
   });
+  const familySearchQuery = useQuery({
+    queryKey: ['member-family-search-edit', memberId, activeFamilySearch.value],
+    queryFn: () => searchMembers({ q: activeFamilySearch.value, limit: 10 }),
+    enabled: Boolean(activeFamilySearch.value && activeFamilySearch.index >= 0) && activeFamilySearch.value.length >= 2,
+  });
+
+  const updateFamilyRelationship = (index, patch) => {
+    setForm((current) => ({
+      ...current,
+      familyRelationships: current.familyRelationships.map((item, idx) =>
+        idx === index ? { ...item, ...patch } : item,
+      ),
+    }));
+  };
+
+  const removeFamilyRelationship = (index) => {
+    setForm((current) => ({
+      ...current,
+      familyRelationships: current.familyRelationships.filter((_, idx) => idx !== index),
+    }));
+  };
+
+  const addFamilyRelationship = () => {
+    setForm((current) => ({
+      ...current,
+      familyRelationships: [
+        ...(current.familyRelationships || []),
+        { memberId: '', relationship: '', search: '' },
+      ],
+    }));
+  };
   const canViewPastoralActivity = role !== 'member' && (isSuperAdmin || hasCapability('pastoral.view'));
   const pastoralCasesQuery = useQuery({
     queryKey: ['member-pastoral-cases', memberId],
@@ -204,6 +269,23 @@ export default function MemberDetailPage() {
       },
       tags: Array.isArray(member.tags) ? member.tags.join(', ') : '',
       notes: member.notes || '',
+      familyRelationships: Array.isArray(member.linkedFamilyMembers)
+        ? member.linkedFamilyMembers
+            .filter((item) => item?.memberId && item?.relatedMember?.name)
+            .map((item) => ({
+              memberId: item.memberId,
+              relationship: item.relationship || '',
+              search: item.relatedMember?.name || '',
+            }))
+        : Array.isArray(member.familyRelationships)
+          ? member.familyRelationships
+              .filter((item) => item?.memberId)
+              .map((item) => ({
+                memberId: item.memberId,
+                relationship: item.relationship || '',
+                search: item.memberId,
+              }))
+          : [],
     });
   }, [memberQuery.data]);
 
@@ -395,6 +477,11 @@ export default function MemberDetailPage() {
         : [],
       groupingIds: sanitizeGroupingPath(groupingOptions, form.groupingIds),
       tags: form.tags ? form.tags.split(',').map((item) => item.trim()).filter(Boolean) : [],
+      familyRelationships: Array.isArray(form.familyRelationships)
+        ? form.familyRelationships
+            .filter((item) => item?.memberId && item?.relationship)
+            .map(({ memberId, relationship }) => ({ memberId, relationship }))
+        : [],
     });
   };
 
@@ -581,29 +668,51 @@ export default function MemberDetailPage() {
                     ))}
                   </select>
                 </label>
-                <label className="block space-y-2">
+                <label className="block space-y-2 md:col-span-2">
                   <span className="text-sm font-medium text-white/80">Department</span>
-                  <select
-                    multiple
-                    value={form.department
-                      ? form.department.split(',').map((item) => item.trim()).filter(Boolean)
-                      : []}
-                    onChange={(event) =>
-                      setForm((current) => ({
-                        ...current,
-                        department: Array.from(event.target.selectedOptions, (option) => option.value).join(', '),
-                      }))
-                    }
-                    disabled={!departmentOptions.length}
-                    className="min-h-[120px] w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white"
-                  >
-                    {!departmentOptions.length ? <option value="">No departments configured yet</option> : null}
-                    {departmentOptions.map((department) => (
-                      <option key={department} value={department}>
-                        {department}
-                      </option>
-                    ))}
-                  </select>
+                  <div className="rounded-xl border border-white/10 bg-white/5 px-4 py-3">
+                    {!departmentOptions.length ? (
+                      <p className="text-sm text-white/50">No departments configured yet</p>
+                    ) : (
+                      <div className="flex flex-wrap gap-2">
+                        {departmentOptions.map((department) => {
+                          const selected = (form.department || '')
+                            .split(',')
+                            .map((item) => item.trim())
+                            .filter(Boolean)
+                            .includes(department);
+                          return (
+                            <button
+                              key={department}
+                              type="button"
+                              onClick={() =>
+                                setForm((current) => {
+                                  const existing = (current.department || '')
+                                    .split(',')
+                                    .map((item) => item.trim())
+                                    .filter(Boolean);
+                                  const next = selected
+                                    ? existing.filter((item) => item !== department)
+                                    : [...existing, department];
+                                  return { ...current, department: next.join(', ') };
+                                })
+                              }
+                              className={
+                                selected
+                                  ? 'rounded-full border border-transparent bg-accent px-3 py-1.5 text-xs font-semibold text-[#0b1220] transition'
+                                  : 'rounded-full border border-white/15 bg-transparent px-3 py-1.5 text-xs font-medium text-white/80 transition hover:bg-white/10'
+                              }
+                            >
+                              {department}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                  <p className="text-xs text-white/45">
+                    Tap to toggle. Selected departments are saved with this member profile.
+                  </p>
                 </label>
                 <label className="block space-y-2">
                   <span className="text-sm font-medium text-white/80">Ministry</span>
@@ -849,6 +958,7 @@ export default function MemberDetailPage() {
                 <Detail label="Membership Status" value={member?.membershipStatus} />
                 <Detail label="Membership Date" value={member?.membershipDate ? formatDate(member.membershipDate) : '—'} />
                 <Detail label="Baptism Status" value={member?.baptismStatus?.replaceAll('_', ' ')} />
+                <Detail label="Baptism Date" value={member?.baptismDate ? formatDate(member.baptismDate) : '—'} />
                 <Detail label="Marital Status" value={member?.maritalStatus} />
                 <Detail label="Department" value={member?.department?.join(', ') || '—'} />
                 <Detail label="Ministry" value={member?.ministry} />
@@ -917,11 +1027,127 @@ export default function MemberDetailPage() {
             </Card>
 
             <Card className="space-y-4">
-              <div>
-                <p className="text-sm uppercase tracking-[0.25em] text-accent">Family</p>
-                <h3 className="mt-2 text-xl font-semibold text-white">Related members</h3>
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <p className="text-sm uppercase tracking-[0.25em] text-accent">Family</p>
+                  <h3 className="mt-2 text-xl font-semibold text-white">
+                    Related members
+                  </h3>
+                </div>
+                {isEditing ? (
+                  <Button type="button" variant="secondary" onClick={addFamilyRelationship}>
+                    + Add relative
+                  </Button>
+                ) : null}
               </div>
-              {member?.linkedFamilyMembers?.length ? (
+              {isEditing ? (
+                <div className="space-y-4">
+                  {!form.familyRelationships?.length ? (
+                    <p className="rounded-2xl border border-dashed border-white/15 bg-white/5 px-4 py-6 text-sm text-white/55">
+                      No relatives linked yet. Tap "Add relative" to begin.
+                    </p>
+                  ) : null}
+                  {form.familyRelationships?.map((item, index) => (
+                    <div
+                      key={`${item.memberId || 'new'}-${index}`}
+                      className="rounded-2xl border border-white/10 bg-white/5 p-4"
+                    >
+                      <div className="mb-3 flex items-center justify-between gap-2">
+                        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-white/55">
+                          Relative {index + 1}
+                        </p>
+                        <button
+                          type="button"
+                          onClick={() => removeFamilyRelationship(index)}
+                          className="inline-flex items-center gap-1 rounded-full border border-white/10 px-2.5 py-1 text-xs font-medium text-white/70 transition hover:bg-white/10"
+                        >
+                          <X size={12} /> Remove
+                        </button>
+                      </div>
+                      <div className="grid gap-4 md:grid-cols-2">
+                        <div className="relative">
+                          <label className="mb-2 block text-sm font-medium text-white/80">
+                            Search member
+                          </label>
+                          <div className="relative">
+                            <Search
+                              size={15}
+                              className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-white/45"
+                            />
+                            <input
+                              value={activeFamilySearch.index === index ? activeFamilySearch.value : item.search}
+                              onFocus={() =>
+                                setActiveFamilySearch({ index, value: item.search || '' })
+                              }
+                              onChange={(event) =>
+                                setActiveFamilySearch({ index, value: event.target.value })
+                              }
+                              placeholder="Type name, member ID, or phone"
+                              className="w-full rounded-xl border border-white/10 bg-white/5 py-2.5 pl-9 pr-3 text-sm text-white placeholder:text-white/35 focus:border-accent focus:outline-none"
+                            />
+                          </div>
+                          {activeFamilySearch.index === index &&
+                          (familySearchQuery.data?.members || []).length ? (
+                            <div
+                              className="mt-2 rounded-2xl border border-white/10 p-2 shadow-xl"
+                              style={{ backgroundColor: '#0b1220' }}
+                            >
+                              {(familySearchQuery.data?.members || []).map((searchResult) => (
+                                <button
+                                  key={searchResult.memberId}
+                                  type="button"
+                                  onClick={() => {
+                                    updateFamilyRelationship(index, {
+                                      memberId: searchResult.memberId,
+                                      search: [searchResult.firstName, searchResult.otherName, searchResult.lastName]
+                                        .filter(Boolean)
+                                        .join(' '),
+                                    });
+                                    setActiveFamilySearch({ index: -1, value: '' });
+                                  }}
+                                  className="flex w-full items-center justify-between rounded-xl px-3 py-2 text-left text-sm transition hover:bg-white/10"
+                                  style={{ backgroundColor: 'transparent', color: '#f8fafc' }}
+                                >
+                                  <span style={{ color: '#f8fafc', fontWeight: 500 }}>
+                                    {[searchResult.firstName, searchResult.otherName, searchResult.lastName]
+                                      .filter(Boolean)
+                                      .join(' ')}
+                                  </span>
+                                  <span style={{ color: 'rgba(248,250,252,0.55)' }}>
+                                    {searchResult.memberId}
+                                  </span>
+                                </button>
+                              ))}
+                            </div>
+                          ) : null}
+                          {item.memberId ? (
+                            <p className="mt-1 text-xs text-white/45">Linked: {item.memberId}</p>
+                          ) : null}
+                        </div>
+                        <div>
+                          <label className="mb-2 block text-sm font-medium text-white/80">
+                            Relationship
+                          </label>
+                          <select
+                            value={item.relationship}
+                            onChange={(event) =>
+                              updateFamilyRelationship(index, { relationship: event.target.value })
+                            }
+                            className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm text-white focus:border-accent focus:outline-none"
+                          >
+                            <option value="">Pick a relationship…</option>
+                            {RELATIONSHIP_OPTIONS.map((relationship) => (
+                              <option key={relationship} value={relationship}>
+                                {relationship.toUpperCase()}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : member?.linkedFamilyMembers?.length ? (
                 <div className="space-y-3">
                   {member.linkedFamilyMembers.map((relationship) => (
                     <Link
@@ -930,7 +1156,10 @@ export default function MemberDetailPage() {
                       className="flex items-center justify-between rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white/75 transition hover:bg-white/10"
                     >
                       <span>
-                        {relationship.relatedMember?.name} · {relationship.relationship}
+                        {relationship.relatedMember?.name} ·{' '}
+                        <span className="font-semibold tracking-wide">
+                          {(relationship.relationship || '').toUpperCase()}
+                        </span>
                       </span>
                       <span className="text-white/45">{relationship.memberId}</span>
                     </Link>
@@ -944,7 +1173,9 @@ export default function MemberDetailPage() {
                       to={`${isSuperAdmin ? '/superadmin' : ''}/members/${familyMember.memberId}`}
                       className="flex items-center justify-between rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white/75 transition hover:bg-white/10"
                     >
-                      <span>{[familyMember.firstName, familyMember.lastName].filter(Boolean).join(' ')}</span>
+                      <span>
+                        {[familyMember.firstName, familyMember.lastName].filter(Boolean).join(' ')}
+                      </span>
                       <span className="text-white/45">{familyMember.memberId}</span>
                     </Link>
                   ))}

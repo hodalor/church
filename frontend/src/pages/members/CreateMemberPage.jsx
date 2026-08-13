@@ -32,6 +32,40 @@ const fingerOptions = [
   'left-middle',
 ];
 
+const maritalStatusOptions = ['single', 'married', 'divorced', 'widowed'];
+const baptismOptions = ['not_baptised', 'water', 'holy_spirit', 'both'];
+const RELATIONSHIP_OPTIONS = [
+  'spouse',
+  'wife',
+  'husband',
+  'parent',
+  'mother',
+  'father',
+  'child',
+  'son',
+  'daughter',
+  'sibling',
+  'brother',
+  'sister',
+  'grandparent',
+  'grandchild',
+  'aunt',
+  'uncle',
+  'niece',
+  'nephew',
+  'cousin',
+  'in-law',
+  'mother-in-law',
+  'father-in-law',
+  'son-in-law',
+  'daughter-in-law',
+  'brother-in-law',
+  'sister-in-law',
+  'guardian',
+  'ward',
+  'other',
+];
+
 export default function CreateMemberPage() {
   const navigate = useNavigate();
   const { role } = useAuth();
@@ -64,6 +98,10 @@ export default function CreateMemberPage() {
       notes: '',
     },
     membershipStatus: 'member',
+    membershipDate: '',
+    baptismStatus: 'not_baptised',
+    baptismDate: '',
+    maritalStatus: '',
     branch: '',
     department: '',
     ministry: '',
@@ -72,7 +110,6 @@ export default function CreateMemberPage() {
     address: '',
     city: '',
     country: '',
-    membershipDate: '',
     loginUsername: '',
     loginPhone: '',
     loginPin: '',
@@ -394,6 +431,21 @@ export default function CreateMemberPage() {
                 value={form.dateOfBirth}
                 onChange={(event) => updateField('dateOfBirth', event.target.value)}
               />
+              <label className="block space-y-2">
+                <span className="text-sm font-medium text-white/80">Marital Status</span>
+                <select
+                  value={form.maritalStatus}
+                  onChange={(event) => updateField('maritalStatus', event.target.value)}
+                  className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white outline-none focus:border-accent"
+                >
+                  <option value="">Select marital status</option>
+                  {maritalStatusOptions.map((option) => (
+                    <option key={option} value={option}>
+                      {option}
+                    </option>
+                  ))}
+                </select>
+              </label>
               <Input
                 label="Login Username"
                 value={form.loginUsername}
@@ -685,6 +737,26 @@ export default function CreateMemberPage() {
                 onChange={(event) => updateField('membershipDate', event.target.value)}
               />
               <label className="block space-y-2">
+                <span className="text-sm font-medium text-white/80">Baptism Status</span>
+                <select
+                  value={form.baptismStatus}
+                  onChange={(event) => updateField('baptismStatus', event.target.value)}
+                  className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white outline-none focus:border-accent"
+                >
+                  {baptismOptions.map((option) => (
+                    <option key={option} value={option}>
+                      {option.replaceAll('_', ' ')}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <Input
+                label="Baptism Date"
+                type="date"
+                value={form.baptismDate}
+                onChange={(event) => updateField('baptismDate', event.target.value)}
+              />
+              <label className="block space-y-2">
                 <span className="text-sm font-medium text-white/80">Branch</span>
                 <select
                   value={form.branch}
@@ -706,23 +778,47 @@ export default function CreateMemberPage() {
                   ))}
                 </select>
               </label>
-              <label className="block space-y-2">
+              <label className="block space-y-2 md:col-span-2">
                 <span className="text-sm font-medium text-white/80">Department</span>
-                <select
-                  value={form.department}
-                  onChange={(event) => updateField('department', event.target.value)}
-                  disabled={!departmentOptions.length}
-                  className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white outline-none focus:border-accent"
-                >
-                  <option value="">
-                    {departmentOptions.length ? 'Select department' : 'No departments configured yet'}
-                  </option>
-                  {departmentOptions.map((item) => (
-                    <option key={item} value={item}>
-                      {item}
-                    </option>
-                  ))}
-                </select>
+                <div className="rounded-2xl border border-white/10 bg-white/5 p-3">
+                  {!departmentOptions.length ? (
+                    <p className="px-2 py-2 text-sm text-white/45">No departments configured yet. Add them in Settings first.</p>
+                  ) : (
+                    <>
+                      <div className="flex flex-wrap gap-2 pb-3">
+                        {departmentOptions.map((dept) => {
+                          const current = form.department
+                            ? form.department.split(',').map((item) => item.trim()).filter(Boolean)
+                            : [];
+                          const selected = current.includes(dept);
+                          return (
+                            <button
+                              key={dept}
+                              type="button"
+                              onClick={() => {
+                                const base = form.department
+                                  ? form.department.split(',').map((item) => item.trim()).filter(Boolean)
+                                  : [];
+                                const next = selected ? base.filter((x) => x !== dept) : [...base, dept];
+                                updateField('department', next.join(', '));
+                              }}
+                              className={`rounded-xl px-3 py-2 text-xs font-semibold transition ${
+                                selected
+                                  ? 'bg-accent text-[#13100a] shadow-sm'
+                                  : 'bg-white/5 text-white/75 ring-1 ring-white/10 hover:bg-white/10'
+                              }`}
+                            >
+                              {dept}
+                            </button>
+                          );
+                        })}
+                      </div>
+                      <p className="border-t border-white/5 pt-3 text-xs text-white/45">
+                        Click to toggle departments. You can assign this member to as many as needed.
+                      </p>
+                    </>
+                  )}
+                </div>
               </label>
               <label className="block space-y-2">
                 <span className="text-sm font-medium text-white/80">Ministry</span>
@@ -807,7 +903,10 @@ export default function CreateMemberPage() {
                         />
                         {activeFamilySearch.index === index &&
                         (familySearchQuery.data?.members || []).length ? (
-                          <div className="rounded-2xl border border-white/10 bg-[#0f1524] p-2">
+                          <div
+                            className="rounded-2xl border border-white/10 p-2 shadow-xl"
+                            style={{ backgroundColor: '#0b1220' }}
+                          >
                             {(familySearchQuery.data?.members || []).map((member) => (
                               <button
                                 key={member.memberId}
@@ -819,25 +918,35 @@ export default function CreateMemberPage() {
                                   });
                                   setActiveFamilySearch({ index: -1, value: '' });
                                 }}
-                                className="flex w-full items-center justify-between rounded-xl px-3 py-2 text-left text-sm text-white hover:bg-white/5"
+                                className="flex w-full items-center justify-between rounded-xl px-3 py-2 text-left text-sm transition hover:bg-white/10"
+                                style={{ backgroundColor: 'transparent', color: '#f8fafc' }}
                               >
-                                <span>
-                                  {[member.firstName, member.lastName].filter(Boolean).join(' ')}
+                                <span style={{ color: '#f8fafc', fontWeight: 500 }}>
+                                  {[member.firstName, member.otherName, member.lastName].filter(Boolean).join(' ')}
                                 </span>
-                                <span className="text-white/45">{member.memberId}</span>
+                                <span style={{ color: 'rgba(248,250,252,0.55)' }}>{member.memberId}</span>
                               </button>
                             ))}
                           </div>
                         ) : null}
                       </div>
-                      <Input
-                        label="Relationship"
-                        value={item.relationship}
-                        onChange={(event) =>
-                          updateFamilyRelationship(index, { relationship: event.target.value })
-                        }
-                        placeholder="son, wife, father"
-                      />
+                      <div>
+                        <label className="mb-2 block text-sm font-medium text-white/80">Relationship</label>
+                        <select
+                          value={item.relationship}
+                          onChange={(event) =>
+                            updateFamilyRelationship(index, { relationship: event.target.value })
+                          }
+                          className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white placeholder:text-white/35 focus:border-accent focus:outline-none"
+                        >
+                          <option value="">Pick a relationship…</option>
+                          {RELATIONSHIP_OPTIONS.map((relationship) => (
+                            <option key={relationship} value={relationship}>
+                              {relationship.toUpperCase()}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
                       <div className="flex items-end">
                         <Button
                           type="button"

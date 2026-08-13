@@ -6,7 +6,6 @@ export const DEFAULT_SUPABASE_BUCKET =
 const MAX_FILE_SIZE_BYTES = 60 * 1024 * 1024; // 60MB original file upload cap (hard)
 const COMPRESS_MAX_SIDE_PX = 2560;
 const COMPRESS_JPEG_QUALITY = 0.82;
-const COMPRESS_PNG_QUALITY = 0; // PNG lossless, size-reduced by canvas re-encode + resize
 const COMPRESS_IF_OVER_BYTES = 1.2 * 1024 * 1024; // auto-compress anything > 1.2MB
 
 const BUCKET_SETUP_HELP =
