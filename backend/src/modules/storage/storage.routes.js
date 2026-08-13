@@ -9,7 +9,7 @@ import env from '../../config/env.js';
 
 const storageRouter = Router();
 
-const MAX_BASE64_BYTES = 60 * 1024 * 1024; // 60MB decoded
+const MAX_BASE64_BYTES = 180 * 1024 * 1024; // 180MB decoded — supports large photos with 250MB JSON body cap, base64 + wrapper safe.
 
 const BUCKET_SETUP_HELP =
   'Open the Supabase dashboard for this project, open SQL Editor, then paste the SQL from supabase/migrations/create_church_media_bucket.sql and click Run.';

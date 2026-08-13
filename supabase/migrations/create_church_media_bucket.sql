@@ -4,7 +4,7 @@ VALUES (
   'church-media',
   TRUE,
   FALSE,
-  104857600,
+  209715200,
   NULL
 )
 ON CONFLICT (id) DO UPDATE SET
@@ -19,7 +19,7 @@ VALUES (
   'ecclesia',
   TRUE,
   FALSE,
-  104857600,
+  209715200,
   NULL
 )
 ON CONFLICT (id) DO UPDATE SET

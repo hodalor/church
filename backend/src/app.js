@@ -72,7 +72,8 @@ app.use(
   }),
 );
 app.use(morgan(env.NODE_ENV === 'production' ? 'combined' : 'dev'));
-app.use(express.json());
+app.use(express.json({ limit: '250mb' }));
+app.use(express.urlencoded({ extended: true, limit: '250mb' }));
 app.use(apiLimiter);
 
 apiRouter.get('/health', (_req, res) => {
