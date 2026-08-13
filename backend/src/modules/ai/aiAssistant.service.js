@@ -157,19 +157,24 @@ export const generateMeetingSummary = async ({
   desiredTone,
   tenantId,
   requestedBy,
-}) =>
-  runAiRequest({
+}) => {
+  const title = String(meetingTitle || '').trim() || 'Church meeting';
+  const people = String(attendees || '').trim() || 'Not recorded';
+  const tone = String(desiredTone || '').trim() || 'Formal';
+  const notes = String(meetingNotes || '').trim();
+
+  return runAiRequest({
     tenantId,
     requestedBy,
     feature: 'meeting_summary',
     systemPrompt:
-      'You summarize church leadership meetings clearly and accurately. Focus on decisions, action items, owners, and timelines.',
+      'You summarize church leadership meetings clearly and accurately. Focus on decisions, action items, owners, and timelines. If the input is not a strict meeting but general notes, still produce a clear summary with key points, actions, owners, and any prayer/pastoral follow-up needed.',
     userPrompt: `Summarize this church meeting.
-Title: ${meetingTitle}
-Attendees: ${attendees}
-Preferred tone: ${desiredTone}
-Raw notes:
-${meetingNotes}
+Title: ${title}
+Attendees: ${people}
+Preferred tone: ${tone}
+Raw notes / content:
+${notes}
 
 Format the output with:
 1. Summary
@@ -178,6 +183,7 @@ Format the output with:
 4. Prayer points if implied by the discussion.`,
     maxTokens: 1800,
   });
+};
 
 export const generateMemberNarrative = async ({
   memberName,

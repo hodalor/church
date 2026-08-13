@@ -266,12 +266,47 @@ export default function AIPastorAssistant() {
                 <Input label="Day of Week" value={form.audience} onChange={(event) => updateField('devotional', 'audience', event.target.value)} {...aiInputProps} />
               </div>
             ) : activeTool === 'meeting' ? (
-              <div className="grid gap-4">
-                <Input label="Meeting Type" value={form.meetingTitle} onChange={(event) => updateField('meeting', 'meetingTitle', event.target.value)} {...aiInputProps} />
-                <Input label="Attendees" value={form.attendees} onChange={(event) => updateField('meeting', 'attendees', event.target.value)} {...aiInputProps} />
+              <div className="grid gap-4 md:grid-cols-2">
+                <Input
+                  label="Meeting Type / Title (optional)"
+                  value={form.meetingTitle}
+                  onChange={(event) => updateField('meeting', 'meetingTitle', event.target.value)}
+                  placeholder="e.g. Leadership Team, Sunday Service debrief…"
+                  {...aiInputProps}
+                />
+                <Input
+                  label="Attendees (optional)"
+                  value={form.attendees}
+                  onChange={(event) => updateField('meeting', 'attendees', event.target.value)}
+                  placeholder="Pastor, elders, department leads…"
+                  {...aiInputProps}
+                />
                 <label className="block space-y-2">
-                  <span className="text-sm font-medium text-[#1E2A4A]">Meeting Notes</span>
-                  <textarea className="min-h-[160px] w-full rounded-xl border border-slate-200 px-3 py-2.5" value={form.meetingNotes} onChange={(event) => updateField('meeting', 'meetingNotes', event.target.value)} />
+                  <span className="text-sm font-medium text-[#1E2A4A]">Desired Tone</span>
+                  <select
+                    className="w-full rounded-xl border border-slate-200 px-3 py-2.5"
+                    value={form.desiredTone}
+                    onChange={(event) => updateField('meeting', 'desiredTone', event.target.value)}
+                  >
+                    {['Formal', 'Casual', 'Action-oriented', 'Devotional'].map((option) => (
+                      <option key={option}>{option}</option>
+                    ))}
+                  </select>
+                </label>
+                <label className="block space-y-2 md:col-span-2">
+                  <span className="text-sm font-medium text-[#1E2A4A]">
+                    Meeting Notes <span className="text-accent">*</span>
+                  </span>
+                  <textarea
+                    className="min-h-[160px] w-full rounded-xl border border-slate-200 px-3 py-2.5"
+                    placeholder="Paste or type the content you want summarized. This field is required."
+                    value={form.meetingNotes}
+                    onChange={(event) => updateField('meeting', 'meetingNotes', event.target.value)}
+                  />
+                  <p className="text-xs text-slate-500">
+                    You only need to fill in Meeting Notes — the rest is optional and a summary
+                    will be generated from any content you type here.
+                  </p>
                 </label>
               </div>
             ) : activeTool === 'member' ? (

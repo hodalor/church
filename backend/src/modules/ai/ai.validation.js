@@ -21,10 +21,21 @@ export const announcementValidation = [
 ];
 
 export const meetingSummaryValidation = [
-  body('meetingTitle').trim().notEmpty().withMessage('Meeting title is required.'),
-  body('meetingNotes').trim().notEmpty().withMessage('Meeting notes are required.'),
+  body('meetingTitle')
+    .optional({ values: 'falsy' })
+    .trim()
+    .isLength({ max: 200 })
+    .withMessage('Meeting title must be 200 characters or less.'),
+  body('meetingNotes')
+    .trim()
+    .notEmpty()
+    .withMessage('Meeting notes are required — paste the content you want summarized.'),
   body('attendees').optional({ values: 'falsy' }).isString().withMessage('Attendees must be text.'),
-  body('desiredTone').optional({ values: 'falsy' }).isString().withMessage('Desired tone must be text.'),
+  body('desiredTone')
+    .optional({ values: 'falsy' })
+    .trim()
+    .isIn(['Formal', 'Casual', 'Action-oriented', 'Devotional'])
+    .withMessage('Desired tone must be one of: Formal, Casual, Action-oriented, Devotional.'),
   body('tenantId').optional({ values: 'falsy' }).trim().notEmpty().withMessage('Tenant ID is invalid.'),
 ];
 
