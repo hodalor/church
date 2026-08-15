@@ -1,29 +1,124 @@
 import Member from '../members/member.model.js';
 
+const householdRelationships = new Set([
+  'spouse',
+  'wife',
+  'husband',
+  'parent',
+  'child',
+  'father',
+  'mother',
+  'son',
+  'daughter',
+]);
+
 const buildFamilyUnits = (members = []) => {
-  const families = new Map();
+  const memberMap = new Map(
+    members
+      .filter((member) => member?.memberId)
+      .map((member) => [member.memberId, member]),
+  );
+  const adjacency = new Map(
+    [...memberMap.keys()].map((memberId) => [memberId, new Set()]),
+  );
+
+  const linkMembers = (leftId, rightId) => {
+    if (!leftId || !rightId || leftId === rightId) {
+      return;
+    }
+
+    if (!adjacency.has(leftId) || !adjacency.has(rightId)) {
+      return;
+    }
+
+    adjacency.get(leftId).add(rightId);
+    adjacency.get(rightId).add(leftId);
+  };
+
+  const groupedMemberIds = new Map();
 
   members.forEach((member) => {
-    const familyKey = member.familyGroupId || `member:${member.memberId}`;
-    const entry = families.get(familyKey) || {
-      familyGroupId: member.familyGroupId || null,
-      members: [],
-      children: 0,
-      couples: 0,
-      statuses: [],
-    };
+    if (!member?.memberId) {
+      return;
+    }
 
-    entry.members.push(member);
-    entry.children += Array.isArray(member.children) ? member.children.length : 0;
-    entry.statuses.push(member.healthScore?.status || 'new');
-    families.set(familyKey, entry);
+    if (member.familyGroupId) {
+      const groupedIds = groupedMemberIds.get(member.familyGroupId) || [];
+      groupedIds.push(member.memberId);
+      groupedMemberIds.set(member.familyGroupId, groupedIds);
+    }
+
+    if (member.spouseMemberId) {
+      linkMembers(member.memberId, member.spouseMemberId);
+    }
+
+    (Array.isArray(member.familyRelationships) ? member.familyRelationships : []).forEach((relationship) => {
+      if (householdRelationships.has(String(relationship.relationship || '').trim().toLowerCase())) {
+        linkMembers(member.memberId, relationship.memberId);
+      }
+    });
   });
 
-  families.forEach((family) => {
-    family.couples = family.members.filter((member) => member.maritalStatus === 'married').length >= 2 ? 1 : 0;
+  groupedMemberIds.forEach((memberIds) => {
+    const [firstId, ...restIds] = memberIds;
+    restIds.forEach((memberId) => linkMembers(firstId, memberId));
   });
 
-  return [...families.values()];
+  const visited = new Set();
+  const families = [];
+
+  memberMap.forEach((member, memberId) => {
+    if (visited.has(memberId)) {
+      return;
+    }
+
+    const stack = [memberId];
+    const familyMembers = [];
+
+    while (stack.length) {
+      const currentId = stack.pop();
+      if (!currentId || visited.has(currentId)) {
+        continue;
+      }
+
+      visited.add(currentId);
+      const currentMember = memberMap.get(currentId);
+      if (currentMember) {
+        familyMembers.push(currentMember);
+      }
+
+      (adjacency.get(currentId) || new Set()).forEach((linkedId) => {
+        if (!visited.has(linkedId)) {
+          stack.push(linkedId);
+        }
+      });
+    }
+
+    const familyGroupId =
+      familyMembers.find((item) => item.familyGroupId)?.familyGroupId || null;
+    const couples = familyMembers.some(
+      (item) =>
+        item.spouseMemberId &&
+        familyMembers.some((candidate) => candidate.memberId === item.spouseMemberId),
+    )
+      ? 1
+      : familyMembers.filter((item) => item.maritalStatus === 'married').length >= 2
+        ? 1
+        : 0;
+
+    families.push({
+      familyGroupId,
+      members: familyMembers,
+      children: familyMembers.reduce(
+        (sum, item) => sum + (Array.isArray(item.children) ? item.children.length : 0),
+        0,
+      ),
+      couples,
+      statuses: familyMembers.map((item) => item.healthScore?.status || 'new'),
+    });
+  });
+
+  return families;
 };
 
 export const getFamilyOverview = async (tenantId) => {

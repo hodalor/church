@@ -821,6 +821,7 @@ export const getMemberIntelligence = async (tenantId, actor = {}, query = {}) =>
   return {
     totalMembers: members.length,
     activeCount: members.filter((item) => item.healthScore?.status === 'active').length,
+    newCount: members.filter((item) => item.healthScore?.status === 'new').length,
     atRiskCount: members.filter((item) => item.healthScore?.status === 'at_risk').length,
     driftingCount: members.filter((item) => item.healthScore?.status === 'drifting').length,
     atRiskMembers,

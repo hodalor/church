@@ -9,6 +9,7 @@ import PageHeader from '../../components/ui/PageHeader';
 import Badge from '../../components/ui/Badge';
 import UserFormModal from '../../components/users/UserFormModal';
 import { getUsers } from '../../api/endpoints/users';
+import { getMembers } from '../../api/endpoints/members';
 import { formatDate } from '../../utils/formatDate';
 import { useAuth } from '../../hooks/useAuth';
 import { useCapabilities } from '../../hooks/useCapabilities';
@@ -26,6 +27,7 @@ export default function UsersPage() {
   const canViewUsers = hasCapability('users.view');
   const canCreateUsers = hasCapability('users.create');
   const canModifyUsers = hasCapability('users.modify');
+  const canViewMembers = hasCapability('members.view');
   const { branchOptions } = useBranchOptions();
 
   const usersQuery = useQuery({
@@ -33,10 +35,28 @@ export default function UsersPage() {
     queryFn: () => getUsers({ tenantId }),
     enabled: Boolean(tenantId) && canViewUsers,
   });
+  const membersQuery = useQuery({
+    queryKey: ['users-page-members', tenantId],
+    queryFn: () => getMembers({ limit: 1000 }),
+    enabled: Boolean(tenantId) && canViewUsers && canViewMembers,
+  });
   const users = useMemo(() => usersQuery.data || [], [usersQuery.data]);
+  const members = useMemo(
+    () =>
+      Array.isArray(membersQuery.data?.members)
+        ? membersQuery.data.members
+        : Array.isArray(membersQuery.data)
+          ? membersQuery.data
+          : [],
+    [membersQuery.data],
+  );
+  const membersWithoutAccounts = useMemo(() => {
+    const linkedMemberIds = new Set(users.map((user) => user.memberId).filter(Boolean));
+    return members.filter((member) => !linkedMemberIds.has(member.memberId));
+  }, [members, users]);
   const stats = useMemo(
     () => [
-      { label: 'Total Users', value: users.length, helper: 'All tenant staff accounts' },
+      { label: 'Total Users', value: users.length, helper: 'All tenant login accounts' },
       {
         label: 'Linked Members',
         value: users.filter((user) => user.memberId).length,
@@ -164,6 +184,24 @@ export default function UsersPage() {
         </div>
 
         <Card className="space-y-5 border-slate-200 bg-white text-slate-900 shadow-[0_12px_28px_rgba(15,23,42,0.08)]">
+          {canViewMembers && membersWithoutAccounts.length ? (
+            <div className="rounded-[18px] border border-amber-200 bg-amber-50 px-4 py-4 text-sm text-slate-700">
+              <p className="font-semibold text-slate-900">
+                {members.length} member profiles found, but only {users.length} login accounts exist.
+              </p>
+              <p className="mt-1 text-slate-600">
+                These members do not have user accounts yet:
+                {' '}
+                {membersWithoutAccounts
+                  .slice(0, 6)
+                  .map((member) => `${member.firstName || ''} ${member.lastName || ''}`.trim() || member.memberId)
+                  .join(', ')}
+                {membersWithoutAccounts.length > 6
+                  ? ` and ${membersWithoutAccounts.length - 6} more.`
+                  : '.'}
+              </p>
+            </div>
+          ) : null}
           <div className="rounded-[18px] border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600">
             You can assign up to {capabilities.length} permissions based on your current access scope.
           </div>

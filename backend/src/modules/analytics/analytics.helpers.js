@@ -299,7 +299,7 @@ export const getMetricsBundle = async ({ tenantId, branchName, start, end }) => 
     Member.countDocuments(buildScopedMemberQuery(normalizedTenantId, branchName)),
     Member.countDocuments({
       ...buildScopedMemberQuery(normalizedTenantId, branchName),
-      'healthScore.status': { $in: ['active', 'new'] },
+      'healthScore.status': 'active',
     }),
     Member.countDocuments({
       ...buildScopedMemberQuery(normalizedTenantId, branchName),
@@ -485,7 +485,7 @@ export const getMetricsBundle = async ({ tenantId, branchName, start, end }) => 
     members: {
       total: totalMembers,
       active: activeMembers,
-      inactive: Math.max(totalMembers - activeMembers, 0),
+      inactive: Math.max(totalMembers - activeMembers - atRiskMembers - driftingMembers - newMembers, 0),
       new: newMembers,
       atRisk: atRiskMembers,
       drifting: driftingMembers,

@@ -132,11 +132,19 @@ export default function HQDashboard() {
   }));
   const healthDistribution = [
     { name: 'Active', value: memberIntelligence.activeCount || 0, fill: '#22C55E' },
+    { name: 'New', value: memberIntelligence.newCount || 0, fill: '#94A3B8' },
     { name: 'Drifting', value: memberIntelligence.driftingCount || 0, fill: '#F59E0B' },
     { name: 'At Risk', value: memberIntelligence.atRiskCount || 0, fill: '#F97316' },
     {
       name: 'Inactive',
-      value: Math.max((memberIntelligence.totalMembers || 0) - (memberIntelligence.activeCount || 0) - (memberIntelligence.driftingCount || 0) - (memberIntelligence.atRiskCount || 0), 0),
+      value: Math.max(
+        (memberIntelligence.totalMembers || 0) -
+          (memberIntelligence.activeCount || 0) -
+          (memberIntelligence.newCount || 0) -
+          (memberIntelligence.driftingCount || 0) -
+          (memberIntelligence.atRiskCount || 0),
+        0,
+      ),
       fill: '#EF4444',
     },
   ];

@@ -192,21 +192,100 @@ function Badge({ children, className = 'bg-white/10 text-white/75' }) {
 }
 
 function UserSelect({ label, value, onChange, options }) {
+  const normalizedOptions = useMemo(
+    () =>
+      (Array.isArray(options) ? options : [])
+        .map((user) => {
+          const id = String(user.userId || user.id || user._id || '');
+          const primaryLabel = user.fullName || user.username || user.phone || user.email || id;
+          const secondaryLabel = [user.username, user.phone, user.email]
+            .filter(Boolean)
+            .join(' • ');
+
+          return {
+            id,
+            primaryLabel,
+            secondaryLabel,
+            searchText: [primaryLabel, user.username, user.phone, user.email]
+              .filter(Boolean)
+              .join(' ')
+              .toLowerCase(),
+          };
+        })
+        .filter((user) => user.id),
+    [options],
+  );
+  const [query, setQuery] = useState('');
+  const [isOpen, setIsOpen] = useState(false);
+
+  useEffect(() => {
+    const selectedUser = normalizedOptions.find((user) => user.id === String(value || ''));
+    setQuery(selectedUser?.primaryLabel || '');
+  }, [normalizedOptions, value]);
+
+  const filteredOptions = useMemo(() => {
+    const searchTerm = query.trim().toLowerCase();
+    if (!searchTerm) {
+      return normalizedOptions.slice(0, 8);
+    }
+
+    return normalizedOptions
+      .filter((user) => user.searchText.includes(searchTerm))
+      .slice(0, 8);
+  }, [normalizedOptions, query]);
+
   return (
-    <label className="block space-y-1.5">
+    <label className="relative block space-y-1.5">
       <span className="text-[13px] font-medium text-white/75">{label}</span>
-      <select
-        value={value}
-        onChange={(event) => onChange(event.target.value)}
-      className="w-full rounded-xl border border-cyan-300/15 bg-cyan-400/10 px-3.5 py-2.5 text-sm text-white outline-none"
-      >
-        <option value="">Select user</option>
-        {options.map((user) => (
-          <option key={user.userId || user.id || user._id} value={user.userId || user.id || user._id}>
-            {user.fullName || user.username}
-          </option>
-        ))}
-      </select>
+      <input
+        type="text"
+        value={query}
+        onFocus={() => setIsOpen(true)}
+        onBlur={() => {
+          const selectedUser = normalizedOptions.find((user) => user.id === String(value || ''));
+          window.setTimeout(() => {
+            setIsOpen(false);
+            setQuery(selectedUser?.primaryLabel || query);
+          }, 120);
+        }}
+        onChange={(event) => {
+          setQuery(event.target.value);
+          setIsOpen(true);
+
+          if (!event.target.value.trim()) {
+            onChange('');
+          }
+        }}
+        placeholder="Type name, username, phone, or email"
+        className="w-full rounded-xl border border-cyan-300/15 bg-cyan-400/10 px-3.5 py-2.5 text-sm text-white outline-none placeholder:text-white/40"
+      />
+      {isOpen ? (
+        filteredOptions.length ? (
+          <div className="absolute left-0 right-0 top-full z-20 mt-2 max-h-64 overflow-y-auto rounded-2xl border border-cyan-300/15 bg-[#0b1220] p-2 shadow-2xl">
+            {filteredOptions.map((user) => (
+              <button
+                key={user.id}
+                type="button"
+                onMouseDown={() => {
+                  onChange(user.id);
+                  setQuery(user.primaryLabel);
+                  setIsOpen(false);
+                }}
+                className="flex w-full flex-col rounded-xl px-3 py-2 text-left transition hover:bg-white/10"
+              >
+                <span className="text-sm font-medium text-white">{user.primaryLabel}</span>
+                {user.secondaryLabel ? (
+                  <span className="mt-1 text-xs text-white/45">{user.secondaryLabel}</span>
+                ) : null}
+              </button>
+            ))}
+          </div>
+        ) : query.trim() ? (
+          <div className="absolute left-0 right-0 top-full z-20 mt-2 rounded-2xl border border-cyan-300/15 bg-[#0b1220] px-4 py-3 text-sm text-white/45 shadow-2xl">
+            No users match this search.
+          </div>
+        ) : null
+      ) : null}
     </label>
   );
 }
@@ -496,7 +575,9 @@ export function CreateMinistryPage() {
     }
   }, [form, name]);
 
-  const users = usersQuery.data?.users || usersQuery.data?.items || [];
+  const users = Array.isArray(usersQuery.data)
+    ? usersQuery.data
+    : usersQuery.data?.users || usersQuery.data?.items || [];
 
   const mutation = useMutation({
     mutationFn: createMinistry,
