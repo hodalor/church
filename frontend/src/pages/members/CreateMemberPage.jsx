@@ -155,6 +155,20 @@ export default function CreateMemberPage() {
     enabled: activeFamilySearch.index >= 0 && activeFamilySearch.value.trim().length >= 2,
   });
 
+  const filteredFamilyMembers = useMemo(() => {
+    const raw = familySearchQuery.data?.members || [];
+    const term = (activeFamilySearch.value || '').trim().toLowerCase();
+    if (!term) return raw;
+    return raw.filter((m) => {
+      const fullName = [m.firstName, m.otherName, m.lastName].filter(Boolean).join(' ').toLowerCase();
+      const idMatch = (m.memberId || '').toLowerCase().includes(term);
+      const nameMatch = fullName.includes(term);
+      const phoneMatch = String(m.phone || '').toLowerCase().includes(term);
+      const emailMatch = String(m.email || '').toLowerCase().includes(term);
+      return idMatch || nameMatch || phoneMatch || emailMatch;
+    });
+  }, [activeFamilySearch.value, familySearchQuery.data?.members]);
+
   const mutation = useMutation({
     mutationFn: createMember,
     onSuccess: () => {
@@ -901,33 +915,41 @@ export default function CreateMemberPage() {
                           }}
                           placeholder="Type name, member ID, or phone"
                         />
-                        {activeFamilySearch.index === index &&
-                        (familySearchQuery.data?.members || []).length ? (
-                          <div
-                            className="rounded-2xl border border-white/10 p-2 shadow-xl"
-                            style={{ backgroundColor: '#0b1220' }}
-                          >
-                            {(familySearchQuery.data?.members || []).map((member) => (
-                              <button
-                                key={member.memberId}
-                                type="button"
-                                onClick={() => {
-                                  updateFamilyRelationship(index, {
-                                    memberId: member.memberId,
-                                    search: `${member.firstName || ''} ${member.lastName || ''}`.trim(),
-                                  });
-                                  setActiveFamilySearch({ index: -1, value: '' });
-                                }}
-                                className="flex w-full items-center justify-between rounded-xl px-3 py-2 text-left text-sm transition hover:bg-white/10"
-                                style={{ backgroundColor: 'transparent', color: '#f8fafc' }}
-                              >
-                                <span style={{ color: '#f8fafc', fontWeight: 500 }}>
-                                  {[member.firstName, member.otherName, member.lastName].filter(Boolean).join(' ')}
-                                </span>
-                                <span style={{ color: 'rgba(248,250,252,0.55)' }}>{member.memberId}</span>
-                              </button>
-                            ))}
-                          </div>
+                        {activeFamilySearch.index === index ? (
+                          filteredFamilyMembers.length ? (
+                            <div
+                              className="rounded-2xl border border-white/10 p-2 shadow-xl"
+                              style={{ backgroundColor: '#0b1220' }}
+                            >
+                              {filteredFamilyMembers.map((member) => (
+                                <button
+                                  key={member.memberId}
+                                  type="button"
+                                  onClick={() => {
+                                    updateFamilyRelationship(index, {
+                                      memberId: member.memberId,
+                                      search: `${member.firstName || ''} ${member.lastName || ''}`.trim(),
+                                    });
+                                    setActiveFamilySearch({ index: -1, value: '' });
+                                  }}
+                                  className="flex w-full items-center justify-between rounded-xl px-3 py-2 text-left text-sm transition hover:bg-white/10"
+                                  style={{ backgroundColor: 'transparent', color: '#f8fafc' }}
+                                >
+                                  <span style={{ color: '#f8fafc', fontWeight: 500 }}>
+                                    {[member.firstName, member.otherName, member.lastName].filter(Boolean).join(' ')}
+                                  </span>
+                                  <span style={{ color: 'rgba(248,250,252,0.55)' }}>{member.memberId}</span>
+                                </button>
+                              ))}
+                            </div>
+                          ) : activeFamilySearch.value && activeFamilySearch.value.trim().length >= 2 ? (
+                            <div
+                              className="rounded-2xl border border-white/10 p-5 text-center shadow-xl"
+                              style={{ backgroundColor: '#0b1220' }}
+                            >
+                              <p className="text-sm text-white/40">No members found</p>
+                            </div>
+                          ) : null
                         ) : null}
                       </div>
                       <div>

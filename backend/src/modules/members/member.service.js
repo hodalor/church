@@ -276,6 +276,10 @@ const compactObject = (payload) =>
         return true;
       }
 
+      if (value instanceof Date) {
+        return !Number.isNaN(value.getTime());
+      }
+
       if (value && typeof value === 'object') {
         return Object.keys(value).length > 0;
       }

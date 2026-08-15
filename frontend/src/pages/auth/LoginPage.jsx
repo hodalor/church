@@ -172,9 +172,9 @@ export default function LoginPage() {
                 </div>
               </div>
 
-              <div className="mt-10 max-w-xl">
+              <div className="mt-10 max-w-md">
                 <p className="text-[10px] uppercase tracking-[0.38em] text-white/48">More solutions by Prynova</p>
-                <div className="mt-4 border-t border-white/6 pt-2">
+                <div className="mt-4 inline-block w-fit border-t border-white/6 pt-2 min-w-[400px]">
                   {promotedApps.slice(0, 3).map((app, index) => {
                     const href = app.href && app.href.trim() !== '' ? app.href : '';
                     const isClickable = Boolean(href) && href !== '#';
@@ -235,7 +235,7 @@ export default function LoginPage() {
           </div>
 
           <div className="flex items-center justify-center px-4 py-5 sm:px-6 lg:px-10">
-            <div className="relative w-full max-w-xl">
+            <div className="relative w-full max-w-lg">
               <div className="absolute -inset-[1.5px] rounded-[1.8rem] bg-[linear-gradient(140deg,rgba(217,181,93,0.7),rgba(250,230,170,0.15)_35%,rgba(250,230,170,0.12)_65%,rgba(217,181,93,0.55))] opacity-90 blur-[0.3px]" />
               <div className="absolute inset-0 rounded-[1.8rem] shadow-[0_0_120px_rgba(217,181,93,0.08)]" />
               <Card className="relative w-full rounded-[1.75rem] border border-[#e8c56a]/40 bg-[linear-gradient(180deg,rgba(11,18,36,0.92),rgba(6,12,26,0.98))] p-5 text-white shadow-[0_30px_90px_rgba(0,0,0,0.55)] backdrop-blur-xl sm:p-7 overflow-hidden">

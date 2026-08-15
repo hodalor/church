@@ -174,9 +174,23 @@ export default function MemberDetailPage() {
   });
   const familySearchQuery = useQuery({
     queryKey: ['member-family-search-edit', memberId, activeFamilySearch.value],
-    queryFn: () => searchMembers({ q: activeFamilySearch.value, limit: 10 }),
+    queryFn: () => searchMembers({ search: activeFamilySearch.value, limit: 10 }),
     enabled: Boolean(activeFamilySearch.value && activeFamilySearch.index >= 0) && activeFamilySearch.value.length >= 2,
   });
+
+  const filteredFamilyMembers = useMemo(() => {
+    const raw = familySearchQuery.data?.members || [];
+    const term = (activeFamilySearch.value || '').trim().toLowerCase();
+    if (!term) return raw;
+    return raw.filter((m) => {
+      const fullName = [m.firstName, m.otherName, m.lastName].filter(Boolean).join(' ').toLowerCase();
+      const idMatch = (m.memberId || '').toLowerCase().includes(term);
+      const nameMatch = fullName.includes(term);
+      const phoneMatch = String(m.phone || '').toLowerCase().includes(term);
+      const emailMatch = String(m.email || '').toLowerCase().includes(term);
+      return idMatch || nameMatch || phoneMatch || emailMatch;
+    });
+  }, [activeFamilySearch.value, familySearchQuery.data?.members]);
 
   const updateFamilyRelationship = (index, patch) => {
     setForm((current) => ({
@@ -669,10 +683,10 @@ export default function MemberDetailPage() {
                   </select>
                 </label>
                 <label className="block space-y-2 md:col-span-2">
-                  <span className="text-sm font-medium text-white/80">Department</span>
-                  <div className="rounded-xl border border-white/10 bg-white/5 px-4 py-3">
+                  <span className="text-sm font-medium text-[#1E2A4A]">Department</span>
+                  <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
                     {!departmentOptions.length ? (
-                      <p className="text-sm text-white/50">No departments configured yet</p>
+                      <p className="text-sm text-slate-500">No departments configured yet</p>
                     ) : (
                       <div className="flex flex-wrap gap-2">
                         {departmentOptions.map((department) => {
@@ -699,8 +713,8 @@ export default function MemberDetailPage() {
                               }
                               className={
                                 selected
-                                  ? 'rounded-full border border-transparent bg-accent px-3 py-1.5 text-xs font-semibold text-[#0b1220] transition'
-                                  : 'rounded-full border border-white/15 bg-transparent px-3 py-1.5 text-xs font-medium text-white/80 transition hover:bg-white/10'
+                                  ? 'rounded-full border border-transparent bg-accent px-3 py-1.5 text-xs font-semibold text-[#0b1220] shadow-sm transition hover:brightness-105'
+                                  : 'rounded-full border border-slate-300 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 transition hover:border-slate-400 hover:bg-slate-100'
                               }
                             >
                               {department}
@@ -710,7 +724,7 @@ export default function MemberDetailPage() {
                       </div>
                     )}
                   </div>
-                  <p className="text-xs text-white/45">
+                  <p className="text-xs text-slate-500">
                     Tap to toggle. Selected departments are saved with this member profile.
                   </p>
                 </label>
@@ -736,6 +750,7 @@ export default function MemberDetailPage() {
                     value={form.groupingIds}
                     onChange={(nextPath) => setForm((current) => ({ ...current, groupingIds: nextPath }))}
                     hint="Select each grouping level in order based on this church's structure."
+                    variant="light"
                   />
                 </div>
                 <Input label="Cell Group" value={form.cell_group} onChange={(event) => setForm((current) => ({ ...current, cell_group: event.target.value }))} />
@@ -1086,39 +1101,47 @@ export default function MemberDetailPage() {
                               className="w-full rounded-xl border border-white/10 bg-white/5 py-2.5 pl-9 pr-3 text-sm text-white placeholder:text-white/35 focus:border-accent focus:outline-none"
                             />
                           </div>
-                          {activeFamilySearch.index === index &&
-                          (familySearchQuery.data?.members || []).length ? (
-                            <div
-                              className="mt-2 rounded-2xl border border-white/10 p-2 shadow-xl"
-                              style={{ backgroundColor: '#0b1220' }}
-                            >
-                              {(familySearchQuery.data?.members || []).map((searchResult) => (
-                                <button
-                                  key={searchResult.memberId}
-                                  type="button"
-                                  onClick={() => {
-                                    updateFamilyRelationship(index, {
-                                      memberId: searchResult.memberId,
-                                      search: [searchResult.firstName, searchResult.otherName, searchResult.lastName]
+                          {activeFamilySearch.index === index ? (
+                            filteredFamilyMembers.length ? (
+                              <div
+                                className="mt-2 rounded-2xl border border-white/10 p-2 shadow-xl"
+                                style={{ backgroundColor: '#0b1220' }}
+                              >
+                                {filteredFamilyMembers.map((searchResult) => (
+                                  <button
+                                    key={searchResult.memberId}
+                                    type="button"
+                                    onClick={() => {
+                                      updateFamilyRelationship(index, {
+                                        memberId: searchResult.memberId,
+                                        search: [searchResult.firstName, searchResult.otherName, searchResult.lastName]
+                                          .filter(Boolean)
+                                          .join(' '),
+                                      });
+                                      setActiveFamilySearch({ index: -1, value: '' });
+                                    }}
+                                    className="flex w-full items-center justify-between rounded-xl px-3 py-2 text-left text-sm transition hover:bg-white/10"
+                                    style={{ backgroundColor: 'transparent', color: '#f8fafc' }}
+                                  >
+                                    <span style={{ color: '#f8fafc', fontWeight: 500 }}>
+                                      {[searchResult.firstName, searchResult.otherName, searchResult.lastName]
                                         .filter(Boolean)
-                                        .join(' '),
-                                    });
-                                    setActiveFamilySearch({ index: -1, value: '' });
-                                  }}
-                                  className="flex w-full items-center justify-between rounded-xl px-3 py-2 text-left text-sm transition hover:bg-white/10"
-                                  style={{ backgroundColor: 'transparent', color: '#f8fafc' }}
-                                >
-                                  <span style={{ color: '#f8fafc', fontWeight: 500 }}>
-                                    {[searchResult.firstName, searchResult.otherName, searchResult.lastName]
-                                      .filter(Boolean)
-                                      .join(' ')}
-                                  </span>
-                                  <span style={{ color: 'rgba(248,250,252,0.55)' }}>
-                                    {searchResult.memberId}
-                                  </span>
-                                </button>
-                              ))}
-                            </div>
+                                        .join(' ')}
+                                    </span>
+                                    <span style={{ color: 'rgba(248,250,252,0.55)' }}>
+                                      {searchResult.memberId}
+                                    </span>
+                                  </button>
+                                ))}
+                              </div>
+                            ) : activeFamilySearch.value && activeFamilySearch.value.length >= 2 ? (
+                              <div
+                                className="mt-2 rounded-2xl border border-white/10 p-5 text-center shadow-xl"
+                                style={{ backgroundColor: '#0b1220' }}
+                              >
+                                <p className="text-sm text-white/40">No members found</p>
+                              </div>
+                            ) : null
                           ) : null}
                           {item.memberId ? (
                             <p className="mt-1 text-xs text-white/45">Linked: {item.memberId}</p>
