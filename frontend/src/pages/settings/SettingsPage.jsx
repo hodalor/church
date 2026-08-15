@@ -55,6 +55,19 @@ const emptyPromotedApp = {
   href: '',
 };
 
+const defaultTransactionTypes = [
+  'tithe',
+  'offering',
+  'pledge_payment',
+  'donation',
+  'special_seed',
+  'welfare',
+  'building_fund',
+  'mission_fund',
+  'thanksgiving',
+  'other_income',
+];
+
 const shellPanelClass =
   'border-white/10 bg-[linear-gradient(135deg,rgba(15,23,42,0.94),rgba(8,13,24,0.98))] p-[18px] text-white shadow-[0_14px_30px_rgba(0,0,0,0.16)]';
 const innerPanelClass =
@@ -68,6 +81,71 @@ const contentShellPanelClass =
 const contentMutedPanelClass = 'rounded-[20px] border border-slate-200 bg-white';
 const contentInputClass =
   'w-full rounded-[16px] border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none placeholder:text-slate-500 focus:border-accent';
+
+function LightStringListEditor({
+  title,
+  hint,
+  values,
+  onChange,
+  placeholder,
+  addLabel = 'Add',
+}) {
+  const [draft, setDraft] = useState('');
+
+  const addItem = () => {
+    const nextValue = draft.trim();
+    if (!nextValue) {
+      return;
+    }
+
+    onChange([...new Set([...(values || []), nextValue])]);
+    setDraft('');
+  };
+
+  return (
+    <div className={`space-y-4 p-4 ${contentMutedPanelClass}`}>
+      <div>
+        <h3 className="text-base font-semibold text-slate-900">{title}</h3>
+        <p className="mt-1 text-sm text-slate-600">{hint}</p>
+      </div>
+
+      <div className="flex gap-3">
+        <input
+          value={draft}
+          onChange={(event) => setDraft(event.target.value)}
+          onKeyDown={(event) => {
+            if (event.key === 'Enter') {
+              event.preventDefault();
+              addItem();
+            }
+          }}
+          placeholder={placeholder}
+          className={contentInputClass}
+        />
+        <Button type="button" variant="secondary" className="self-end" onClick={addItem}>
+          {addLabel}
+        </Button>
+      </div>
+
+      <div className="flex flex-wrap gap-2">
+        {values?.length ? (
+          values.map((value) => (
+            <button
+              key={value}
+              type="button"
+              onClick={() => onChange(values.filter((item) => item !== value))}
+              className="rounded-full border border-accent/25 bg-accent/10 px-3 py-1.5 text-sm text-accent"
+            >
+              {value} x
+            </button>
+          ))
+        ) : (
+          <p className="text-sm text-slate-400">Nothing added yet.</p>
+        )}
+      </div>
+    </div>
+  );
+}
 
 function BrandPreview({ name, logoUrl, caption }) {
   return (
@@ -274,6 +352,7 @@ export default function SettingsPage() {
   });
   const [contentForm, setContentForm] = useState({
     departments: [],
+    transactionTypes: defaultTransactionTypes,
     groupings: [],
   });
   const [groupingDraft, setGroupingDraft] = useState(emptyGroupingForm);
@@ -322,6 +401,8 @@ export default function SettingsPage() {
     setBrandingForm(nextBranding);
     setContentForm({
       departments: content.departments || [],
+      transactionTypes:
+        content.transactionTypes?.length ? content.transactionTypes : defaultTransactionTypes,
       groupings: content.groupings || [],
     });
 
@@ -589,6 +670,7 @@ export default function SettingsPage() {
           branches: tenantQuery.data?.content?.branches || [],
           ministries: tenantQuery.data?.content?.ministries || [],
           departments: contentForm.departments,
+          transactionTypes: contentForm.transactionTypes,
           groupings: contentForm.groupings,
         },
       },
@@ -978,13 +1060,10 @@ export default function SettingsPage() {
             <Card className={`space-y-5 ${contentShellPanelClass}`}>
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div>
-                  <p className="text-[11px] uppercase tracking-[0.28em] text-accent/80">
-                    Grouping Tree
-                  </p>
-                  <h2 className="mt-2 text-xl font-semibold text-slate-900">Flexible hierarchy</h2>
+                  <p className="text-[11px] uppercase tracking-[0.28em] text-accent/80">Workspace Content</p>
+                  <h2 className="mt-2 text-xl font-semibold text-slate-900">Transaction types and groupings</h2>
                   <p className="mt-2 text-sm text-slate-600">
-                    Use this for the structure under a branch, such as Region, Zone, District,
-                    Cell, Cluster, Sector, or any custom discipleship hierarchy.
+                    Manage the giving transaction types available to this tenant and the grouping hierarchy used under each branch.
                   </p>
                 </div>
                 <Button
@@ -996,9 +1075,20 @@ export default function SettingsPage() {
                   }
                   onClick={handleSaveContent}
                 >
-                  {isSavingContent ? 'Saving...' : 'Save groupings'}
+                  {isSavingContent ? 'Saving...' : 'Save content'}
                 </Button>
               </div>
+
+              <LightStringListEditor
+                title="Transaction Types"
+                hint="Add or remove the giving transaction types this church should see when recording income."
+                values={contentForm.transactionTypes}
+                onChange={(transactionTypes) =>
+                  setContentForm((current) => ({ ...current, transactionTypes }))
+                }
+                placeholder="Harvest Seed"
+                addLabel="Add type"
+              />
 
               <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
                 <Input

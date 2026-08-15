@@ -953,6 +953,7 @@ export const getInbox = async (tenantId, userId, query = {}) => {
   const { page, limit, skip } = normalizePagination(query);
   const filter = {
     tenantId,
+    type: { $ne: 'system' },
     $or: [{ targetUserId: userId }, { targetUserId: null }, { targetUserId: { $exists: false } }],
   };
 
@@ -975,6 +976,7 @@ export const getInboxMessageById = async (tenantId, userId, messageId) => {
   const item = await NotificationLog.findOne({
     _id: messageId,
     tenantId,
+    type: { $ne: 'system' },
     $or: [{ targetUserId: userId }, { targetUserId: null }, { targetUserId: { $exists: false } }],
   }).lean();
 

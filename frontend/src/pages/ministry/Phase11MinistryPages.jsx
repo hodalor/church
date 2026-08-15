@@ -1034,13 +1034,13 @@ export function MinistryDetailPage() {
             <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
               <div className="flex flex-wrap gap-3">
                 <SearchInput value={memberSearch} onChange={(event) => setMemberSearch(event.target.value)} placeholder="Search member for quick add or bulk add" />
-                <select value={memberFilter} onChange={(event) => setMemberFilter(event.target.value)} className="rounded-xl border border-white/10 bg-[#101827] px-3.5 py-2.5 text-sm text-white">
+                <select value={memberFilter} onChange={(event) => setMemberFilter(event.target.value)} className="rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-sm text-slate-900 shadow-sm outline-none focus:border-accent">
                   <option value="">All roles</option>
                   {[...new Set(members.map((item) => item.role).filter(Boolean))].map((role) => (
                     <option key={role} value={role}>{formatLabel(role)}</option>
                   ))}
                 </select>
-                <select value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)} className="rounded-xl border border-white/10 bg-[#101827] px-3.5 py-2.5 text-sm text-white">
+                <select value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)} className="rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-sm text-slate-900 shadow-sm outline-none focus:border-accent">
                   <option value="">All status</option>
                   {[...new Set(members.map((item) => item.status).filter(Boolean))].map((status) => (
                     <option key={status} value={status}>{formatLabel(status)}</option>
@@ -1078,15 +1078,15 @@ export function MinistryDetailPage() {
             </div>
 
             {(searchQuery.data?.members || []).length ? (
-              <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
-                <p className="mb-3 text-sm text-white/60">Quick add candidates</p>
+              <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                <p className="mb-3 text-sm text-slate-500">Quick add candidates</p>
                 <div className="flex flex-wrap gap-2">
                   {searchQuery.data.members.map((member) => (
                     <button
                       key={member.memberId}
                       type="button"
                       onClick={() => setSelectedMember(member)}
-                      className="rounded-full border border-white/10 bg-[#101827] px-3 py-2 text-sm text-white/75"
+                      className="rounded-full border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 shadow-sm transition hover:border-accent/40 hover:text-slate-900"
                     >
                       {[member.firstName, member.lastName].filter(Boolean).join(' ') || member.memberId}
                     </button>

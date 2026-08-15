@@ -31,6 +31,10 @@ const tenantSettingsValidation = [
     .optional()
     .isArray()
     .withMessage('Departments must be an array.'),
+  body('content.transactionTypes')
+    .optional()
+    .isArray()
+    .withMessage('Transaction types must be an array.'),
   body('content.ministries')
     .optional()
     .isArray()

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { CheckCircle2, Clock3 } from 'lucide-react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
@@ -14,8 +14,9 @@ import useBranchOptions from '../../hooks/useBranchOptions';
 import useCurrency from '../../hooks/useCurrency';
 import { useFinanceAccess } from '../../hooks/useFinanceAccess';
 import { getAllTransactions, reverseTransaction, verifyTransaction } from '../../api/endpoints/finance';
+import { getCurrentTenant } from '../../api/endpoints/tenants';
 
-const typeOptions = [
+const defaultTypeOptions = [
   'tithe',
   'offering',
   'pledge_payment',
@@ -27,6 +28,11 @@ const typeOptions = [
   'thanksgiving',
   'other_income',
 ];
+
+const formatTransactionTypeLabel = (value) =>
+  String(value || '')
+    .replaceAll('_', ' ')
+    .replace(/\b\w/g, (match) => match.toUpperCase());
 
 const paymentOptions = ['cash', 'mobile_money', 'bank_transfer', 'card', 'cheque', 'online', 'other'];
 
@@ -63,6 +69,10 @@ export default function TransactionsPage() {
   const { formatCurrency } = useCurrency();
   const [selectedRows, setSelectedRows] = useState([]);
   const { branchOptions } = useBranchOptions();
+  const tenantQuery = useQuery({
+    queryKey: ['finance-transactions-tenant-content'],
+    queryFn: getCurrentTenant,
+  });
 
   const page = Number(searchParams.get('page') || 1);
   const from = searchParams.get('from') || '';
@@ -72,6 +82,11 @@ export default function TransactionsPage() {
   const type = searchParams.get('type') || '';
   const paymentMethod = searchParams.get('paymentMethod') || '';
   const verified = searchParams.get('isVerified') || '';
+  const typeOptions = useMemo(() => {
+    const configuredTypes = tenantQuery.data?.content?.transactionTypes || [];
+    const baseTypes = configuredTypes.length ? configuredTypes : defaultTypeOptions;
+    return type && !baseTypes.includes(type) ? [type, ...baseTypes] : baseTypes;
+  }, [tenantQuery.data?.content?.transactionTypes, type]);
 
   const transactionsQuery = useQuery({
     queryKey: ['finance-transactions', page, from, to, search, branch, type, paymentMethod, verified],
@@ -182,9 +197,9 @@ export default function TransactionsPage() {
                 className="w-full rounded-2xl border border-white/10 bg-[#101827] px-4 py-3 text-sm text-white"
               >
                 <option value="">All types</option>
-                {typeOptions.map((option) => (
+                  {typeOptions.map((option) => (
                   <option key={option} value={option}>
-                    {option.replaceAll('_', ' ')}
+                      {formatTransactionTypeLabel(option)}
                   </option>
                 ))}
               </select>

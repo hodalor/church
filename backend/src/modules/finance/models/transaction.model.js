@@ -29,7 +29,7 @@ const transactionSchema = new mongoose.Schema(
   {
     tenantId: { type: String, required: true, trim: true, lowercase: true, index: true },
     transactionId: { type: String, unique: true, trim: true },
-    type: { type: String, required: true, enum: transactionTypes },
+    type: { type: String, required: true, trim: true },
     amount: { type: Number, required: true, min: 0 },
     currency: { type: String, default: 'USD', trim: true },
     memberId: { type: String, trim: true },

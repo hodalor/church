@@ -2,6 +2,7 @@ import { body, query } from 'express-validator';
 import { transactionTypes, paymentMethods } from './models/transaction.model.js';
 import { expenseCategories, expensePaymentMethods } from './models/expense.model.js';
 import { pledgeTypes } from './models/pledge.model.js';
+import Tenant from '../tenants/model.js';
 
 const notFutureDateValidator = (value) => {
   const date = new Date(value);
@@ -14,13 +15,41 @@ const notFutureDateValidator = (value) => {
   return true;
 };
 
+const resolveTenantId = (req) =>
+  String(
+    req.tenantId ||
+      req.body?.tenantId ||
+      req.query?.tenantId ||
+      req.headers['x-tenant-id'] ||
+      '',
+  )
+    .trim()
+    .toLowerCase();
+
+const resolveAllowedTransactionTypes = async (req) => {
+  const tenantId = resolveTenantId(req);
+  if (!tenantId) {
+    return transactionTypes;
+  }
+
+  const tenant = await Tenant.findOne({ tenantId }).select('content.transactionTypes').lean();
+  return tenant?.content?.transactionTypes?.length
+    ? tenant.content.transactionTypes
+    : transactionTypes;
+};
+
 export const recordTransactionValidation = [
   body('amount')
     .isFloat({ gt: 0 })
     .withMessage('Amount must be a positive number.'),
   body('type')
-    .isIn(transactionTypes)
-    .withMessage('Transaction type is invalid.'),
+    .custom(async (value, { req }) => {
+      const allowedTypes = await resolveAllowedTransactionTypes(req);
+      if (!allowedTypes.includes(String(value || '').trim())) {
+        throw new Error('Transaction type is invalid.');
+      }
+      return true;
+    }),
   body('serviceDate')
     .notEmpty()
     .withMessage('Service date is required.')

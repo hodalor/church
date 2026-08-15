@@ -84,6 +84,10 @@ const tenantContentSchema = new mongoose.Schema(
       type: [String],
       default: () => [],
     },
+    transactionTypes: {
+      type: [String],
+      default: () => [],
+    },
     ministries: {
       type: [String],
       default: () => [],

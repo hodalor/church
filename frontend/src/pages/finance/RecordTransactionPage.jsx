@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -14,6 +14,7 @@ import { useAuth } from '../../hooks/useAuth';
 import useBranchOptions from '../../hooks/useBranchOptions';
 import useCurrency from '../../hooks/useCurrency';
 import { getReceipt, recordTransaction } from '../../api/endpoints/finance';
+import { getCurrentTenant } from '../../api/endpoints/tenants';
 
 const schema = z.object({
   type: z.string().min(1, 'Transaction type is required.'),
@@ -38,7 +39,7 @@ const schema = z.object({
   anonymous: z.boolean().optional(),
 });
 
-const transactionTypes = [
+const defaultTransactionTypes = [
   { value: 'tithe', label: 'Tithe' },
   { value: 'offering', label: 'Offering' },
   { value: 'pledge_payment', label: 'Pledge Payment' },
@@ -49,6 +50,11 @@ const transactionTypes = [
   { value: 'thanksgiving', label: 'Thanksgiving' },
   { value: 'other_income', label: 'Other Income' },
 ];
+
+const formatTransactionTypeLabel = (value) =>
+  String(value || '')
+    .replaceAll('_', ' ')
+    .replace(/\b\w/g, (match) => match.toUpperCase());
 
 const paymentMethods = [
   { value: 'cash', label: 'Cash' },
@@ -69,6 +75,10 @@ export default function RecordTransactionPage() {
   const { branchOptions } = useBranchOptions({ includeCurrent: user?.branch || '' });
   const defaultCurrency = user?.currency || currencyCode || 'USD';
   const defaultBranch = user?.branch || branchOptions[0] || '';
+  const tenantQuery = useQuery({
+    queryKey: ['finance-record-transaction-tenant-content'],
+    queryFn: getCurrentTenant,
+  });
   const queryPrefill = useMemo(
     () => ({
       type: searchParams.get('type') || 'tithe',
@@ -78,11 +88,36 @@ export default function RecordTransactionPage() {
     }),
     [searchParams],
   );
+  const transactionTypes = useMemo(() => {
+    const configuredTypes = tenantQuery.data?.content?.transactionTypes || [];
+    const baseTypes = configuredTypes.length
+      ? configuredTypes.map((value) => ({
+          value,
+          label: formatTransactionTypeLabel(value),
+        }))
+      : defaultTransactionTypes;
+
+    if (
+      queryPrefill.type &&
+      !baseTypes.some((option) => option.value === queryPrefill.type)
+    ) {
+      return [
+        {
+          value: queryPrefill.type,
+          label: formatTransactionTypeLabel(queryPrefill.type),
+        },
+        ...baseTypes,
+      ];
+    }
+
+    return baseTypes;
+  }, [queryPrefill.type, tenantQuery.data?.content?.transactionTypes]);
+  const defaultTransactionType = transactionTypes[0]?.value || 'tithe';
 
   const form = useForm({
     resolver: zodResolver(schema),
     defaultValues: {
-      type: queryPrefill.type,
+      type: queryPrefill.type || defaultTransactionType,
       amount: '',
       currency: defaultCurrency,
       serviceDate: new Date().toISOString().slice(0, 10),
@@ -103,7 +138,10 @@ export default function RecordTransactionPage() {
 
   useEffect(() => {
     form.reset({
-      type: queryPrefill.type,
+      type:
+        queryPrefill.type && transactionTypes.some((option) => option.value === queryPrefill.type)
+          ? queryPrefill.type
+          : defaultTransactionType,
       amount: '',
       currency: defaultCurrency,
       serviceDate: new Date().toISOString().slice(0, 10),
@@ -123,14 +161,17 @@ export default function RecordTransactionPage() {
         memberName: queryPrefill.memberName,
       });
     }
-  }, [defaultBranch, defaultCurrency, form, queryPrefill]);
+  }, [defaultBranch, defaultCurrency, defaultTransactionType, form, queryPrefill, transactionTypes]);
 
   const mutation = useMutation({
     mutationFn: recordTransaction,
     onSuccess: (data) => {
       setSuccessData(data);
       form.reset({
-        type: queryPrefill.type === 'pledge_payment' ? 'pledge_payment' : 'tithe',
+        type:
+          queryPrefill.type === 'pledge_payment'
+            ? 'pledge_payment'
+            : defaultTransactionType,
         amount: '',
         currency: defaultCurrency,
         serviceDate: new Date().toISOString().slice(0, 10),

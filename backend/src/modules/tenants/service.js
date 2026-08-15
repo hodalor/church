@@ -170,6 +170,9 @@ const buildTenantContent = (tenantOrPayload = {}) => ({
   departments: normalizeStringList(
     tenantOrPayload.content?.departments || tenantOrPayload.departments,
   ),
+  transactionTypes: normalizeStringList(
+    tenantOrPayload.content?.transactionTypes || tenantOrPayload.transactionTypes,
+  ),
   ministries: normalizeStringList(tenantOrPayload.content?.ministries || tenantOrPayload.ministries),
   groupings: normalizeGroupingNodes(tenantOrPayload.content?.groupings || tenantOrPayload.groupings),
 });
@@ -271,6 +274,12 @@ const buildTenantContentPatch = (payload = {}) => {
 
   if (hasOwn(nestedContent, 'departments') || hasOwn(payload, 'departments')) {
     patch.departments = normalizeStringList(nestedContent.departments || payload.departments);
+  }
+
+  if (hasOwn(nestedContent, 'transactionTypes') || hasOwn(payload, 'transactionTypes')) {
+    patch.transactionTypes = normalizeStringList(
+      nestedContent.transactionTypes || payload.transactionTypes,
+    );
   }
 
   if (hasOwn(nestedContent, 'ministries') || hasOwn(payload, 'ministries')) {
