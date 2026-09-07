@@ -1,7 +1,6 @@
 import express from 'express';
 import helmet from 'helmet';
 import cors from 'cors';
-import morgan from 'morgan';
 import rateLimit from 'express-rate-limit';
 import { attendanceRouter, adminAttendanceRouter } from './modules/attendance/attendance.routes.js';
 import env from './config/env.js';
@@ -38,7 +37,9 @@ import { adminMinistryRouter, ministryRouter } from './modules/ministry/ministry
 import { adminStrategicRouter, strategicRouter } from './modules/strategic/strategic.routes.js';
 import storageRouter from './modules/storage/storage.routes.js';
 import errorHandler from './middleware/errorHandler.js';
+import { requestLogger } from './middleware/requestLogger.js';
 import { error } from './utils/apiResponse.js';
+import logger from './utils/logger.js';
 
 const app = express();
 const apiRouter = express.Router();
@@ -71,10 +72,18 @@ app.use(
     credentials: true,
   }),
 );
-app.use(morgan(env.NODE_ENV === 'production' ? 'combined' : 'dev'));
+app.use(requestLogger);
 app.use(express.json({ limit: '250mb' }));
 app.use(express.urlencoded({ extended: true, limit: '250mb' }));
 app.use(apiLimiter);
+
+logger.info(
+  {
+    nodeEnv: env.NODE_ENV,
+    corsOrigin,
+  },
+  'Express app configured',
+);
 
 apiRouter.get('/health', (_req, res) => {
   return res.status(200).json({

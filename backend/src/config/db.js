@@ -1,10 +1,16 @@
 import mongoose from 'mongoose';
 import env from './env.js';
+import logger from '../utils/logger.js';
 
 const connectDB = async () => {
-  mongoose.set('strictQuery', true);
-  await mongoose.connect(env.MONGODB_URI);
-  console.log('MongoDB connected successfully');
+  try {
+    mongoose.set('strictQuery', true);
+    await mongoose.connect(env.MONGODB_URI);
+    logger.info('MongoDB connected');
+  } catch (error) {
+    logger.error({ err: error }, 'MongoDB connection failed');
+    throw error;
+  }
 };
 
 export default connectDB;

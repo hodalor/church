@@ -16,6 +16,7 @@ import { startReportAutomationJob } from './src/jobs/reportAutomation.job.js';
 import { startRosterRemindersJob } from './src/jobs/rosterReminders.job.js';
 import { startStaleCaseAlertsJob } from './src/jobs/staleCaseAlerts.job.js';
 import { startVolunteerAbsenceTrackerJob } from './src/jobs/volunteerAbsenceTracker.job.js';
+import logger from './src/utils/logger.js';
 
 const startServer = async () => {
   await connectDB();
@@ -36,11 +37,11 @@ const startServer = async () => {
   startVolunteerAbsenceTrackerJob();
 
   app.listen(env.PORT, () => {
-    console.log(`Prynova backend listening on port ${env.PORT}`);
+    logger.info({ port: env.PORT }, 'Prynova backend listening');
   });
 };
 
 startServer().catch((error) => {
-  console.error('Failed to start server:', error);
+  logger.error({ err: error }, 'Failed to start server');
   process.exit(1);
 });
