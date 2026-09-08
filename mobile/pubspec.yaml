@@ -25,7 +25,7 @@ dependencies:
   image_gallery_saver: ^2.0.3
   firebase_core: ^2.27.0
   firebase_messaging: ^14.7.0
-  flutter_local_notifications: ^17.0.0
+  flutter_local_notifications: ^22.3.0
   timeago: ^3.6.0
   mobile_scanner: ^5.1.0
   screen_brightness: ^0.2.2
