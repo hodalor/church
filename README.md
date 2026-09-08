@@ -11,6 +11,7 @@ The repository is organized as three separate applications:
 - `church/backend` - Node.js + Express + MongoDB REST API
 - `church/frontend` - React.js admin dashboard built with Create React App
 - `church/mobile` - Flutter member mobile app
+- `church/biometric-bridge` - local Windows fingerprint bridge for ZKTeco USB scanners
 
 ```text
                     +----------------------+
@@ -133,6 +134,16 @@ Backend variables for server boot, MongoDB, JWT, seed admin, and Supabase are re
 - Twilio: Used for SMS and WhatsApp messaging integrations.
 - Firebase: Used for push notifications and requires platform-specific mobile setup such as `google-services.json`.
 - Anthropic: Used for AI Pastor Assistant features.
+
+## Biometric Setup
+
+Fingerprint enrollment and biometric service attendance use a local Windows bridge because browsers cannot call the ZKTeco USB SDK directly.
+
+1. Install the ZKTeco `ZKFinger SDK for Windows` for the `SLK20R`.
+2. Configure and run `biometric-bridge/server.js` on the scanner PC.
+3. Set `REACT_APP_BIOMETRIC_BRIDGE_URL=http://127.0.0.1:4113` in `frontend/.env`.
+
+See `biometric-bridge/README.md` for the bridge contract and SDK adapter wiring.
 
 ## Multi-Tenancy
 

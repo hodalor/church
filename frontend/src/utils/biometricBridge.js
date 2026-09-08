@@ -1,4 +1,4 @@
-const DEFAULT_BRIDGE_URL = 'http://127.0.0.1:4007';
+const DEFAULT_BRIDGE_URL = 'http://127.0.0.1:4113';
 
 const asObject = (value) =>
   value && typeof value === 'object' && !Array.isArray(value) ? value : {};
@@ -67,6 +67,27 @@ const callBridge = async (path, options = {}) => {
   return readJsonResponse(response);
 };
 
+const callBridgeWithFallback = async (paths = [], options = {}) => {
+  let lastError;
+
+  for (const path of paths) {
+    try {
+      return await callBridge(path, options);
+    } catch (error) {
+      lastError = error;
+      const isNotFoundError =
+        typeof error?.message === 'string' &&
+        error.message.includes('Biometric bridge request failed (404)');
+
+      if (!isNotFoundError) {
+        throw error;
+      }
+    }
+  }
+
+  throw lastError || new Error('Biometric bridge request failed.');
+};
+
 export const getBiometricBridgeStatus = async () => {
   try {
     return await callBridge('/health', { method: 'GET' });
@@ -80,7 +101,7 @@ export const getBiometricBridgeStatus = async () => {
 
 export const enrollFingerprint = async (payload = {}) => {
   try {
-    return await callBridge('/fingerprint/enroll', {
+    return await callBridgeWithFallback(['/fingerprint/enroll', '/enroll'], {
       method: 'POST',
       body: JSON.stringify(payload),
     });
@@ -94,7 +115,7 @@ export const enrollFingerprint = async (payload = {}) => {
 
 export const identifyFingerprint = async (payload = {}) => {
   try {
-    return await callBridge('/fingerprint/identify', {
+    return await callBridgeWithFallback(['/fingerprint/identify', '/identify'], {
       method: 'POST',
       body: JSON.stringify(payload),
     });

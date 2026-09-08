@@ -1,0 +1,11 @@
+{
+  "name": "prynova-biometric-bridge",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Local Windows bridge for ZKTeco fingerprint enrollment and identification.",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js"
+  }
+}
