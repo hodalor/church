@@ -39,7 +39,21 @@ const resolveBackendBaseUrl = () => {
 
 const readJsonResponse = async (response) => {
   const text = await response.text();
-  const data = text ? JSON.parse(text) : {};
+  let data = {};
+
+  if (text) {
+    try {
+      data = JSON.parse(text);
+    } catch {
+      if (!response.ok) {
+        throw new Error(`Biometric bridge request failed (${response.status}).`);
+      }
+
+      throw new Error(
+        'Fingerprint bridge returned an unexpected response. Confirm the local bridge URL points to the fingerprint service.',
+      );
+    }
+  }
 
   if (!response.ok) {
     throw new Error(data?.message || `Biometric bridge request failed (${response.status}).`);
@@ -125,10 +139,13 @@ export const getBiometricBridgeStatus = async () => {
 
 export const enrollFingerprint = async (payload = {}) => {
   try {
-    return await callBridgeWithFallback(['/fingerprint/enroll', '/enroll'], {
+    return await callBridgeWithFallback(
+      ['/fingerprint/enroll', '/fingerprints/enroll', '/enroll'],
+      {
       method: 'POST',
       body: JSON.stringify(payload),
-    });
+      },
+    );
   } catch (error) {
     throw new Error(
       error.message ||
@@ -139,10 +156,13 @@ export const enrollFingerprint = async (payload = {}) => {
 
 export const identifyFingerprint = async (payload = {}) => {
   try {
-    return await callBridgeWithFallback(['/fingerprint/identify', '/identify'], {
+    return await callBridgeWithFallback(
+      ['/fingerprint/identify', '/fingerprints/identify', '/identify'],
+      {
       method: 'POST',
       body: JSON.stringify(payload),
-    });
+      },
+    );
   } catch (error) {
     throw new Error(
       error.message ||
@@ -159,14 +179,20 @@ export const extractFingerprintTemplateId = (payload = {}) => {
   return pickText(
     data.templateId,
     data.template_id,
+    data.templateRef,
+    data.template_ref,
     data.fingerprintTemplateId,
     data.fingerprint_template_id,
     match.templateId,
     match.template_id,
+    match.templateRef,
+    match.template_ref,
     match.fingerprintTemplateId,
     match.fingerprint_template_id,
     fingerprint.templateId,
     fingerprint.template_id,
+    fingerprint.templateRef,
+    fingerprint.template_ref,
     fingerprint.fingerprintTemplateId,
     fingerprint.fingerprint_template_id,
   );
