@@ -1,10 +1,12 @@
 import { createClient } from '@supabase/supabase-js';
+import ws from 'ws';
 import env from '../config/env.js';
 import { createHttpError } from './httpError.js';
 
 const serviceKey = env.SUPABASE_SERVICE_ROLE_KEY || env.SUPABASE_ANON_KEY;
 const supabase = createClient(env.SUPABASE_URL, serviceKey, {
   auth: { persistSession: false, autoRefreshToken: false },
+  realtime: { transport: ws },
 });
 const DEFAULT_BUCKET = env.SUPABASE_BUCKET_NAME || 'ecclesia';
 

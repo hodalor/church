@@ -10,6 +10,7 @@ import DataTable from '../../components/ui/DataTable';
 import PageHeader from '../../components/ui/PageHeader';
 import Pagination from '../../components/ui/Pagination';
 import {
+  checkOutAttendanceRecord,
   computeServiceStats,
   getServiceAttendance,
   getServiceById,
@@ -29,6 +30,8 @@ import useAttendanceAccess from '../../hooks/useAttendanceAccess';
 
 const statCards = [
   ['Total', 'total'],
+  ['Inside', 'currentlyInside'],
+  ['Checked Out', 'checkedOut'],
   ['Members', 'members'],
   ['Visitors', 'visitors'],
   ['Children', 'children'],
@@ -90,6 +93,15 @@ export default function ServiceDetailPage() {
   const removeMutation = useMutation({
     mutationFn: (checkInId) => removeCheckIn(serviceId, checkInId),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['attendance-service-checkins', serviceId] }),
+  });
+
+  const checkOutMutation = useMutation({
+    mutationFn: (checkInId) => checkOutAttendanceRecord(serviceId, checkInId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['attendance-service-checkins', serviceId] });
+      queryClient.invalidateQueries({ queryKey: ['attendance-service-detail', serviceId] });
+      queryClient.invalidateQueries({ queryKey: ['attendance-live-checkins', serviceId] });
+    },
   });
 
   const service = serviceQuery.data?.service || serviceQuery.data || {};
@@ -155,18 +167,49 @@ export default function ServiceDetailPage() {
     },
     {
       key: 'time',
-      header: 'Time',
+      header: 'Check In',
       render: (row) => row.time || row.checkedInAt || row.createdAt || 'N/A',
+    },
+    {
+      key: 'checkOutTime',
+      header: 'Check Out',
+      render: (row) => row.checkOutTimeLabel || (row.checkedOutAt ? row.checkedOutAt : 'Still Inside'),
+    },
+    {
+      key: 'status',
+      header: 'Status',
+      render: (row) => (
+        <span
+          className={`rounded-full px-2.5 py-1 text-xs font-semibold uppercase tracking-[0.16em] ${
+            row.isCheckedOut
+              ? 'bg-white/10 text-white/70'
+              : 'bg-emerald-500/15 text-emerald-300'
+          }`}
+        >
+          {row.isCheckedOut ? 'Checked Out' : 'Inside'}
+        </span>
+      ),
     },
     {
       key: 'actions',
       header: 'Actions',
-      render: (row) =>
-        hasAnyCapability(['attendance.delete', 'attendance.services.delete']) ? (
-          <Button variant="ghost" onClick={() => removeMutation.mutate(row.checkInId || row._id)}>
-            Remove
-          </Button>
-        ) : null,
+      render: (row) => (
+        <div className="flex flex-wrap gap-2">
+          {canCheckInServices && !row.isCheckedOut ? (
+            <Button
+              variant="ghost"
+              onClick={() => checkOutMutation.mutate(row.checkInId || row._id)}
+            >
+              Check Out
+            </Button>
+          ) : null}
+          {hasAnyCapability(['attendance.delete', 'attendance.services.delete']) ? (
+            <Button variant="ghost" onClick={() => removeMutation.mutate(row.checkInId || row._id)}>
+              Remove
+            </Button>
+          ) : null}
+        </div>
+      ),
     },
   ];
 
@@ -305,13 +348,15 @@ export default function ServiceDetailPage() {
                 onClick={() =>
                   downloadCsv(
                     `attendance-${serviceId}.csv`,
-                    ['Name', 'Member ID', 'Type', 'Method', 'Time'],
+                    ['Name', 'Member ID', 'Type', 'Method', 'Check In', 'Check Out', 'Status'],
                     checkIns.map((item) => [
                       item.name || item.memberName || 'Guest',
                       item.memberId || '',
                       item.type || 'member',
                       getMethodLabel(item.method),
                       item.time || item.checkedInAt || '',
+                      item.checkOutTimeLabel || item.checkedOutAt || '',
+                      item.isCheckedOut ? 'Checked Out' : 'Inside',
                     ]),
                   )
                 }

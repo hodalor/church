@@ -26,6 +26,8 @@ export default function EventCheckInPage() {
   const { eventId } = useParams();
   const { canViewRegistrations, canCheckInRegistrations } = useEventsAccess();
   const scannerRef = useRef(null);
+  const scannerStartingRef = useRef(false);
+  const latestQrActionRef = useRef(null);
   const [activeTab, setActiveTab] = useState('qr');
   const [search, setSearch] = useState('');
   const [manualEntry, setManualEntry] = useState('');
@@ -75,20 +77,49 @@ export default function EventCheckInPage() {
     },
   });
 
+  latestQrActionRef.current = (regId) => {
+    checkInMutation.mutate({ regId, method: 'qr_scan' });
+  };
+
   useEffect(() => {
-    if (activeTab !== 'qr') {
-      if (scannerRef.current?.isScanning) {
-        scannerRef.current.stop().catch(() => {});
+    const stopScanner = async () => {
+      const scanner = scannerRef.current;
+      scannerRef.current = null;
+      scannerStartingRef.current = false;
+
+      if (!scanner) {
+        return;
       }
+
+      try {
+        if (scanner.isScanning) {
+          await scanner.stop();
+        } else if (typeof scanner.clear === 'function') {
+          await scanner.clear();
+        }
+      } catch (_) {
+        // Ignore scanner shutdown race conditions.
+      }
+    };
+
+    if (activeTab !== 'qr') {
+      stopScanner();
       return undefined;
     }
 
     let disposed = false;
 
     const startScanner = async () => {
+      if (scannerRef.current || scannerStartingRef.current) {
+        return;
+      }
+
+      scannerStartingRef.current = true;
+
       try {
         const { Html5Qrcode } = await import('html5-qrcode');
         if (disposed) {
+          scannerStartingRef.current = false;
           return;
         }
 
@@ -99,11 +130,14 @@ export default function EventCheckInPage() {
           { fps: 10, qrbox: 260 },
           (decodedText) => {
             const regId = parseRegistrationId(decodedText);
-            checkInMutation.mutate({ regId, method: 'qr_scan' });
+            latestQrActionRef.current?.(regId);
           },
           () => {},
         );
+        scannerStartingRef.current = false;
       } catch (_) {
+        scannerStartingRef.current = false;
+        scannerRef.current = null;
         setFeedback({
           variant: 'error',
           message: 'Camera scanner is unavailable. Use manual search or manual code entry.',
@@ -115,11 +149,9 @@ export default function EventCheckInPage() {
 
     return () => {
       disposed = true;
-      if (scannerRef.current?.isScanning) {
-        scannerRef.current.stop().catch(() => {});
-      }
+      stopScanner();
     };
-  }, [activeTab, checkInMutation]);
+  }, [activeTab]);
 
   const event = eventQuery.data || {};
   const registrations = useMemo(() => registrationsQuery.data?.items || [], [registrationsQuery.data]);

@@ -54,6 +54,11 @@ export const removeCheckIn = async (serviceId, checkInId) => {
   return unwrap(response);
 };
 
+export const checkOutAttendanceRecord = async (serviceId, checkInId) => {
+  const response = await api.patch(`/attendance/services/${serviceId}/check-ins/${checkInId}/check-out`);
+  return unwrap(response);
+};
+
 export const searchCheckInMembers = async (params) => {
   const response = await api.get('/attendance/check-in/search', { params });
   return unwrap(response);
@@ -69,6 +74,11 @@ export const manualMemberCheckIn = async (serviceId, payload) => {
   return unwrap(response);
 };
 
+export const manualMemberCheckOut = async (serviceId, payload) => {
+  const response = await api.post(`/attendance/services/${serviceId}/check-out/member`, payload);
+  return unwrap(response);
+};
+
 export const visitorCheckIn = async (serviceId, payload) => {
   const response = await api.post(`/attendance/services/${serviceId}/check-in/visitor`, payload);
   return unwrap(response);
@@ -81,6 +91,16 @@ export const childCheckIn = async (serviceId, payload) => {
 
 export const biometricMemberCheckIn = async (serviceId, payload) => {
   const response = await api.post(`/attendance/services/${serviceId}/check-in/biometric`, payload);
+  return unwrap(response);
+};
+
+export const checkOutByQr = async (serviceId, payload) => {
+  const response = await api.post(`/attendance/services/${serviceId}/check-out/qr`, payload);
+  return unwrap(response);
+};
+
+export const biometricMemberCheckOut = async (serviceId, payload) => {
+  const response = await api.post(`/attendance/services/${serviceId}/check-out/biometric`, payload);
   return unwrap(response);
 };
 

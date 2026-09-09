@@ -16,6 +16,21 @@ For the `SLK20R`, the official SDK line is `ZKFinger SDK for Windows`, which ZKT
 
 Browsers cannot talk directly to the ZKTeco USB SDK. The admin app therefore calls a local HTTP bridge, and the bridge calls your SDK wrapper on the same machine.
 
+This is especially important when your main backend is hosted on `Cloud Run`, `Render`, or another cloud platform. The backend stays in the cloud. Only the bridge runs locally on the Windows scanner PC.
+
+## Fresh scanner PC setup
+
+From the hosted admin app:
+
+1. Open member fingerprint enrollment or service biometric check-in.
+2. Click `Download Windows Installer`.
+3. Run the downloaded `install-prynova-biometric-bridge.cmd`.
+4. Use the desktop shortcut `Start Prynova Fingerprint Bridge`.
+5. Return to the app and click `Refresh Bridge`.
+
+The installer places the bridge in `%LOCALAPPDATA%\\Prynova\\biometric-bridge` and creates a desktop launcher so the operator does not need to run the backend locally.
+On a brand new machine, the installer leaves the bridge in `shell` mode until the ZKTeco SDK adapter command is configured, so the app does not incorrectly show the scanner as ready before the real hardware integration is in place.
+
 ## Quick start
 
 1. Copy `.env.example` to `.env`.

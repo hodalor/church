@@ -168,6 +168,8 @@ const serializeService = (serviceDocument) => {
     stats: {
       total,
       totalCheckedIn: total,
+      checkedOut: Number(stats.checkedOut || 0),
+      currentlyInside: Number(stats.currentlyInside || 0),
       members: Number(stats.members || 0),
       visitors: Number(stats.visitors || 0),
       children: Number(stats.children || 0),
@@ -206,7 +208,12 @@ const serializeRecord = (recordDocument) => {
     method: record.checkInMethod,
     checkInMethod: record.checkInMethod,
     checkedInAt: record.checkInTime,
+    checkedOutAt: record.checkOutTime,
+    checkOutMethod: record.checkOutMethod,
+    isCheckedOut: Boolean(record.checkOutTime),
+    status: record.checkOutTime ? 'checked_out' : 'checked_in',
     time: buildTimeLabel(record.checkInTime),
+    checkOutTimeLabel: record.checkOutTime ? buildTimeLabel(record.checkOutTime) : null,
     name: displayName,
     memberName: record.memberName || record.childName || record.visitorName || displayName,
     visitorName: record.visitorName,
@@ -289,6 +296,15 @@ const findExistingMemberCheckIn = async (tenantId, serviceId, memberId) =>
     isRemoved: false,
   }).sort({ checkInTime: -1 });
 
+const findOpenMemberCheckIn = async (tenantId, serviceId, memberId) =>
+  AttendanceRecord.findOne({
+    tenantId,
+    serviceId,
+    memberId,
+    isRemoved: false,
+    checkOutTime: { $exists: false },
+  }).sort({ checkInTime: -1 });
+
 const calculateTimeline = (records = []) => {
   const buckets = new Map();
 
@@ -317,6 +333,8 @@ const calculateStats = (records = []) => {
   const stats = {
     total: 0,
     totalCheckedIn: 0,
+    checkedOut: 0,
+    currentlyInside: 0,
     members: 0,
     visitors: 0,
     children: 0,
@@ -342,6 +360,12 @@ const calculateStats = (records = []) => {
 
     if (record.firstTimer) {
       stats.firstTimers += 1;
+    }
+
+    if (record.checkOutTime) {
+      stats.checkedOut += 1;
+    } else {
+      stats.currentlyInside += 1;
     }
 
     if (record.gender === 'male') {
@@ -479,10 +503,56 @@ const buildCheckInPayload = ({ service, member, actor, attendeeType, checkInMeth
 
 const buildAlreadyCheckedInResponse = (existingRecord) => ({
   alreadyCheckedIn: true,
-  message: `Already checked in at ${buildTimeLabel(existingRecord.checkInTime)}.`,
+  message: existingRecord.checkOutTime
+    ? `Already checked in at ${buildTimeLabel(existingRecord.checkInTime)} and checked out at ${buildTimeLabel(existingRecord.checkOutTime)}.`
+    : `Already checked in at ${buildTimeLabel(existingRecord.checkInTime)}.`,
   checkedInAt: existingRecord.checkInTime,
+  ...(existingRecord.checkOutTime ? { checkedOutAt: existingRecord.checkOutTime } : {}),
   ...serializeRecord(existingRecord),
 });
+
+const buildAlreadyCheckedOutResponse = (existingRecord) => ({
+  alreadyCheckedOut: true,
+  message: existingRecord.checkOutTime
+    ? `Already checked out at ${buildTimeLabel(existingRecord.checkOutTime)}.`
+    : 'This attendance record is already checked out.',
+  checkedInAt: existingRecord.checkInTime,
+  checkedOutAt: existingRecord.checkOutTime,
+  ...serializeRecord(existingRecord),
+});
+
+const completeCheckOut = async ({
+  tenantId,
+  serviceId,
+  record,
+  actor = {},
+  method = 'manual',
+  successMessage = 'Check-out completed successfully.',
+}) => {
+  if (!record) {
+    throw createHttpError(404, 'Active attendance record not found for check-out.');
+  }
+
+  if (record.checkOutTime) {
+    return buildAlreadyCheckedOutResponse(record);
+  }
+
+  record.checkOutTime = new Date();
+  record.checkOutMethod = method;
+  record.checkedOutBy = {
+    userId: actor.userId,
+    role: actor.role,
+  };
+  await record.save();
+  await refreshServiceMetrics(tenantId, serviceId);
+
+  return {
+    message: successMessage,
+    checkedInAt: record.checkInTime,
+    checkedOutAt: record.checkOutTime,
+    ...serializeRecord(record),
+  };
+};
 
 const getPastServiceSequence = async (tenantId, { from, to } = {}) => {
   const filters = {
@@ -1071,6 +1141,75 @@ export const biometricCheckIn = async (tenantId, serviceId, payload = {}, actor 
     checkedInAt: record.checkInTime,
     ...serializeRecord(record),
   };
+};
+
+export const manualCheckOut = async (tenantId, serviceId, memberId, actor = {}) => {
+  const service = await getServiceOrThrow(tenantId, serviceId);
+  const member = await getMemberOrThrow(tenantId, memberId);
+  const openRecord = await findOpenMemberCheckIn(tenantId, service._id.toString(), member.memberId);
+
+  return completeCheckOut({
+    tenantId,
+    serviceId,
+    record: openRecord,
+    actor,
+    method: 'manual',
+    successMessage: 'Member checked out successfully.',
+  });
+};
+
+export const qrCheckOut = async (tenantId, serviceId, qrData, actor = {}) => {
+  const service = await getServiceOrThrow(tenantId, serviceId);
+  const parsed = resolveQrMemberId(qrData);
+  if (parsed.tenantId && parsed.tenantId !== tenantId) {
+    throw createHttpError(403, 'This QR code belongs to another tenant.');
+  }
+
+  const member = await getMemberOrThrow(tenantId, parsed.memberId);
+  const openRecord = await findOpenMemberCheckIn(tenantId, service._id.toString(), member.memberId);
+
+  return completeCheckOut({
+    tenantId,
+    serviceId,
+    record: openRecord,
+    actor,
+    method: 'qr',
+    successMessage: 'QR check-out completed successfully.',
+  });
+};
+
+export const biometricCheckOut = async (tenantId, serviceId, payload = {}, actor = {}) => {
+  const service = await getServiceOrThrow(tenantId, serviceId);
+  const member = await getMemberByBiometricOrThrow(tenantId, payload);
+  const openRecord = await findOpenMemberCheckIn(tenantId, service._id.toString(), member.memberId);
+
+  return completeCheckOut({
+    tenantId,
+    serviceId,
+    record: openRecord,
+    actor,
+    method: 'biometric',
+    successMessage: 'Fingerprint check-out completed successfully.',
+  });
+};
+
+export const checkOutAttendanceRecord = async (tenantId, serviceId, checkInId, actor = {}) => {
+  const service = await getServiceOrThrow(tenantId, serviceId);
+  const record = await AttendanceRecord.findOne({
+    _id: checkInId,
+    tenantId,
+    serviceId: service._id.toString(),
+    isRemoved: false,
+  });
+
+  return completeCheckOut({
+    tenantId,
+    serviceId,
+    record,
+    actor,
+    method: 'manual',
+    successMessage: 'Attendance record checked out successfully.',
+  });
 };
 
 export const getLiveCheckIns = async (tenantId, serviceId, query = {}) => {

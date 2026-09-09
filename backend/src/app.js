@@ -36,6 +36,7 @@ import { adminLeadershipRouter, leadershipRouter } from './modules/leadership/le
 import { adminMinistryRouter, ministryRouter } from './modules/ministry/ministry.routes.js';
 import { adminStrategicRouter, strategicRouter } from './modules/strategic/strategic.routes.js';
 import storageRouter from './modules/storage/storage.routes.js';
+import setupRouter from './modules/setup/setup.routes.js';
 import errorHandler from './middleware/errorHandler.js';
 import { requestLogger } from './middleware/requestLogger.js';
 import { error } from './utils/apiResponse.js';
@@ -91,6 +92,7 @@ apiRouter.get('/health', (_req, res) => {
     timestamp: new Date().toISOString(),
   });
 });
+apiRouter.use('/setup', setupRouter);
 apiRouter.use('/auth', authRoutes);
 apiRouter.use('/tenants', tenantRouter);
 apiRouter.use('/users', userRoutes);

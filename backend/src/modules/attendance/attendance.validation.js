@@ -129,6 +129,11 @@ const manualCheckInValidation = [
   body('memberId').trim().notEmpty().withMessage('Member ID is required.'),
 ];
 
+const manualCheckOutValidation = [
+  ...serviceIdParamValidation,
+  body('memberId').trim().notEmpty().withMessage('Member ID is required.'),
+];
+
 const visitorCheckInValidation = [
   ...serviceIdParamValidation,
   body().custom((value) => {
@@ -172,6 +177,24 @@ const biometricCheckInValidation = [
     })
     .withMessage('Fingerprint template ID or member ID is required.'),
 ];
+
+const biometricCheckOutValidation = [
+  ...serviceIdParamValidation,
+  body()
+    .custom((value) => {
+      const templateId =
+        value?.templateId || value?.fingerprintTemplateId || value?.fingerprint_template_id;
+      const memberId = value?.memberId;
+
+      return (
+        (typeof templateId === 'string' && templateId.trim().length > 0) ||
+        (typeof memberId === 'string' && memberId.trim().length > 0)
+      );
+    })
+    .withMessage('Fingerprint template ID or member ID is required.'),
+];
+
+const checkOutRecordValidation = [...serviceIdParamValidation, ...checkInIdParamValidation];
 
 const liveCheckInsValidation = [
   ...serviceIdParamValidation,
@@ -219,4 +242,7 @@ export {
   childCheckInValidation,
   biometricCheckInValidation,
   manualCheckInValidation,
+  manualCheckOutValidation,
+  biometricCheckOutValidation,
+  checkOutRecordValidation,
 };

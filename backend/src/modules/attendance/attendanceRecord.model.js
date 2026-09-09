@@ -52,6 +52,14 @@ const attendanceRecordSchema = new Schema(
       default: Date.now,
       index: true,
     },
+    checkOutTime: {
+      type: Date,
+      index: true,
+    },
+    checkOutMethod: {
+      type: String,
+      enum: ['qr', 'manual', 'visitor_form', 'child_check_in', 'online', 'bulk', 'biometric'],
+    },
     branch: {
       type: String,
       trim: true,
@@ -130,6 +138,10 @@ const attendanceRecordSchema = new Schema(
       userId: { type: String, trim: true },
       role: { type: String, trim: true },
     },
+    checkedOutBy: {
+      userId: { type: String, trim: true },
+      role: { type: String, trim: true },
+    },
     isRemoved: {
       type: Boolean,
       default: false,
@@ -151,6 +163,7 @@ const attendanceRecordSchema = new Schema(
 );
 
 attendanceRecordSchema.index({ tenantId: 1, serviceId: 1, checkInTime: -1 });
+attendanceRecordSchema.index({ tenantId: 1, serviceId: 1, checkOutTime: -1 });
 attendanceRecordSchema.index({ tenantId: 1, serviceId: 1, memberId: 1 });
 attendanceRecordSchema.index({ tenantId: 1, memberId: 1, serviceDate: -1 });
 attendanceRecordSchema.index({ tenantId: 1, attendeeType: 1, checkInTime: -1 });

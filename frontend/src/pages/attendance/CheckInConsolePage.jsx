@@ -1,17 +1,20 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Camera, Expand, Fingerprint, Minimize, Search, Users } from 'lucide-react';
+import { Camera, Download, Expand, Fingerprint, Minimize, Search, Users } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import AttendanceCounter from '../../components/attendance/AttendanceCounter';
 import CheckInSuccessOverlay from '../../components/attendance/CheckInSuccessOverlay';
 import Button from '../../components/ui/Button';
 import {
+  checkOutByQr,
   checkInByQr,
   biometricMemberCheckIn,
+  biometricMemberCheckOut,
   childCheckIn,
   getLiveCheckIns,
   getServiceById,
   manualMemberCheckIn,
+  manualMemberCheckOut,
   toggleServiceCheckIn,
   visitorCheckIn,
 } from '../../api/endpoints/attendance';
@@ -19,6 +22,7 @@ import { searchMembers } from '../../api/endpoints/members';
 import useAttendanceAccess from '../../hooks/useAttendanceAccess';
 import useDebounce from '../../hooks/useDebounce';
 import {
+  downloadBiometricBridgeWindowsInstaller,
   extractFingerprintDeviceMeta,
   extractFingerprintMemberId,
   extractFingerprintMessage,
@@ -26,6 +30,7 @@ import {
   getBiometricBridgeStatus,
   identifyFingerprint,
 } from '../../utils/biometricBridge';
+import { showInfoToast } from '../../utils/toast';
 import {
   formatLongDate,
   formatTimeRange,
@@ -38,6 +43,11 @@ const tabs = [
   { label: 'Biometric Scan', value: 'biometric' },
   { label: 'Visitor Check-In', value: 'visitor' },
   { label: 'Child Check-In', value: 'child' },
+];
+
+const attendanceModes = [
+  { label: 'Check In', value: 'check_in' },
+  { label: 'Check Out', value: 'check_out' },
 ];
 
 const createVisitorForm = () => ({
@@ -53,8 +63,11 @@ export default function CheckInConsolePage() {
   const { canViewServices, canCheckInServices, canModifyServices } = useAttendanceAccess();
   const { serviceId } = useParams();
   const scannerRef = useRef(null);
+  const scannerStartingRef = useRef(false);
+  const latestQrActionRef = useRef(null);
   const printRef = useRef(null);
   const [activeTab, setActiveTab] = useState('qr');
+  const [attendanceMode, setAttendanceMode] = useState('check_in');
   const [qrMode, setQrMode] = useState('camera');
   const [overlayState, setOverlayState] = useState(null);
   const [manualSearch, setManualSearch] = useState('');
@@ -109,38 +122,60 @@ export default function CheckInConsolePage() {
   };
 
   const showOverlay = (variant, payload) => {
+    const checkedOutAt = payload?.checkedOutAt;
+    const checkedInAt = payload?.checkedInAt;
     setOverlayState({
       variant,
       member: {
         name: payload?.name || payload?.memberName || payload?.visitorName || 'Guest',
         photoUrl: payload?.photoUrl,
-        timeLabel: payload?.checkedInAt
-          ? `Checked in at ${new Date(payload.checkedInAt).toLocaleTimeString()}`
-          : payload?.message || '',
+        timeLabel: checkedOutAt
+          ? `Checked out at ${new Date(checkedOutAt).toLocaleTimeString()}`
+          : checkedInAt
+            ? `Checked in at ${new Date(checkedInAt).toLocaleTimeString()}`
+            : payload?.message || '',
       },
     });
   };
 
   const qrMutation = useMutation({
-    mutationFn: (qrCode) => checkInByQr(serviceId, { qrCode }),
+    mutationFn: (qrCode) =>
+      attendanceMode === 'check_out'
+        ? checkOutByQr(serviceId, { qrCode })
+        : checkInByQr(serviceId, { qrCode }),
     onSuccess: (data) => {
       invalidateAttendance();
-      if (data?.alreadyCheckedIn) {
-        showOverlay('warning', { name: data.memberName, message: 'Already checked in earlier' });
+      if (data?.alreadyCheckedIn || data?.alreadyCheckedOut) {
+        showOverlay('warning', data);
       } else {
         showOverlay('success', data);
       }
     },
-    onError: (error) => showOverlay('error', { name: 'Check-in error', message: error.message }),
+    onError: (error) =>
+      showOverlay('error', {
+        name: attendanceMode === 'check_out' ? 'Check-out error' : 'Check-in error',
+        message: error.message,
+      }),
   });
 
+  latestQrActionRef.current = (qrCode) => {
+    qrMutation.mutate(qrCode);
+  };
+
   const memberMutation = useMutation({
-    mutationFn: (memberId) => manualMemberCheckIn(serviceId, { memberId }),
+    mutationFn: (memberId) =>
+      attendanceMode === 'check_out'
+        ? manualMemberCheckOut(serviceId, { memberId })
+        : manualMemberCheckIn(serviceId, { memberId }),
     onSuccess: (data) => {
       invalidateAttendance();
-      showOverlay(data?.alreadyCheckedIn ? 'warning' : 'success', data);
+      showOverlay(data?.alreadyCheckedIn || data?.alreadyCheckedOut ? 'warning' : 'success', data);
     },
-    onError: (error) => showOverlay('error', { name: 'Check-in error', message: error.message }),
+    onError: (error) =>
+      showOverlay('error', {
+        name: attendanceMode === 'check_out' ? 'Check-out error' : 'Check-in error',
+        message: error.message,
+      }),
   });
 
   const visitorMutation = useMutation({
@@ -186,13 +221,22 @@ export default function CheckInConsolePage() {
         throw new Error('Scanner bridge did not return a fingerprint match.');
       }
 
-      const data = await biometricMemberCheckIn(serviceId, {
-        ...(templateId ? { templateId } : {}),
-        ...(memberId ? { memberId } : {}),
-        ...(deviceMeta.provider ? { provider: deviceMeta.provider } : {}),
-        ...(deviceMeta.deviceModel ? { deviceModel: deviceMeta.deviceModel } : {}),
-        ...(deviceMeta.fingerLabel ? { fingerLabel: deviceMeta.fingerLabel } : {}),
-      });
+      const data =
+        attendanceMode === 'check_out'
+          ? await biometricMemberCheckOut(serviceId, {
+              ...(templateId ? { templateId } : {}),
+              ...(memberId ? { memberId } : {}),
+              ...(deviceMeta.provider ? { provider: deviceMeta.provider } : {}),
+              ...(deviceMeta.deviceModel ? { deviceModel: deviceMeta.deviceModel } : {}),
+              ...(deviceMeta.fingerLabel ? { fingerLabel: deviceMeta.fingerLabel } : {}),
+            })
+          : await biometricMemberCheckIn(serviceId, {
+              ...(templateId ? { templateId } : {}),
+              ...(memberId ? { memberId } : {}),
+              ...(deviceMeta.provider ? { provider: deviceMeta.provider } : {}),
+              ...(deviceMeta.deviceModel ? { deviceModel: deviceMeta.deviceModel } : {}),
+              ...(deviceMeta.fingerLabel ? { fingerLabel: deviceMeta.fingerLabel } : {}),
+            });
 
       return {
         ...data,
@@ -208,13 +252,16 @@ export default function CheckInConsolePage() {
         templateId: data?.templateId || '',
         bridgeMessage: data?.bridgeMessage || '',
       });
-      showOverlay(data?.alreadyCheckedIn ? 'warning' : 'success', {
+      showOverlay(data?.alreadyCheckedIn || data?.alreadyCheckedOut ? 'warning' : 'success', {
         ...data,
         message: data?.bridgeMessage || data?.message,
       });
     },
     onError: (error) =>
-      showOverlay('error', { name: 'Fingerprint scan error', message: error.message }),
+      showOverlay('error', {
+        name: attendanceMode === 'check_out' ? 'Fingerprint check-out error' : 'Fingerprint scan error',
+        message: error.message,
+      }),
   });
 
   const toggleMutation = useMutation({
@@ -225,19 +272,44 @@ export default function CheckInConsolePage() {
   });
 
   useEffect(() => {
-    if (activeTab !== 'qr' || qrMode !== 'camera') {
-      if (scannerRef.current?.isScanning) {
-        scannerRef.current.stop().catch(() => {});
+    const stopScanner = async () => {
+      const scanner = scannerRef.current;
+      scannerRef.current = null;
+      scannerStartingRef.current = false;
+
+      if (!scanner) {
+        return;
       }
+
+      try {
+        if (scanner.isScanning) {
+          await scanner.stop();
+        } else if (typeof scanner.clear === 'function') {
+          await scanner.clear();
+        }
+      } catch (_) {
+        // Ignore scanner shutdown race conditions and allow the next start attempt.
+      }
+    };
+
+    if (activeTab !== 'qr' || qrMode !== 'camera') {
+      stopScanner();
       return undefined;
     }
 
     let disposed = false;
 
     const startScanner = async () => {
+      if (scannerRef.current || scannerStartingRef.current) {
+        return;
+      }
+
+      scannerStartingRef.current = true;
+
       try {
         const { Html5Qrcode } = await import('html5-qrcode');
         if (disposed) {
+          scannerStartingRef.current = false;
           return;
         }
 
@@ -247,11 +319,14 @@ export default function CheckInConsolePage() {
           { facingMode: 'environment' },
           { fps: 10, qrbox: 260 },
           (decodedText) => {
-            qrMutation.mutate(decodedText);
+            latestQrActionRef.current?.(decodedText);
           },
           () => {},
         );
+        scannerStartingRef.current = false;
       } catch (_) {
+        scannerStartingRef.current = false;
+        scannerRef.current = null;
         // Keep manual entry available when camera setup is unavailable.
       }
     };
@@ -260,11 +335,9 @@ export default function CheckInConsolePage() {
 
     return () => {
       disposed = true;
-      if (scannerRef.current?.isScanning) {
-        scannerRef.current.stop().catch(() => {});
-      }
+      stopScanner();
     };
-  }, [activeTab, qrMode, qrMutation]);
+  }, [activeTab, qrMode]);
 
   const manualResults = manualSearchQuery.data?.members || [];
   const parentResults = childParentQuery.data?.members || [];
@@ -306,9 +379,19 @@ export default function CheckInConsolePage() {
       ['Visitors', summary.visitors || 0],
       ['Children', summary.children || 0],
       ['Online', summary.online || 0],
+      ['Inside', summary.currentlyInside || 0],
+      ['Checked Out', summary.checkedOut || 0],
       ['Total', summary.total || 0],
     ],
-    [summary.children, summary.members, summary.online, summary.total, summary.visitors],
+    [
+      summary.checkedOut,
+      summary.children,
+      summary.currentlyInside,
+      summary.members,
+      summary.online,
+      summary.total,
+      summary.visitors,
+    ],
   );
 
   if (!canViewServices || !canCheckInServices) {
@@ -382,9 +465,19 @@ export default function CheckInConsolePage() {
               <AttendanceCounter count={summary.total || 0} />
               <div className="text-right">
                 <p className="text-sm text-white/55">{new Date().toLocaleTimeString()}</p>
-                <p className="mt-1 inline-flex items-center gap-2 rounded-full border border-emerald-400/30 bg-emerald-500/15 px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-emerald-300">
-                  <span className="h-2 w-2 animate-pulse rounded-full bg-emerald-400" />
-                  Check-in OPEN
+                <p
+                  className={`mt-1 inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] ${
+                    attendanceMode === 'check_out'
+                      ? 'border border-amber-400/30 bg-amber-500/15 text-amber-200'
+                      : 'border border-emerald-400/30 bg-emerald-500/15 text-emerald-300'
+                  }`}
+                >
+                  <span
+                    className={`h-2 w-2 animate-pulse rounded-full ${
+                      attendanceMode === 'check_out' ? 'bg-amber-300' : 'bg-emerald-400'
+                    }`}
+                  />
+                  {attendanceMode === 'check_out' ? 'Check-Out Mode' : 'Check-In Open'}
                 </p>
               </div>
               {canModifyServices ? (
@@ -406,6 +499,22 @@ export default function CheckInConsolePage() {
         <div className="flex min-h-0 flex-1">
           <main className="flex min-h-0 flex-1 flex-col px-4 py-4 sm:px-6">
             <div className="flex flex-wrap gap-2">
+              {attendanceModes.map((mode) => (
+                <button
+                  key={mode.value}
+                  type="button"
+                  onClick={() => setAttendanceMode(mode.value)}
+                  className={`rounded-full px-4 py-2 text-sm font-semibold ${
+                    attendanceMode === mode.value
+                      ? mode.value === 'check_out'
+                        ? 'bg-amber-400 text-primary'
+                        : 'bg-emerald-400 text-primary'
+                      : 'border border-white/10 bg-white/5 text-white/70'
+                  }`}
+                >
+                  {mode.label}
+                </button>
+              ))}
               {tabs.map((tab) => (
                 <button
                   key={tab.value}
@@ -452,7 +561,11 @@ export default function CheckInConsolePage() {
                         <span className="text-sm font-semibold text-white/70">Enter QR Code / Member ID</span>
                         <input
                           className="w-full rounded-2xl border border-white/10 bg-[#081125] px-4 py-4 text-lg text-white"
-                          placeholder="Scan unavailable? Enter code manually"
+                          placeholder={
+                            attendanceMode === 'check_out'
+                              ? 'Scanner unavailable? Enter code to check out'
+                              : 'Scan unavailable? Enter code manually'
+                          }
                           onKeyDown={(event) => {
                             if (event.key === 'Enter' && event.currentTarget.value.trim()) {
                               qrMutation.mutate(event.currentTarget.value.trim());
@@ -511,17 +624,37 @@ export default function CheckInConsolePage() {
               {activeTab === 'biometric' ? (
                 <div className="mx-auto flex h-full w-full max-w-3xl flex-col justify-center space-y-5">
                   <div className="rounded-[28px] border border-white/10 bg-[#081125] p-6">
-                    <div className="flex flex-wrap items-start justify-between gap-4">
+                    <div className="flex flex-wrap items-start justify-between gap-4 rounded-2xl border border-accent/25 bg-[#f6efdc] p-5">
                       <div>
-                        <p className="text-sm uppercase tracking-[0.22em] text-accent/80">Fingerprint Scanner</p>
-                        <h2 className="mt-2 text-2xl font-semibold text-white">Biometric member check-in</h2>
-                        <p className="mt-2 max-w-xl text-sm text-white/60">
-                          Scan a saved fingerprint to match the member profile and register attendance automatically for this service.
+                        <p className="text-sm uppercase tracking-[0.22em] text-[#b68c2c]">Fingerprint Scanner</p>
+                        <h2 className="mt-2 text-2xl font-semibold text-slate-900">
+                          {attendanceMode === 'check_out'
+                            ? 'Biometric member check-out'
+                            : 'Biometric member check-in'}
+                        </h2>
+                        <p className="mt-2 max-w-xl text-sm text-slate-700">
+                          {attendanceMode === 'check_out'
+                            ? 'Scan a saved fingerprint to find the member and mark them out for this service.'
+                            : 'Scan a saved fingerprint to match the member profile and register attendance automatically for this service.'}
                         </p>
                       </div>
                       <div className="flex flex-wrap gap-2">
                         <Button
-                          variant="ghost"
+                          variant="subtle"
+                          className="border-[#d6bf84] bg-white text-slate-800 hover:border-[#c8a64a] hover:bg-white disabled:opacity-100 disabled:text-slate-500"
+                          onClick={() => {
+                            downloadBiometricBridgeWindowsInstaller();
+                            showInfoToast(
+                              'Windows installer downloaded. Run it on the scanner PC, then use Start Prynova Fingerprint Bridge.',
+                            );
+                          }}
+                        >
+                          <Download className="mr-2 h-4 w-4" />
+                          Download Windows Installer
+                        </Button>
+                        <Button
+                          variant="subtle"
+                          className="border-[#d6bf84] bg-white text-slate-800 hover:border-[#c8a64a] hover:bg-white disabled:opacity-100 disabled:text-slate-500"
                           onClick={() => biometricBridgeQuery.refetch()}
                           disabled={biometricBridgeQuery.isFetching}
                         >
@@ -529,11 +662,18 @@ export default function CheckInConsolePage() {
                         </Button>
                         <Button
                           variant="secondary"
+                          className="min-h-[48px] px-5 disabled:opacity-90 disabled:bg-slate-300 disabled:text-slate-600"
                           onClick={() => biometricMutation.mutate()}
                           disabled={biometricMutation.isPending}
                         >
                           <Fingerprint className="mr-2 h-4 w-4" />
-                          {biometricMutation.isPending ? 'Scanning Fingerprint...' : 'Scan Fingerprint'}
+                          {biometricMutation.isPending
+                            ? attendanceMode === 'check_out'
+                              ? 'Checking Out...'
+                              : 'Scanning Fingerprint...'
+                            : attendanceMode === 'check_out'
+                              ? 'Scan to Check Out'
+                              : 'Scan Fingerprint'}
                         </Button>
                       </div>
                     </div>
@@ -552,7 +692,8 @@ export default function CheckInConsolePage() {
                         </p>
                         <p className="mt-2 text-sm text-white/60">
                           {biometricBridgeQuery.isError
-                            ? 'Start the local ZKT bridge service on this machine, then refresh the bridge status.'
+                            ? biometricBridgeQuery.error?.message ||
+                              'On a fresh Windows scanner PC, download the installer, run it once, then launch Start Prynova Fingerprint Bridge and refresh the bridge status.'
                             : 'The scanner bridge is reachable and ready to identify fingerprint matches.'}
                         </p>
                       </div>
@@ -586,6 +727,11 @@ export default function CheckInConsolePage() {
 
               {activeTab === 'visitor' ? (
                 <div className="mx-auto max-w-2xl space-y-4">
+                  {attendanceMode === 'check_out' ? (
+                    <div className="rounded-2xl border border-amber-400/20 bg-amber-500/10 px-4 py-4 text-sm text-amber-100">
+                      Visitor check-out is not captured from this screen yet. Use the service detail attendance list to check a visitor out.
+                    </div>
+                  ) : null}
                   <input
                     value={visitorForm.name}
                     onChange={(event) => setVisitorForm((current) => ({ ...current, name: event.target.value }))}
@@ -614,7 +760,12 @@ export default function CheckInConsolePage() {
                       }
                     />
                   </label>
-                  <Button variant="secondary" className="w-full py-4 text-base" onClick={() => visitorMutation.mutate(visitorForm)}>
+                  <Button
+                    variant="secondary"
+                    className="w-full py-4 text-base"
+                    disabled={attendanceMode === 'check_out'}
+                    onClick={() => visitorMutation.mutate(visitorForm)}
+                  >
                     Check In Visitor
                   </Button>
                 </div>
@@ -622,6 +773,11 @@ export default function CheckInConsolePage() {
 
               {activeTab === 'child' ? (
                 <div className="mx-auto max-w-2xl space-y-4">
+                  {attendanceMode === 'check_out' ? (
+                    <div className="rounded-2xl border border-amber-400/20 bg-amber-500/10 px-4 py-4 text-sm text-amber-100">
+                      Child check-out is handled from the service detail attendance list so pickup records stay clear and controlled.
+                    </div>
+                  ) : null}
                   <div className="space-y-2">
                     <span className="text-sm font-semibold text-white/70">Parent Member</span>
                     <input
@@ -682,6 +838,7 @@ export default function CheckInConsolePage() {
                   <Button
                     variant="secondary"
                     className="w-full py-4 text-base"
+                    disabled={attendanceMode === 'check_out'}
                     onClick={() =>
                       childMutation.mutate({
                         parentMemberId: selectedParent?.memberId,
@@ -701,7 +858,7 @@ export default function CheckInConsolePage() {
             <div className="space-y-4">
               <div>
                 <p className="text-sm uppercase tracking-[0.22em] text-white/45">Live Sidebar</p>
-                <h2 className="mt-2 text-xl font-semibold text-white">Last 10 check-ins</h2>
+                <h2 className="mt-2 text-xl font-semibold text-white">Latest attendance activity</h2>
               </div>
               <div className="max-h-[calc(100vh-220px)] space-y-3 overflow-y-auto pr-1">
                 {liveItems.map((item) => (
@@ -720,7 +877,11 @@ export default function CheckInConsolePage() {
                       <div className="min-w-0">
                         <p className="truncate font-semibold text-white">{item.name || item.memberName || 'Guest'}</p>
                         <p className="text-xs text-white/45">
-                          {item.checkedInAt ? new Date(item.checkedInAt).toLocaleTimeString() : ''}
+                          {item.checkedOutAt
+                            ? `Out ${new Date(item.checkedOutAt).toLocaleTimeString()}`
+                            : item.checkedInAt
+                              ? `In ${new Date(item.checkedInAt).toLocaleTimeString()}`
+                              : ''}
                         </p>
                       </div>
                       <span

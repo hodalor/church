@@ -1,4 +1,5 @@
 const DEFAULT_BRIDGE_URL = 'http://127.0.0.1:4113';
+const DEFAULT_API_BASE_URL = 'http://localhost:5000/api/v1';
 
 const asObject = (value) =>
   value && typeof value === 'object' && !Array.isArray(value) ? value : {};
@@ -20,6 +21,20 @@ const resolveBridgeUrl = () => {
     DEFAULT_BRIDGE_URL;
 
   return String(configuredUrl).replace(/\/+$/, '');
+};
+
+const resolveApiBaseUrl = () => {
+  const configuredUrl =
+    process.env.REACT_APP_API_BASE_URL ||
+    process.env.REACT_APP_API_URL ||
+    DEFAULT_API_BASE_URL;
+
+  return String(configuredUrl).replace(/\/+$/, '');
+};
+
+const resolveBackendBaseUrl = () => {
+  const apiBaseUrl = resolveApiBaseUrl();
+  return apiBaseUrl.replace(/\/api\/v1$/i, '');
 };
 
 const readJsonResponse = async (response) => {
@@ -90,7 +105,16 @@ const callBridgeWithFallback = async (paths = [], options = {}) => {
 
 export const getBiometricBridgeStatus = async () => {
   try {
-    return await callBridge('/health', { method: 'GET' });
+    const data = await callBridge('/health', { method: 'GET' });
+
+    if (data?.ready === false) {
+      throw new Error(
+        data?.message ||
+          'Fingerprint bridge is installed but not configured yet. Finish the scanner setup, then refresh bridge status.',
+      );
+    }
+
+    return data;
   } catch (error) {
     throw new Error(
       error.message ||
@@ -190,6 +214,16 @@ export const extractFingerprintDeviceMeta = (payload = {}) => {
 export const extractFingerprintMessage = (payload = {}) => {
   const data = unwrapBridgePayload(payload);
   return pickText(data.message, data.statusMessage, data.detail, data.description);
+};
+
+export const downloadBiometricBridgeWindowsInstaller = () => {
+  const href = `${resolveBackendBaseUrl()}/api/v1/setup/biometric-bridge/windows-installer`;
+  const anchor = document.createElement('a');
+  anchor.href = href;
+  anchor.download = 'install-prynova-biometric-bridge.cmd';
+  document.body.appendChild(anchor);
+  anchor.click();
+  anchor.remove();
 };
 
 export { resolveBridgeUrl };

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Camera, Fingerprint, Search, X } from 'lucide-react';
+import { Camera, Download, Fingerprint, Search, X } from 'lucide-react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import {
   getFamilyGroup,
@@ -34,6 +34,7 @@ import useMinistryOptions from '../../hooks/useMinistryOptions';
 import { useCapabilities } from '../../hooks/useCapabilities';
 import { supabaseUpload, DEFAULT_SUPABASE_BUCKET } from '../../utils/supabaseUpload';
 import {
+  downloadBiometricBridgeWindowsInstaller,
   enrollFingerprint,
   extractFingerprintDeviceMeta,
   extractFingerprintMessage,
@@ -429,7 +430,7 @@ export default function MemberDetailPage() {
     : bridgeStatusQuery.isLoading || bridgeStatusQuery.isFetching
       ? 'Checking the local fingerprint bridge...'
       : bridgeStatusQuery.isError
-        ? 'Start the local ZKT bridge service, then refresh bridge status.'
+        ? 'Bridge not ready yet. Re-run the Windows installer if needed, then launch Start Prynova Fingerprint Bridge and refresh status.'
         : '';
   const isBiometricCaptureDisabled =
     biometricEnrollMutation.isPending ||
@@ -779,20 +780,35 @@ export default function MemberDetailPage() {
                       Keep the fingerprint enrollment status on the member profile. Use the template ID saved from the ZKT scanner bridge once capture is complete.
                     </p>
                   </div>
-                  <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-accent/20 bg-accent/10 px-4 py-3">
+                  <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-accent/25 bg-[#f6efdc] px-4 py-3">
                     <div>
-                      <p className="text-xs uppercase tracking-[0.2em] text-accent/80">Scanner Bridge</p>
-                      <p className="mt-1 text-sm text-white/80">
+                      <p className="text-xs uppercase tracking-[0.2em] text-[#b68c2c]">Scanner Bridge</p>
+                      <p className="mt-1 text-sm text-slate-700">
                         {bridgeStatusQuery.isLoading
                           ? 'Checking local fingerprint bridge...'
                           : bridgeStatusQuery.isError
-                            ? 'Bridge offline. Start the local ZKT bridge service, then refresh status.'
+                            ? bridgeStatusQuery.error?.message ||
+                              'Bridge offline. On a fresh Windows scanner PC, run the installer once, then launch Start Prynova Fingerprint Bridge and refresh status.'
                             : 'Bridge online and ready for enrollment.'}
                       </p>
                     </div>
                     <div className="flex flex-wrap gap-2">
                       <Button
-                        variant="ghost"
+                        variant="subtle"
+                        className="border-[#d6bf84] bg-white text-slate-800 hover:border-[#c8a64a] hover:bg-white disabled:opacity-100 disabled:text-slate-500"
+                        onClick={() => {
+                          downloadBiometricBridgeWindowsInstaller();
+                          showInfoToast(
+                            'Windows installer downloaded. Run it on the scanner PC, then use Start Prynova Fingerprint Bridge.',
+                          );
+                        }}
+                      >
+                        <Download className="mr-2 h-4 w-4" />
+                        Download Windows Installer
+                      </Button>
+                      <Button
+                        variant="subtle"
+                        className="border-[#d6bf84] bg-white text-slate-800 hover:border-[#c8a64a] hover:bg-white disabled:opacity-100 disabled:text-slate-500"
                         onClick={() => bridgeStatusQuery.refetch()}
                         disabled={bridgeStatusQuery.isFetching}
                       >
@@ -800,6 +816,7 @@ export default function MemberDetailPage() {
                       </Button>
                       <Button
                         variant="secondary"
+                        className="min-h-[48px] px-5 disabled:opacity-90 disabled:bg-slate-300 disabled:text-slate-600"
                         onClick={() => biometricEnrollMutation.mutate()}
                         disabled={isBiometricCaptureDisabled}
                         title={biometricCaptureDisabledReason || 'Capture member fingerprint'}

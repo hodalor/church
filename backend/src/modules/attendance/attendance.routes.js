@@ -10,6 +10,7 @@ import {
   liveCheckInsValidation,
   listServicesValidation,
   manualCheckInValidation,
+  manualCheckOutValidation,
   memberAttendanceReportValidation,
   platformAttendanceOverviewValidation,
   qrCheckInValidation,
@@ -24,6 +25,8 @@ import {
   visitorCheckInValidation,
   childCheckInValidation,
   biometricCheckInValidation,
+  biometricCheckOutValidation,
+  checkOutRecordValidation,
 } from './attendance.validation.js';
 
 const attendanceRouter = Router();
@@ -81,6 +84,12 @@ attendanceRouter.delete(
   validate,
   attendanceController.removeCheckIn,
 );
+attendanceRouter.patch(
+  '/services/:serviceId/check-ins/:checkInId/check-out',
+  checkOutRecordValidation,
+  validate,
+  attendanceController.checkOutAttendanceRecord,
+);
 attendanceRouter.get(
   '/services/:serviceId/live',
   liveCheckInsValidation,
@@ -106,6 +115,12 @@ attendanceRouter.post(
   attendanceController.manualCheckIn,
 );
 attendanceRouter.post(
+  '/services/:serviceId/check-out/member',
+  manualCheckOutValidation,
+  validate,
+  attendanceController.manualCheckOut,
+);
+attendanceRouter.post(
   '/services/:serviceId/check-in/visitor',
   visitorCheckInValidation,
   validate,
@@ -122,6 +137,18 @@ attendanceRouter.post(
   biometricCheckInValidation,
   validate,
   attendanceController.biometricCheckIn,
+);
+attendanceRouter.post(
+  '/services/:serviceId/check-out/qr',
+  qrCheckInValidation,
+  validate,
+  attendanceController.qrCheckOut,
+);
+attendanceRouter.post(
+  '/services/:serviceId/check-out/biometric',
+  biometricCheckOutValidation,
+  validate,
+  attendanceController.biometricCheckOut,
 );
 attendanceRouter.get(
   '/check-in/search',

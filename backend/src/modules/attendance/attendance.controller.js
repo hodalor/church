@@ -214,6 +214,18 @@ export const manualCheckIn = asyncHandler(async (req, res) => {
   return success(res, data, 'Manual attendance processed successfully.');
 });
 
+export const manualCheckOut = asyncHandler(async (req, res) => {
+  ensureAttendanceCapability(req, ['attendance.create', 'attendance.services.check_in']);
+  await ensureServiceBranchAccess(req, req.params.serviceId);
+  const data = await attendanceService.manualCheckOut(
+    resolveScopedTenantId(req),
+    req.params.serviceId,
+    req.body.memberId,
+    attendanceActor(req),
+  );
+  return success(res, data, 'Manual check-out processed successfully.');
+});
+
 export const visitorCheckIn = asyncHandler(async (req, res) => {
   ensureAttendanceCapability(req, ['attendance.create', 'attendance.services.check_in']);
   await ensureServiceBranchAccess(req, req.params.serviceId);
@@ -248,6 +260,42 @@ export const biometricCheckIn = asyncHandler(async (req, res) => {
     attendanceActor(req),
   );
   return success(res, data, 'Biometric attendance processed successfully.');
+});
+
+export const qrCheckOut = asyncHandler(async (req, res) => {
+  ensureAttendanceCapability(req, ['attendance.create', 'attendance.services.check_in']);
+  await ensureServiceBranchAccess(req, req.params.serviceId);
+  const data = await attendanceService.qrCheckOut(
+    resolveScopedTenantId(req),
+    req.params.serviceId,
+    req.body.qrCode || req.body.qrData,
+    attendanceActor(req),
+  );
+  return success(res, data, 'QR check-out processed successfully.');
+});
+
+export const biometricCheckOut = asyncHandler(async (req, res) => {
+  ensureAttendanceCapability(req, ['attendance.create', 'attendance.services.check_in']);
+  await ensureServiceBranchAccess(req, req.params.serviceId);
+  const data = await attendanceService.biometricCheckOut(
+    resolveScopedTenantId(req),
+    req.params.serviceId,
+    req.body,
+    attendanceActor(req),
+  );
+  return success(res, data, 'Biometric check-out processed successfully.');
+});
+
+export const checkOutAttendanceRecord = asyncHandler(async (req, res) => {
+  ensureAttendanceCapability(req, ['attendance.create', 'attendance.services.check_in']);
+  await ensureServiceBranchAccess(req, req.params.serviceId);
+  const data = await attendanceService.checkOutAttendanceRecord(
+    resolveScopedTenantId(req),
+    req.params.serviceId,
+    req.params.checkInId,
+    attendanceActor(req),
+  );
+  return success(res, data, 'Attendance record checked out successfully.');
 });
 
 export const getLiveCheckIns = asyncHandler(async (req, res) => {
