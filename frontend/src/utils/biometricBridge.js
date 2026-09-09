@@ -120,10 +120,12 @@ const callBridgeWithFallback = async (paths = [], options = {}) => {
 export const getBiometricBridgeStatus = async () => {
   try {
     const data = await callBridge('/health', { method: 'GET' });
+    const provider = asObject(data.provider);
+    const isReady = data.ready !== false && provider.ready !== false && data.ok !== false;
 
-    if (data?.ready === false) {
+    if (!isReady) {
       throw new Error(
-        data?.message ||
+        pickText(data?.message, provider?.message) ||
           'Fingerprint bridge is installed but not configured yet. Finish the scanner setup, then refresh bridge status.',
       );
     }
@@ -203,7 +205,17 @@ export const extractFingerprintMemberId = (payload = {}) => {
   const match = asObject(data.match);
   const member = asObject(data.member);
 
-  return pickText(data.memberId, match.memberId, member.memberId);
+  return pickText(
+    data.memberId,
+    data.subjectId,
+    data.subject_id,
+    match.memberId,
+    match.subjectId,
+    match.subject_id,
+    member.memberId,
+    member.subjectId,
+    member.subject_id,
+  );
 };
 
 export const extractFingerprintDeviceMeta = (payload = {}) => {
@@ -240,6 +252,30 @@ export const extractFingerprintDeviceMeta = (payload = {}) => {
 export const extractFingerprintMessage = (payload = {}) => {
   const data = unwrapBridgePayload(payload);
   return pickText(data.message, data.statusMessage, data.detail, data.description);
+};
+
+export const extractFingerprintPreviewImage = (payload = {}) => {
+  const data = unwrapBridgePayload(payload);
+  const fingerprint = asObject(data.fingerprint);
+  const match = asObject(data.match);
+
+  return pickText(
+    data.previewImage,
+    data.preview_image,
+    fingerprint.previewImage,
+    fingerprint.preview_image,
+    match.previewImage,
+    match.preview_image,
+  );
+};
+
+export const extractFingerprintCaptureStats = (payload = {}) => {
+  const data = unwrapBridgePayload(payload);
+
+  return {
+    captureCount: Number(data.captureCount || data.capture_count || 0) || null,
+    qualityScore: Number(data.qualityScore || data.quality_score || data.score || 0) || null,
+  };
 };
 
 export const downloadBiometricBridgeWindowsInstaller = () => {

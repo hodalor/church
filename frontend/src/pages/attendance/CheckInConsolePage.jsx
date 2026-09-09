@@ -22,10 +22,12 @@ import { searchMembers } from '../../api/endpoints/members';
 import useAttendanceAccess from '../../hooks/useAttendanceAccess';
 import useDebounce from '../../hooks/useDebounce';
 import {
+  extractFingerprintCaptureStats,
   downloadBiometricBridgeWindowsInstaller,
   extractFingerprintDeviceMeta,
   extractFingerprintMemberId,
   extractFingerprintMessage,
+  extractFingerprintPreviewImage,
   extractFingerprintTemplateId,
   getBiometricBridgeStatus,
   identifyFingerprint,
@@ -56,6 +58,9 @@ const createVisitorForm = () => ({
   email: '',
   firstTimer: true,
 });
+
+const getRequestErrorMessage = (error, fallback) =>
+  error?.response?.data?.message || error?.message || fallback;
 
 export default function CheckInConsolePage() {
   const navigate = useNavigate();
@@ -114,6 +119,8 @@ export default function CheckInConsolePage() {
   const service = serviceQuery.data?.service || serviceQuery.data || {};
   const summary = liveQuery.data?.summary || service.stats || {};
   const liveItems = liveQuery.data?.items || liveQuery.data?.checkIns || [];
+  const isServiceCheckInOpen = service?.checkInOpen === true;
+  const isCheckInBlocked = attendanceMode === 'check_in' && !isServiceCheckInOpen;
 
   const invalidateAttendance = () => {
     queryClient.invalidateQueries({ queryKey: ['attendance-live-checkins', serviceId] });
@@ -139,10 +146,15 @@ export default function CheckInConsolePage() {
   };
 
   const qrMutation = useMutation({
-    mutationFn: (qrCode) =>
-      attendanceMode === 'check_out'
+    mutationFn: (qrCode) => {
+      if (isCheckInBlocked) {
+        throw new Error(`Check-in is not open for ${service.title || 'this service'}.`);
+      }
+
+      return attendanceMode === 'check_out'
         ? checkOutByQr(serviceId, { qrCode })
-        : checkInByQr(serviceId, { qrCode }),
+        : checkInByQr(serviceId, { qrCode });
+    },
     onSuccess: (data) => {
       invalidateAttendance();
       if (data?.alreadyCheckedIn || data?.alreadyCheckedOut) {
@@ -154,7 +166,7 @@ export default function CheckInConsolePage() {
     onError: (error) =>
       showOverlay('error', {
         name: attendanceMode === 'check_out' ? 'Check-out error' : 'Check-in error',
-        message: error.message,
+        message: getRequestErrorMessage(error, 'Unable to complete QR attendance action.'),
       }),
   });
 
@@ -163,10 +175,15 @@ export default function CheckInConsolePage() {
   };
 
   const memberMutation = useMutation({
-    mutationFn: (memberId) =>
-      attendanceMode === 'check_out'
+    mutationFn: (memberId) => {
+      if (isCheckInBlocked) {
+        throw new Error(`Check-in is not open for ${service.title || 'this service'}.`);
+      }
+
+      return attendanceMode === 'check_out'
         ? manualMemberCheckOut(serviceId, { memberId })
-        : manualMemberCheckIn(serviceId, { memberId }),
+        : manualMemberCheckIn(serviceId, { memberId });
+    },
     onSuccess: (data) => {
       invalidateAttendance();
       showOverlay(data?.alreadyCheckedIn || data?.alreadyCheckedOut ? 'warning' : 'success', data);
@@ -174,12 +191,18 @@ export default function CheckInConsolePage() {
     onError: (error) =>
       showOverlay('error', {
         name: attendanceMode === 'check_out' ? 'Check-out error' : 'Check-in error',
-        message: error.message,
+        message: getRequestErrorMessage(error, 'Unable to complete manual attendance action.'),
       }),
   });
 
   const visitorMutation = useMutation({
-    mutationFn: (payload) => visitorCheckIn(serviceId, payload),
+    mutationFn: (payload) => {
+      if (isCheckInBlocked) {
+        throw new Error(`Check-in is not open for ${service.title || 'this service'}.`);
+      }
+
+      return visitorCheckIn(serviceId, payload);
+    },
     onSuccess: (data) => {
       invalidateAttendance();
       setVisitorForm(createVisitorForm());
@@ -188,11 +211,21 @@ export default function CheckInConsolePage() {
         message: 'Visitor checked in successfully',
       });
     },
-    onError: (error) => showOverlay('error', { name: 'Visitor check-in error', message: error.message }),
+    onError: (error) =>
+      showOverlay('error', {
+        name: 'Visitor check-in error',
+        message: getRequestErrorMessage(error, 'Unable to check in visitor.'),
+      }),
   });
 
   const childMutation = useMutation({
-    mutationFn: (payload) => childCheckIn(serviceId, payload),
+    mutationFn: (payload) => {
+      if (isCheckInBlocked) {
+        throw new Error(`Check-in is not open for ${service.title || 'this service'}.`);
+      }
+
+      return childCheckIn(serviceId, payload);
+    },
     onSuccess: (data) => {
       invalidateAttendance();
       setChildForm({ childName: '', childAge: 7 });
@@ -202,11 +235,19 @@ export default function CheckInConsolePage() {
         parentName: data?.parentName || selectedParent?.firstName || 'Parent',
       });
     },
-    onError: (error) => showOverlay('error', { name: 'Child check-in error', message: error.message }),
+    onError: (error) =>
+      showOverlay('error', {
+        name: 'Child check-in error',
+        message: getRequestErrorMessage(error, 'Unable to check in child.'),
+      }),
   });
 
   const biometricMutation = useMutation({
     mutationFn: async () => {
+      if (isCheckInBlocked) {
+        throw new Error(`Check-in is not open for ${service.title || 'this service'}.`);
+      }
+
       const bridgePayload = await identifyFingerprint({
         serviceId,
         serviceTitle: service.title,
@@ -216,6 +257,8 @@ export default function CheckInConsolePage() {
       const memberId = extractFingerprintMemberId(bridgePayload);
       const bridgeMessage = extractFingerprintMessage(bridgePayload);
       const deviceMeta = extractFingerprintDeviceMeta(bridgePayload);
+      const previewImage = extractFingerprintPreviewImage(bridgePayload);
+      const captureStats = extractFingerprintCaptureStats(bridgePayload);
 
       if (!templateId && !memberId) {
         throw new Error('Scanner bridge did not return a fingerprint match.');
@@ -243,6 +286,8 @@ export default function CheckInConsolePage() {
         templateId,
         bridgeMessage,
         deviceMeta,
+        previewImage,
+        captureStats,
       };
     },
     onSuccess: (data) => {
@@ -251,6 +296,8 @@ export default function CheckInConsolePage() {
         name: data?.memberName || data?.name || 'Matched member',
         templateId: data?.templateId || '',
         bridgeMessage: data?.bridgeMessage || '',
+        previewImage: data?.previewImage || '',
+        qualityScore: data?.captureStats?.qualityScore || null,
       });
       showOverlay(data?.alreadyCheckedIn || data?.alreadyCheckedOut ? 'warning' : 'success', {
         ...data,
@@ -260,7 +307,7 @@ export default function CheckInConsolePage() {
     onError: (error) =>
       showOverlay('error', {
         name: attendanceMode === 'check_out' ? 'Fingerprint check-out error' : 'Fingerprint scan error',
-        message: error.message,
+        message: getRequestErrorMessage(error, 'Unable to complete biometric attendance action.'),
       }),
   });
 
@@ -469,28 +516,48 @@ export default function CheckInConsolePage() {
                   className={`mt-1 inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] ${
                     attendanceMode === 'check_out'
                       ? 'border border-amber-400/30 bg-amber-500/15 text-amber-200'
-                      : 'border border-emerald-400/30 bg-emerald-500/15 text-emerald-300'
+                      : isServiceCheckInOpen
+                        ? 'border border-emerald-400/30 bg-emerald-500/15 text-emerald-300'
+                        : 'border border-rose-400/30 bg-rose-500/15 text-rose-200'
                   }`}
                 >
                   <span
                     className={`h-2 w-2 animate-pulse rounded-full ${
-                      attendanceMode === 'check_out' ? 'bg-amber-300' : 'bg-emerald-400'
+                      attendanceMode === 'check_out'
+                        ? 'bg-amber-300'
+                        : isServiceCheckInOpen
+                          ? 'bg-emerald-400'
+                          : 'bg-rose-300'
                     }`}
                   />
-                  {attendanceMode === 'check_out' ? 'Check-Out Mode' : 'Check-In Open'}
+                  {attendanceMode === 'check_out'
+                    ? 'Check-Out Mode'
+                    : isServiceCheckInOpen
+                      ? 'Check-In Open'
+                      : 'Check-In Closed'}
                 </p>
               </div>
               {canModifyServices ? (
-                <Button
-                  variant="ghost"
-                  onClick={() => {
-                    if (window.confirm('Close check-in for this service?')) {
-                      toggleMutation.mutate(false);
-                    }
-                  }}
-                >
-                  Close Check-in
-                </Button>
+                isServiceCheckInOpen ? (
+                  <Button
+                    variant="ghost"
+                    onClick={() => {
+                      if (window.confirm('Close check-in for this service?')) {
+                        toggleMutation.mutate(false);
+                      }
+                    }}
+                  >
+                    Close Check-in
+                  </Button>
+                ) : (
+                  <Button
+                    variant="secondary"
+                    onClick={() => toggleMutation.mutate(true)}
+                    disabled={toggleMutation.isPending}
+                  >
+                    Re-Open Check-in
+                  </Button>
+                )
               ) : null}
             </div>
           </div>
@@ -532,6 +599,12 @@ export default function CheckInConsolePage() {
             </div>
 
             <div className="mt-4 min-h-0 flex-1 rounded-[28px] border border-white/10 bg-[#0b1120] p-4 sm:p-6">
+              {isCheckInBlocked ? (
+                <div className="mb-4 rounded-2xl border border-rose-400/20 bg-rose-500/10 px-4 py-4 text-sm text-rose-100">
+                  Check-in is closed for <span className="font-semibold">{service.title || 'this service'}</span>.
+                  Switch to check-out mode or re-open check-in before scanning members, visitors, or children.
+                </div>
+              ) : null}
               {activeTab === 'qr' ? (
                 <div className="grid h-full gap-4 lg:grid-rows-[auto_1fr]">
                   <div className="flex gap-2">
@@ -664,7 +737,7 @@ export default function CheckInConsolePage() {
                           variant="secondary"
                           className="min-h-[48px] px-5 disabled:opacity-90 disabled:bg-slate-300 disabled:text-slate-600"
                           onClick={() => biometricMutation.mutate()}
-                          disabled={biometricMutation.isPending}
+                          disabled={biometricMutation.isPending || isCheckInBlocked}
                         >
                           <Fingerprint className="mr-2 h-4 w-4" />
                           {biometricMutation.isPending
@@ -704,12 +777,24 @@ export default function CheckInConsolePage() {
                       <div className="mt-4 rounded-2xl border border-white/10 bg-white/5 px-4 py-4">
                         {lastBiometricMatch ? (
                           <div className="space-y-2">
+                            {lastBiometricMatch.previewImage ? (
+                              <img
+                                src={lastBiometricMatch.previewImage}
+                                alt="Fingerprint preview"
+                                className="h-36 w-full rounded-2xl border border-white/10 bg-white object-contain"
+                              />
+                            ) : null}
                             <p className="text-lg font-semibold text-white">{lastBiometricMatch.name}</p>
                             <p className="text-sm text-white/60">
                               {lastBiometricMatch.templateId
                                 ? `Template ID: ${lastBiometricMatch.templateId}`
                                 : 'Fingerprint matched without template ID preview.'}
                             </p>
+                            {lastBiometricMatch.qualityScore ? (
+                              <p className="text-sm text-white/60">
+                                Match score: {lastBiometricMatch.qualityScore}
+                              </p>
+                            ) : null}
                             {lastBiometricMatch.bridgeMessage ? (
                               <p className="text-sm text-accent/80">{lastBiometricMatch.bridgeMessage}</p>
                             ) : null}
@@ -763,7 +848,7 @@ export default function CheckInConsolePage() {
                   <Button
                     variant="secondary"
                     className="w-full py-4 text-base"
-                    disabled={attendanceMode === 'check_out'}
+                    disabled={attendanceMode === 'check_out' || isCheckInBlocked}
                     onClick={() => visitorMutation.mutate(visitorForm)}
                   >
                     Check In Visitor
@@ -838,7 +923,7 @@ export default function CheckInConsolePage() {
                   <Button
                     variant="secondary"
                     className="w-full py-4 text-base"
-                    disabled={attendanceMode === 'check_out'}
+                    disabled={attendanceMode === 'check_out' || isCheckInBlocked}
                     onClick={() =>
                       childMutation.mutate({
                         parentMemberId: selectedParent?.memberId,

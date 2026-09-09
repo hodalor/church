@@ -259,9 +259,13 @@ const getMemberOrThrow = async (tenantId, memberId) => {
 
 const getMemberByBiometricOrThrow = async (tenantId, payload = {}) => {
   const templateId = normalizeString(
-    payload.templateId || payload.fingerprintTemplateId || payload.fingerprint_template_id,
+    payload.templateId ||
+      payload.templateRef ||
+      payload.template_ref ||
+      payload.fingerprintTemplateId ||
+      payload.fingerprint_template_id,
   );
-  const memberId = normalizeString(payload.memberId);
+  const memberId = normalizeString(payload.memberId || payload.subjectId || payload.subject_id);
 
   if (memberId) {
     return getMemberOrThrow(tenantId, memberId);
@@ -1109,6 +1113,8 @@ export const biometricCheckIn = async (tenantId, serviceId, payload = {}, actor 
 
   const templateId = normalizeString(
     payload.templateId ||
+      payload.templateRef ||
+      payload.template_ref ||
       payload.fingerprintTemplateId ||
       payload.fingerprint_template_id ||
       member.biometrics?.templateId,

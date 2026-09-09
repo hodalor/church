@@ -36,8 +36,10 @@ import { supabaseUpload, DEFAULT_SUPABASE_BUCKET } from '../../utils/supabaseUpl
 import {
   downloadBiometricBridgeWindowsInstaller,
   enrollFingerprint,
+  extractFingerprintCaptureStats,
   extractFingerprintDeviceMeta,
   extractFingerprintMessage,
+  extractFingerprintPreviewImage,
   extractFingerprintTemplateId,
   getBiometricBridgeStatus,
 } from '../../utils/biometricBridge';
@@ -51,7 +53,6 @@ const genderOptions = ['male', 'female', 'other'];
 const personCategoryOptions = ['adult', 'child'];
 const maritalStatusOptions = ['single', 'married', 'divorced', 'widowed'];
 const baptismOptions = ['not_baptised', 'water', 'holy_spirit', 'both'];
-const biometricStatusOptions = ['not_enrolled', 'pending_capture', 'enrolled', 'disabled'];
 const fingerOptions = [
   'right-thumb',
   'right-index',
@@ -91,6 +92,24 @@ const RELATIONSHIP_OPTIONS = [
   'ward',
   'other',
 ];
+const biometricCaptureSteps = [
+  {
+    title: 'Place finger',
+    detail: 'Ask the member to place any finger flat on the scanner and hold still.',
+  },
+  {
+    title: 'Release',
+    detail: 'When the scanner blinks after the first capture, tell the member to lift the finger.',
+  },
+  {
+    title: 'Press again',
+    detail: 'Place the same finger again for the second capture.',
+  },
+  {
+    title: 'Final pass',
+    detail: 'Lift and place the same finger one last time to finish enrollment.',
+  },
+];
 
 export default function MemberDetailPage() {
   const { memberId } = useParams();
@@ -105,6 +124,15 @@ export default function MemberDetailPage() {
   const [showQrModal, setShowQrModal] = useState(false);
   const photoInputRef = useRef(null);
   const [activeFamilySearch, setActiveFamilySearch] = useState({ index: -1, value: '' });
+  const [biometricCaptureUi, setBiometricCaptureUi] = useState({
+    phase: 'idle',
+    stepIndex: 0,
+    message: 'Enable fingerprint sign-in to begin enrollment.',
+    previewImage: '',
+    templateId: '',
+    captureCount: null,
+    qualityScore: null,
+  });
   const [form, setForm] = useState({
     firstName: '',
     lastName: '',
@@ -302,6 +330,17 @@ export default function MemberDetailPage() {
               }))
           : [],
     });
+    setBiometricCaptureUi({
+      phase: member.biometrics?.templateId ? 'success' : 'idle',
+      stepIndex: member.biometrics?.templateId ? biometricCaptureSteps.length - 1 : 0,
+      message: member.biometrics?.templateId
+        ? 'Fingerprint already enrolled for this member. You can disable or re-capture when needed.'
+        : 'Enable fingerprint sign-in to begin enrollment.',
+      previewImage: '',
+      templateId: member.biometrics?.templateId || '',
+      captureCount: null,
+      qualityScore: null,
+    });
   }, [memberQuery.data]);
 
   const refreshMemberQueries = () => {
@@ -360,6 +399,17 @@ export default function MemberDetailPage() {
   });
 
   const biometricEnrollMutation = useMutation({
+    onMutate: () => {
+      setBiometricCaptureUi({
+        phase: 'capturing',
+        stepIndex: 0,
+        message: biometricCaptureSteps[0].detail,
+        previewImage: '',
+        templateId: form.biometrics?.templateId || '',
+        captureCount: null,
+        qualityScore: null,
+      });
+    },
     mutationFn: async () => {
       if (!member?.memberId) {
         throw new Error('Member profile is not ready for fingerprint capture yet.');
@@ -371,6 +421,9 @@ export default function MemberDetailPage() {
 
       const bridgePayload = await enrollFingerprint({
         memberId: member.memberId,
+        subjectId: member.memberId,
+        subjectType: 'member',
+        label: [member.firstName, member.otherName, member.lastName].filter(Boolean).join(' '),
         memberName: [member.firstName, member.otherName, member.lastName].filter(Boolean).join(' '),
         fingerLabel: form.biometrics?.fingerLabel || 'right-thumb',
         provider: form.biometrics?.provider || 'ZKTeco',
@@ -384,6 +437,8 @@ export default function MemberDetailPage() {
 
       const deviceMeta = extractFingerprintDeviceMeta(bridgePayload);
       const bridgeMessage = extractFingerprintMessage(bridgePayload);
+      const previewImage = extractFingerprintPreviewImage(bridgePayload);
+      const captureStats = extractFingerprintCaptureStats(bridgePayload);
       const enrolledAt = new Date().toISOString().slice(0, 10);
       const nextBiometrics = {
         ...(form.biometrics || {}),
@@ -405,14 +460,25 @@ export default function MemberDetailPage() {
       return {
         templateId,
         bridgeMessage,
+        previewImage,
+        captureStats,
         biometrics: nextBiometrics,
       };
     },
-    onSuccess: ({ templateId, bridgeMessage, biometrics }) => {
+    onSuccess: ({ templateId, bridgeMessage, previewImage, captureStats, biometrics }) => {
       setForm((current) => ({
         ...current,
         biometrics,
       }));
+      setBiometricCaptureUi({
+        phase: 'success',
+        stepIndex: biometricCaptureSteps.length - 1,
+        message: bridgeMessage || 'Fingerprint enrollment completed successfully.',
+        previewImage: previewImage || '',
+        templateId,
+        captureCount: captureStats?.captureCount || 3,
+        qualityScore: captureStats?.qualityScore || null,
+      });
       refreshMemberQueries();
       showSuccessToast(`Fingerprint enrolled successfully${templateId ? ` (${templateId})` : ''}.`);
       if (bridgeMessage) {
@@ -420,11 +486,52 @@ export default function MemberDetailPage() {
       }
     },
     onError: (error) => {
+      setBiometricCaptureUi((current) => ({
+        ...current,
+        phase: 'error',
+        message:
+          error?.response?.data?.message ||
+          error.message ||
+          'Unable to capture fingerprint.',
+      }));
       showErrorToast(error?.response?.data?.message || error.message || 'Unable to capture fingerprint.');
     },
   });
 
+  useEffect(() => {
+    if (!biometricEnrollMutation.isPending) {
+      return undefined;
+    }
+
+    let currentStep = 0;
+    const timer = window.setInterval(() => {
+      currentStep = Math.min(currentStep + 1, biometricCaptureSteps.length - 1);
+      setBiometricCaptureUi((current) => ({
+        ...current,
+        phase: 'capturing',
+        stepIndex: currentStep,
+        message: biometricCaptureSteps[currentStep]?.detail || current.message,
+      }));
+    }, 3500);
+
+    return () => window.clearInterval(timer);
+  }, [biometricEnrollMutation.isPending]);
+
   const member = memberQuery.data;
+  const biometricEnrollmentStatus = (() => {
+    const hasTemplate = Boolean(form.biometrics?.templateId);
+    if (hasTemplate && form.biometrics?.enabled) {
+      return 'enrolled';
+    }
+    if (hasTemplate && !form.biometrics?.enabled) {
+      return 'disabled';
+    }
+    if (form.biometrics?.enabled) {
+      return 'pending_capture';
+    }
+    return 'not_enrolled';
+  })();
+  const isBiometricEnrolled = biometricEnrollmentStatus === 'enrolled' || biometricEnrollmentStatus === 'disabled';
   const biometricCaptureDisabledReason = !form.biometrics?.enabled
     ? 'Set Fingerprint Enabled to Yes first.'
     : bridgeStatusQuery.isLoading || bridgeStatusQuery.isFetching
@@ -777,7 +884,7 @@ export default function MemberDetailPage() {
                   <div>
                     <p className="text-xs uppercase tracking-[0.22em] text-white/55">Biometric Sign-In</p>
                     <p className="mt-2 text-sm text-white/65">
-                      Keep the fingerprint enrollment status on the member profile. Use the template ID saved from the ZKT scanner bridge once capture is complete.
+                      Guide the member through a simple 3-touch fingerprint capture. The system will keep the enrollment state in sync once capture is complete.
                     </p>
                   </div>
                   <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-accent/25 bg-[#f6efdc] px-4 py-3">
@@ -822,62 +929,171 @@ export default function MemberDetailPage() {
                         title={biometricCaptureDisabledReason || 'Capture member fingerprint'}
                       >
                         <Fingerprint className="mr-2 h-4 w-4" />
-                        {biometricEnrollMutation.isPending ? 'Capturing...' : 'Capture Fingerprint'}
+                        {biometricEnrollMutation.isPending
+                          ? 'Capturing 3 Touches...'
+                          : form.biometrics?.templateId
+                            ? 'Re-Capture Fingerprint'
+                            : 'Start Fingerprint Capture'}
                       </Button>
                     </div>
                   </div>
-                  {biometricCaptureDisabledReason ? (
-                    <p className="text-sm text-amber-200">{biometricCaptureDisabledReason}</p>
-                  ) : (
-                    <p className="text-sm text-emerald-200">
-                      Fingerprint capture is ready. Ask the member to place their finger on the scanner.
-                    </p>
-                  )}
+                  <div className="grid gap-4 xl:grid-cols-[1.1fr_0.9fr]">
+                    <div className="space-y-3 rounded-2xl border border-white/10 bg-[#081125] px-4 py-4">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className="rounded-full border border-emerald-400/20 bg-emerald-500/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-emerald-200">
+                          {biometricEnrollmentStatus.replaceAll('_', ' ')}
+                        </span>
+                        {biometricCaptureUi.captureCount ? (
+                          <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-white/70">
+                            {biometricCaptureUi.captureCount} captures
+                          </span>
+                        ) : null}
+                        {biometricCaptureUi.qualityScore ? (
+                          <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-white/70">
+                            score {biometricCaptureUi.qualityScore}
+                          </span>
+                        ) : null}
+                      </div>
+                      <p
+                        className={`text-sm ${
+                          biometricCaptureUi.phase === 'error'
+                            ? 'text-rose-200'
+                            : biometricCaptureDisabledReason
+                              ? 'text-amber-200'
+                              : 'text-emerald-200'
+                        }`}
+                      >
+                        {biometricCaptureUi.message ||
+                          biometricCaptureDisabledReason ||
+                          'Fingerprint capture is ready. Ask the member to place a finger on the scanner.'}
+                      </p>
+                      <div className="grid gap-3">
+                        {biometricCaptureSteps.map((step, index) => {
+                          const isComplete =
+                            biometricCaptureUi.phase === 'success' || index < biometricCaptureUi.stepIndex;
+                          const isActive =
+                            biometricCaptureUi.phase === 'capturing' && index === biometricCaptureUi.stepIndex;
+
+                          return (
+                            <div
+                              key={step.title}
+                              className={`rounded-2xl border px-4 py-3 transition ${
+                                isActive
+                                  ? 'border-accent/40 bg-accent/10'
+                                  : isComplete
+                                    ? 'border-emerald-400/25 bg-emerald-500/10'
+                                    : 'border-white/10 bg-white/[0.03]'
+                              }`}
+                            >
+                              <div className="flex items-start gap-3">
+                                <span
+                                  className={`mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-semibold ${
+                                    isActive
+                                      ? 'bg-accent text-[#111827]'
+                                      : isComplete
+                                        ? 'bg-emerald-400 text-[#052e16]'
+                                        : 'bg-white/10 text-white/70'
+                                  }`}
+                                >
+                                  {index + 1}
+                                </span>
+                                <div>
+                                  <p className="font-semibold text-white">{step.title}</p>
+                                  <p className="mt-1 text-sm text-white/60">{step.detail}</p>
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                    <div className="rounded-2xl border border-white/10 bg-[#081125] px-4 py-4">
+                      <p className="text-xs uppercase tracking-[0.22em] text-white/55">Captured Preview</p>
+                      <div className="mt-4 flex min-h-[280px] items-center justify-center rounded-2xl border border-dashed border-white/10 bg-white/[0.03] p-4">
+                        {biometricCaptureUi.previewImage ? (
+                          <img
+                            src={biometricCaptureUi.previewImage}
+                            alt="Captured fingerprint preview"
+                            className="max-h-[240px] rounded-2xl border border-white/10 bg-white object-contain"
+                          />
+                        ) : (
+                          <div className="space-y-3 text-center">
+                            <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full border border-white/10 bg-white/5 text-accent">
+                              <Fingerprint className="h-10 w-10" />
+                            </div>
+                            <div>
+                              <p className="font-semibold text-white">
+                                {biometricEnrollMutation.isPending ? 'Waiting for fingerprint...' : 'No preview yet'}
+                              </p>
+                              <p className="mt-1 text-sm text-white/55">
+                                The latest captured fingerprint image will appear here after enrollment.
+                              </p>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                      <div className="mt-4 rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3">
+                        <p className="text-xs uppercase tracking-[0.18em] text-white/45">Template Reference</p>
+                        <p className="mt-2 break-all font-semibold text-white">
+                          {biometricCaptureUi.templateId || form.biometrics?.templateId || 'Not captured yet'}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
                   <div className="grid gap-4 md:grid-cols-2">
                     <label className="block space-y-2">
-                      <span className="text-sm font-medium text-white/80">Fingerprint Enabled</span>
-                      <select
-                        value={form.biometrics?.enabled ? 'yes' : 'no'}
-                        onChange={(event) =>
-                          setForm((current) => ({
-                            ...current,
-                            biometrics: {
-                              ...(current.biometrics || {}),
-                              enabled: event.target.value === 'yes',
-                              status:
-                                event.target.value === 'yes'
-                                  ? current.biometrics?.status || 'pending_capture'
-                                  : 'disabled',
-                            },
-                          }))
-                        }
-                        className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white"
-                      >
-                        <option value="no">No</option>
-                        <option value="yes">Yes</option>
-                      </select>
+                      <span className="text-sm font-medium text-white/80">Biometric Access</span>
+                      <div className="flex gap-2 rounded-xl border border-white/10 bg-white/5 p-1">
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setForm((current) => ({
+                              ...current,
+                              biometrics: {
+                                ...(current.biometrics || {}),
+                                enabled: true,
+                                status: current.biometrics?.templateId ? 'enrolled' : 'pending_capture',
+                              },
+                            }))
+                          }
+                          className={`flex-1 rounded-lg px-4 py-3 text-sm font-semibold transition ${
+                            form.biometrics?.enabled
+                              ? 'bg-emerald-400 text-[#052e16]'
+                              : 'text-white/65'
+                          }`}
+                        >
+                          Enabled
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setForm((current) => ({
+                              ...current,
+                              biometrics: {
+                                ...(current.biometrics || {}),
+                                enabled: false,
+                                status: current.biometrics?.templateId ? 'disabled' : 'not_enrolled',
+                              },
+                            }))
+                          }
+                          className={`flex-1 rounded-lg px-4 py-3 text-sm font-semibold transition ${
+                            !form.biometrics?.enabled
+                              ? 'bg-white text-[#111827]'
+                              : 'text-white/65'
+                          }`}
+                        >
+                          {isBiometricEnrolled ? 'Disable' : 'Not Enabled'}
+                        </button>
+                      </div>
                     </label>
                     <label className="block space-y-2">
                       <span className="text-sm font-medium text-white/80">Enrollment Status</span>
-                      <select
-                        value={form.biometrics?.status || 'not_enrolled'}
-                        onChange={(event) =>
-                          setForm((current) => ({
-                            ...current,
-                            biometrics: {
-                              ...(current.biometrics || {}),
-                              status: event.target.value,
-                            },
-                          }))
-                        }
-                        className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white"
-                      >
-                        {biometricStatusOptions.map((option) => (
-                          <option key={option} value={option}>
-                            {option.replaceAll('_', ' ')}
-                          </option>
-                        ))}
-                      </select>
+                      <div className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm font-semibold capitalize text-white">
+                        {biometricEnrollmentStatus.replaceAll('_', ' ')}
+                      </div>
+                      <p className="text-xs text-white/45">
+                        Enrollment status is system controlled. Use the access toggle to enable or disable an enrolled fingerprint.
+                      </p>
                     </label>
                     <Input
                       label="Scanner Provider"
@@ -930,29 +1146,13 @@ export default function MemberDetailPage() {
                     <Input
                       label="Template ID"
                       value={form.biometrics?.templateId || ''}
-                      onChange={(event) =>
-                        setForm((current) => ({
-                          ...current,
-                          biometrics: {
-                            ...(current.biometrics || {}),
-                            templateId: event.target.value,
-                          },
-                        }))
-                      }
+                      readOnly
                     />
                     <Input
                       label="Enrollment Date"
                       type="date"
                       value={form.biometrics?.enrolledAt || ''}
-                      onChange={(event) =>
-                        setForm((current) => ({
-                          ...current,
-                          biometrics: {
-                            ...(current.biometrics || {}),
-                            enrolledAt: event.target.value,
-                          },
-                        }))
-                      }
+                      readOnly
                     />
                     <label className="block space-y-2 md:col-span-2">
                       <span className="text-sm font-medium text-white/80">Biometric Notes</span>

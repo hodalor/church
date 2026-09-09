@@ -167,8 +167,12 @@ const biometricCheckInValidation = [
   body()
     .custom((value) => {
       const templateId =
-        value?.templateId || value?.fingerprintTemplateId || value?.fingerprint_template_id;
-      const memberId = value?.memberId;
+        value?.templateId ||
+        value?.templateRef ||
+        value?.template_ref ||
+        value?.fingerprintTemplateId ||
+        value?.fingerprint_template_id;
+      const memberId = value?.memberId || value?.subjectId || value?.subject_id;
 
       return (
         (typeof templateId === 'string' && templateId.trim().length > 0) ||
@@ -183,8 +187,12 @@ const biometricCheckOutValidation = [
   body()
     .custom((value) => {
       const templateId =
-        value?.templateId || value?.fingerprintTemplateId || value?.fingerprint_template_id;
-      const memberId = value?.memberId;
+        value?.templateId ||
+        value?.templateRef ||
+        value?.template_ref ||
+        value?.fingerprintTemplateId ||
+        value?.fingerprint_template_id;
+      const memberId = value?.memberId || value?.subjectId || value?.subject_id;
 
       return (
         (typeof templateId === 'string' && templateId.trim().length > 0) ||
