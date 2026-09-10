@@ -80,13 +80,25 @@ const parseJsonBody = async (request) =>
     request.on('error', reject);
   });
 
-const createJsonResponse = (response, statusCode, payload) => {
+const resolveAllowedOrigin = (request) => {
+  const configuredOrigin = pickText(process.env.BIOMETRIC_BRIDGE_ALLOWED_ORIGIN);
+  const requestOrigin = pickText(request.headers.origin);
+
+  if (configuredOrigin && configuredOrigin !== '*') {
+    return configuredOrigin;
+  }
+
+  return requestOrigin || configuredOrigin || '*';
+};
+
+const createJsonResponse = (request, response, statusCode, payload) => {
   response.writeHead(statusCode, {
     'Content-Type': 'application/json',
-    'Access-Control-Allow-Origin':
-      process.env.BIOMETRIC_BRIDGE_ALLOWED_ORIGIN || '*',
+    'Access-Control-Allow-Origin': resolveAllowedOrigin(request),
     'Access-Control-Allow-Methods': 'GET,POST,OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type',
+    'Access-Control-Allow-Headers': 'Content-Type, Access-Control-Request-Private-Network',
+    'Access-Control-Allow-Private-Network': 'true',
+    Vary: 'Origin',
   });
   response.end(JSON.stringify(payload));
 };
@@ -249,12 +261,12 @@ const resolveProvider = () => {
 
 const server = createServer(async (request, response) => {
   if (!request.url) {
-    createJsonResponse(response, 404, { message: 'Route not found.' });
+    createJsonResponse(request, response, 404, { message: 'Route not found.' });
     return;
   }
 
   if (request.method === 'OPTIONS') {
-    createJsonResponse(response, 204, {});
+    createJsonResponse(request, response, 204, {});
     return;
   }
 
@@ -263,7 +275,7 @@ const server = createServer(async (request, response) => {
     const { mode, provider } = resolveProvider();
 
     if (request.method === 'GET' && pathname === '/') {
-      createJsonResponse(response, 200, {
+      createJsonResponse(request, response, 200, {
         service: 'prynova-biometric-bridge',
         mode,
         endpoints: ['/health', '/fingerprint/enroll', '/fingerprint/identify'],
@@ -273,29 +285,29 @@ const server = createServer(async (request, response) => {
 
     if (request.method === 'GET' && pathname === '/health') {
       const result = await provider.health();
-      createJsonResponse(response, 200, result);
+      createJsonResponse(request, response, 200, result);
       return;
     }
 
     if (request.method === 'POST' && pathname === '/fingerprint/enroll') {
       const payload = await parseJsonBody(request);
       const result = await provider.enroll(payload);
-      createJsonResponse(response, 200, result);
+      createJsonResponse(request, response, 200, result);
       return;
     }
 
     if (request.method === 'POST' && pathname === '/fingerprint/identify') {
       const payload = await parseJsonBody(request);
       const result = await provider.identify(payload);
-      createJsonResponse(response, 200, result);
+      createJsonResponse(request, response, 200, result);
       return;
     }
 
-    createJsonResponse(response, 404, {
+    createJsonResponse(request, response, 404, {
       message: 'Route not found.',
     });
   } catch (error) {
-    createJsonResponse(response, 500, {
+    createJsonResponse(request, response, 500, {
       message: error.message || 'Biometric bridge request failed.',
     });
   }
