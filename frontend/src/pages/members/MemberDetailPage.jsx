@@ -1041,7 +1041,7 @@ export default function MemberDetailPage() {
                     </div>
                   </div>
                   <div className="grid gap-4 md:grid-cols-2">
-                    <label className="block space-y-2">
+                    <div className="block space-y-2">
                       <span className="text-sm font-medium text-white/80">Biometric Access</span>
                       <div className="flex gap-2 rounded-xl border border-white/10 bg-white/5 p-1">
                         <button
@@ -1085,8 +1085,8 @@ export default function MemberDetailPage() {
                           {isBiometricEnrolled ? 'Disable' : 'Not Enabled'}
                         </button>
                       </div>
-                    </label>
-                    <label className="block space-y-2">
+                    </div>
+                    <div className="block space-y-2">
                       <span className="text-sm font-medium text-white/80">Enrollment Status</span>
                       <div className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm font-semibold capitalize text-white">
                         {biometricEnrollmentStatus.replaceAll('_', ' ')}
@@ -1094,7 +1094,7 @@ export default function MemberDetailPage() {
                       <p className="text-xs text-white/45">
                         Enrollment status is system controlled. Use the access toggle to enable or disable an enrolled fingerprint.
                       </p>
-                    </label>
+                    </div>
                     <Input
                       label="Scanner Provider"
                       value={form.biometrics?.provider || ''}
@@ -1121,9 +1121,12 @@ export default function MemberDetailPage() {
                         }))
                       }
                     />
-                    <label className="block space-y-2">
-                      <span className="text-sm font-medium text-white/80">Preferred Finger</span>
+                    <div className="block space-y-2">
+                      <label htmlFor="member-biometric-finger" className="text-sm font-medium text-white/80">
+                        Preferred Finger
+                      </label>
                       <select
+                        id="member-biometric-finger"
                         value={form.biometrics?.fingerLabel || 'right-thumb'}
                         onChange={(event) =>
                           setForm((current) => ({
@@ -1142,7 +1145,7 @@ export default function MemberDetailPage() {
                           </option>
                         ))}
                       </select>
-                    </label>
+                    </div>
                     <Input
                       label="Template ID"
                       value={form.biometrics?.templateId || ''}
@@ -1154,9 +1157,12 @@ export default function MemberDetailPage() {
                       value={form.biometrics?.enrolledAt || ''}
                       readOnly
                     />
-                    <label className="block space-y-2 md:col-span-2">
-                      <span className="text-sm font-medium text-white/80">Biometric Notes</span>
+                    <div className="block space-y-2 md:col-span-2">
+                      <label htmlFor="member-biometric-notes" className="text-sm font-medium text-white/80">
+                        Biometric Notes
+                      </label>
                       <textarea
+                        id="member-biometric-notes"
                         rows={3}
                         value={form.biometrics?.notes || ''}
                         onChange={(event) =>
@@ -1170,7 +1176,7 @@ export default function MemberDetailPage() {
                         }
                         className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white"
                       />
-                    </label>
+                    </div>
                   </div>
                 </div>
                 <div className="md:col-span-2">
@@ -1276,7 +1282,7 @@ export default function MemberDetailPage() {
                 <div className="space-y-4">
                   {!form.familyRelationships?.length ? (
                     <p className="rounded-2xl border border-dashed border-white/15 bg-white/5 px-4 py-6 text-sm text-white/55">
-                      No relatives linked yet. Tap "Add relative" to begin.
+                      No relatives linked yet. Tap &quot;Add relative&quot; to begin.
                     </p>
                   ) : null}
                   {form.familyRelationships?.map((item, index) => (
@@ -1298,7 +1304,7 @@ export default function MemberDetailPage() {
                       </div>
                       <div className="grid gap-4 md:grid-cols-2">
                         <div className="relative">
-                          <label className="mb-2 block text-sm font-medium text-white/80">
+                          <label htmlFor={`member-family-search-${index}`} className="mb-2 block text-sm font-medium text-white/80">
                             Search member
                           </label>
                           <div className="relative">
@@ -1307,6 +1313,7 @@ export default function MemberDetailPage() {
                               className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-white/45"
                             />
                             <input
+                              id={`member-family-search-${index}`}
                               value={activeFamilySearch.index === index ? activeFamilySearch.value : item.search}
                               onFocus={() =>
                                 setActiveFamilySearch({ index, value: item.search || '' })
@@ -1365,10 +1372,11 @@ export default function MemberDetailPage() {
                           ) : null}
                         </div>
                         <div>
-                          <label className="mb-2 block text-sm font-medium text-white/80">
+                          <label htmlFor={`member-family-relationship-${index}`} className="mb-2 block text-sm font-medium text-white/80">
                             Relationship
                           </label>
                           <select
+                            id={`member-family-relationship-${index}`}
                             value={item.relationship}
                             onChange={(event) =>
                               updateFamilyRelationship(index, { relationship: event.target.value })

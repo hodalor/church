@@ -227,8 +227,7 @@ export const supabaseUpload = async (file, bucketName, customPath) => {
   let processed = file;
   try {
     processed = await compressImageIfNeeded(file);
-  } catch (err) {
-    console.warn('Image pre-compress skipped:', err?.message || err);
+  } catch {
     processed = file;
   }
 

@@ -500,17 +500,20 @@ export default function EventFormWizard({ eventId = null, fallbackPath = '/event
             </div>
           </div>
 
-          <label className="flex items-center justify-between rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4">
+          <div className="flex items-center justify-between rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4">
             <div>
-              <p className="font-semibold text-slate-900">Public Event</p>
+              <label htmlFor="event-public" className="font-semibold text-slate-900">
+                Public Event
+              </label>
               <p className="text-sm text-slate-500">Allow the event to appear on public-facing listings.</p>
             </div>
             <input
+              id="event-public"
               type="checkbox"
               checked={form.isPublic}
               onChange={(event) => setField('isPublic', event.target.checked)}
             />
-          </label>
+          </div>
         </Card>
       ) : null}
 
@@ -547,17 +550,20 @@ export default function EventFormWizard({ eventId = null, fallbackPath = '/event
             />
           </div>
 
-          <label className="flex items-center justify-between rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4">
+          <div className="flex items-center justify-between rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4">
             <div>
-              <p className="font-semibold text-slate-900">Multi-Day Event</p>
+              <label htmlFor="event-multiday" className="font-semibold text-slate-900">
+                Multi-Day Event
+              </label>
               <p className="text-sm text-slate-500">Enable when the event spans more than one day.</p>
             </div>
             <input
+              id="event-multiday"
               type="checkbox"
               checked={form.isMultiDay}
               onChange={(event) => setField('isMultiDay', event.target.checked)}
             />
-          </label>
+          </div>
 
           <div className="grid gap-4 md:grid-cols-2">
             <Input
@@ -587,17 +593,20 @@ export default function EventFormWizard({ eventId = null, fallbackPath = '/event
             ) : null}
           </div>
 
-          <label className="flex items-center justify-between rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4">
+          <div className="flex items-center justify-between rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4">
             <div>
-              <p className="font-semibold text-slate-900">Online Event</p>
+              <label htmlFor="event-online" className="font-semibold text-slate-900">
+                Online Event
+              </label>
               <p className="text-sm text-slate-500">Add a stream link for remote participation.</p>
             </div>
             <input
+              id="event-online"
               type="checkbox"
               checked={form.isOnline}
               onChange={(event) => setField('isOnline', event.target.checked)}
             />
-          </label>
+          </div>
 
           {form.isOnline ? (
             <Input
@@ -633,17 +642,20 @@ export default function EventFormWizard({ eventId = null, fallbackPath = '/event
 
       {activeStep === 3 ? (
         <Card className="space-y-5">
-          <label className="flex items-center justify-between rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4">
+          <div className="flex items-center justify-between rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4">
             <div>
-              <p className="font-semibold text-slate-900">Requires Registration</p>
+              <label htmlFor="event-requires-registration" className="font-semibold text-slate-900">
+                Requires Registration
+              </label>
               <p className="text-sm text-slate-500">Collect attendee signups before the event.</p>
             </div>
             <input
+              id="event-requires-registration"
               type="checkbox"
               checked={form.requiresRegistration}
               onChange={(event) => setField('requiresRegistration', event.target.checked)}
             />
-          </label>
+          </div>
 
           {form.requiresRegistration ? (
             <div className="grid gap-4 md:grid-cols-3">
@@ -663,30 +675,36 @@ export default function EventFormWizard({ eventId = null, fallbackPath = '/event
                 placeholder="0 = unlimited"
                 labelClassName="text-slate-700"
               />
-              <label className="flex items-center justify-between rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 md:mt-7">
+              <div className="flex items-center justify-between rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 md:mt-7">
                 <div>
-                  <p className="font-semibold text-slate-900">Requires Approval</p>
+                  <label htmlFor="event-requires-approval" className="font-semibold text-slate-900">
+                    Requires Approval
+                  </label>
                 </div>
                 <input
+                  id="event-requires-approval"
                   type="checkbox"
                   checked={form.requiresApproval}
                   onChange={(event) => setField('requiresApproval', event.target.checked)}
                 />
-              </label>
+              </div>
             </div>
           ) : null}
 
-          <label className="flex items-center justify-between rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4">
+          <div className="flex items-center justify-between rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4">
             <div>
-              <p className="font-semibold text-slate-900">Free Event</p>
+              <label htmlFor="event-free" className="font-semibold text-slate-900">
+                Free Event
+              </label>
               <p className="text-sm text-slate-500">Turn off to configure paid ticket tiers.</p>
             </div>
             <input
+              id="event-free"
               type="checkbox"
               checked={form.isFree}
               onChange={(event) => setField('isFree', event.target.checked)}
             />
-          </label>
+          </div>
 
           {!form.isFree ? (
             <div className="space-y-4">

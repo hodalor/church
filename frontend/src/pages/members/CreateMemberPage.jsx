@@ -953,8 +953,11 @@ export default function CreateMemberPage() {
                         ) : null}
                       </div>
                       <div>
-                        <label className="mb-2 block text-sm font-medium text-white/80">Relationship</label>
+                        <label htmlFor={`family-relationship-${index}`} className="mb-2 block text-sm font-medium text-white/80">
+                          Relationship
+                        </label>
                         <select
+                          id={`family-relationship-${index}`}
                           value={item.relationship}
                           onChange={(event) =>
                             updateFamilyRelationship(index, { relationship: event.target.value })

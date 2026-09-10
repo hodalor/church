@@ -1,7 +1,6 @@
 export const formatAmount = (
   amount,
   {
-    currencyCode = 'USD',
     currencySymbol = '$',
     locale = 'en-US',
     maximumFractionDigits = 0,

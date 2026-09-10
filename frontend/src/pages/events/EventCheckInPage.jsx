@@ -297,7 +297,6 @@ export default function EventCheckInPage() {
                   <div className="relative">
                     <Search className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-white/35" />
                     <input
-                      autoFocus
                       value={search}
                       onChange={(event) => setSearch(event.target.value)}
                       className="w-full rounded-2xl border border-white/10 bg-[#081125] px-12 py-4 text-lg text-white"

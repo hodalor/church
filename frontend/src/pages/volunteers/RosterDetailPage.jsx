@@ -382,7 +382,7 @@ export default function RosterDetailPage() {
                                   </div>
                                 </div>
 
-                                <label className="space-y-1.5">
+                                <div className="space-y-1.5">
                                   <span className="text-[12px] font-medium text-white/55">Role</span>
                                   <Input
                                     value={assignment.role || ''}
@@ -402,7 +402,7 @@ export default function RosterDetailPage() {
                                       })
                                     }
                                   />
-                                </label>
+                                </div>
 
                                 <label className="space-y-1.5">
                                   <span className="text-[12px] font-medium text-white/55">Status</span>

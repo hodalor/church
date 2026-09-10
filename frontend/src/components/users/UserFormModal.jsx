@@ -251,11 +251,12 @@ export default function UserFormModal({
                 placeholder="+233..."
                 {...lightInputProps}
               />
-              <label className="block space-y-2 md:col-span-2">
+              <div className="block space-y-2 md:col-span-2">
                 <span className="text-sm font-medium text-slate-700">Branch Scope</span>
                 <div className="space-y-3 rounded-2xl border border-slate-200 bg-slate-50 p-4">
-                  <label className="flex items-center gap-3 text-sm text-slate-700">
+                  <label htmlFor="user-all-branches" className="flex items-center gap-3 text-sm text-slate-700">
                     <input
+                      id="user-all-branches"
                       type="checkbox"
                       checked={form.allBranches}
                       onChange={(event) =>
@@ -268,11 +269,12 @@ export default function UserFormModal({
                     />
                     Access all branches in this church
                   </label>
-                  <label className="block space-y-2">
-                    <span className="text-xs uppercase tracking-[0.18em] text-slate-500">
+                  <div className="block space-y-2">
+                    <label htmlFor="user-assigned-branches" className="text-xs uppercase tracking-[0.18em] text-slate-500">
                       Assigned Branches
-                    </span>
+                    </label>
                     <select
+                      id="user-assigned-branches"
                       multiple
                       disabled={form.allBranches || !branchOptions.length}
                       value={form.assignedBranches}
@@ -293,9 +295,9 @@ export default function UserFormModal({
                         </option>
                       ))}
                     </select>
-                  </label>
+                  </div>
                 </div>
-              </label>
+              </div>
               <Input
                 label="Member ID"
                 value={form.memberId}

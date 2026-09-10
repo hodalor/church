@@ -1519,10 +1519,10 @@ export function CreateKPIPage() {
               </div>
 
               <div className="grid gap-4 md:grid-cols-2">
-                <label className="block space-y-1.5">
+                <div className="block space-y-1.5">
                   <span className="text-[13px] font-medium text-white/75">Owner</span>
                   <UserSelect value={form.watch('ownerId')} onChange={(value) => form.setValue('ownerId', value)} users={users} />
-                </label>
+                </div>
                 <Card className="border-white/10 bg-[#101827]">
                   <p className="text-sm font-semibold text-white">Data source note</p>
                   <p className="mt-2 text-sm text-white/60">

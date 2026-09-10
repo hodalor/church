@@ -205,10 +205,10 @@ export default function TemplatesPage() {
             <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
               <p className="text-xs uppercase tracking-[0.18em] text-white/40">Variables</p>
               <div className="mt-3 grid gap-2 text-sm text-white/60">
-                <p>{'{{firstName}}'} - Member's first name</p>
-                <p>{'{{lastName}}'} - Member's last name</p>
+                <p>{'{{firstName}}'} - Member&apos;s first name</p>
+                <p>{'{{lastName}}'} - Member&apos;s last name</p>
                 <p>{'{{churchName}}'} - Your church name</p>
-                <p>{'{{date}}'} - Today's date</p>
+                <p>{'{{date}}'} - Today&apos;s date</p>
                 <p>{'{{memberId}}'} - Member ID</p>
               </div>
             </div>

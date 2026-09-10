@@ -681,18 +681,19 @@ export default function CaseDetailPage() {
 
           {canViewConfidential ? (
             <>
-              <label className="rounded-2xl border border-accent/25 bg-accent/10 px-4 py-4 md:col-span-2">
+              <div className="rounded-2xl border border-accent/25 bg-accent/10 px-4 py-4 md:col-span-2">
                 <div className="flex items-center justify-between gap-3">
                   <div>
-                    <p className="flex items-center gap-2 font-semibold text-white">
+                    <label htmlFor="case-confidential-notes" className="flex items-center gap-2 font-semibold text-white">
                       <ShieldCheck className="h-4 w-4 text-accent" />
                       Confidential Notes
-                    </p>
+                    </label>
                     <p className="mt-1 text-sm text-white/60">
                       These notes are only visible to head pastor and above.
                     </p>
                   </div>
                   <input
+                    id="case-confidential-notes"
                     type="checkbox"
                     checked={interactionForm.isConfidential}
                     onChange={(event) =>
@@ -709,7 +710,7 @@ export default function CaseDetailPage() {
                   }
                   className="mt-4 w-full rounded-xl border border-accent/20 bg-black/10 px-4 py-3 text-sm text-white"
                 />
-              </label>
+              </div>
             </>
           ) : null}
 
@@ -945,12 +946,15 @@ export default function CaseDetailPage() {
         description="Keep practical support details current."
       >
         <div className="space-y-4">
-          <label className="flex items-center justify-between rounded-2xl border border-white/10 bg-white/5 px-4 py-4">
+          <div className="flex items-center justify-between rounded-2xl border border-white/10 bg-white/5 px-4 py-4">
             <div>
-              <p className="font-semibold text-white">Receiving Support</p>
+              <label htmlFor="case-receiving-support" className="font-semibold text-white">
+                Receiving Support
+              </label>
               <p className="mt-1 text-sm text-white/55">Toggle active welfare assistance for this member.</p>
             </div>
             <input
+              id="case-receiving-support"
               type="checkbox"
               checked={welfareForm.isReceivingSupport}
               onChange={(event) =>
@@ -958,7 +962,7 @@ export default function CaseDetailPage() {
               }
               className="h-4 w-4"
             />
-          </label>
+          </div>
 
           <div className="grid gap-2 md:grid-cols-2">
             {WELFARE_SUPPORT_OPTIONS.map((option) => (
