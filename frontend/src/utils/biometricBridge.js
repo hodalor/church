@@ -1,5 +1,7 @@
 const DEFAULT_BRIDGE_URL = 'http://127.0.0.1:4113';
+const LEGACY_BRIDGE_URL = 'http://127.0.0.1:4007';
 const DEFAULT_API_BASE_URL = 'http://localhost:5000/api/v1';
+const BRIDGE_URL_STORAGE_KEY = 'prynova.biometricBridgeUrl';
 
 const asObject = (value) =>
   value && typeof value === 'object' && !Array.isArray(value) ? value : {};
@@ -14,13 +16,74 @@ const pickText = (...values) => {
   return '';
 };
 
+const normalizeUrl = (value) => String(value || '').trim().replace(/\/+$/, '');
+
 const resolveBridgeUrl = () => {
   const configuredUrl =
     process.env.REACT_APP_BIOMETRIC_BRIDGE_URL ||
     process.env.REACT_APP_FINGERPRINT_BRIDGE_URL ||
     DEFAULT_BRIDGE_URL;
 
-  return String(configuredUrl).replace(/\/+$/, '');
+  return normalizeUrl(configuredUrl);
+};
+
+const getStoredBridgeUrl = () => {
+  try {
+    return normalizeUrl(window.localStorage.getItem(BRIDGE_URL_STORAGE_KEY));
+  } catch {
+    return '';
+  }
+};
+
+const persistBridgeUrl = (value) => {
+  try {
+    if (!value) {
+      window.localStorage.removeItem(BRIDGE_URL_STORAGE_KEY);
+      return;
+    }
+
+    window.localStorage.setItem(BRIDGE_URL_STORAGE_KEY, normalizeUrl(value));
+  } catch {
+    // Ignore storage errors; bridge discovery still works without persistence.
+  }
+};
+
+const buildBridgeUrlCandidates = () => {
+  const configuredUrl = resolveBridgeUrl();
+  const storedUrl = getStoredBridgeUrl();
+  const candidates = new Set(
+    [storedUrl, configuredUrl, DEFAULT_BRIDGE_URL, LEGACY_BRIDGE_URL].filter(Boolean),
+  );
+
+  const urls = Array.from(candidates);
+
+  for (const url of urls) {
+    try {
+      const parsed = new URL(url);
+      const alternateHost =
+        parsed.hostname === '127.0.0.1'
+          ? 'localhost'
+          : parsed.hostname === 'localhost'
+            ? '127.0.0.1'
+            : '';
+
+      if (alternateHost) {
+        candidates.add(`${parsed.protocol}//${alternateHost}:${parsed.port}`);
+      }
+
+      if (parsed.port === '4007') {
+        candidates.add(`${parsed.protocol}//${parsed.hostname}:4113`);
+      }
+
+      if (parsed.port === '4113') {
+        candidates.add(`${parsed.protocol}//${parsed.hostname}:4007`);
+      }
+    } catch {
+      // Skip malformed URLs and keep the valid candidates.
+    }
+  }
+
+  return Array.from(candidates).map(normalizeUrl).filter(Boolean);
 };
 
 const resolveApiBaseUrl = () => {
@@ -84,8 +147,13 @@ const unwrapBridgePayload = (payload = {}) => {
   return root;
 };
 
-const callBridge = async (path, options = {}) => {
-  const response = await fetch(`${resolveBridgeUrl()}${path}`, {
+const createBridgeConnectionError = (baseUrls = []) =>
+  new Error(
+    `Fingerprint bridge is not reachable on this computer. Start Prynova Fingerprint Bridge and confirm one of these local addresses is running: ${baseUrls.join(', ')}.`,
+  );
+
+const callBridgeAtBaseUrl = async (baseUrl, path, options = {}) => {
+  const response = await fetch(`${baseUrl}${path}`, {
     ...options,
     headers: {
       'Content-Type': 'application/json',
@@ -93,25 +161,46 @@ const callBridge = async (path, options = {}) => {
     },
   });
 
-  return readJsonResponse(response);
+  const data = await readJsonResponse(response);
+  persistBridgeUrl(baseUrl);
+  return data;
 };
 
-const callBridgeWithFallback = async (paths = [], options = {}) => {
+const callBridge = async (paths = [], options = {}) => {
+  const candidatePaths = Array.isArray(paths) ? paths : [paths];
+  const baseUrls = buildBridgeUrlCandidates();
   let lastError;
+  let sawConnectionFailure = false;
 
-  for (const path of paths) {
-    try {
-      return await callBridge(path, options);
-    } catch (error) {
-      lastError = error;
-      const isNotFoundError =
-        typeof error?.message === 'string' &&
-        error.message.includes('Biometric bridge request failed (404)');
+  for (const baseUrl of baseUrls) {
+    for (const path of candidatePaths) {
+      try {
+        return await callBridgeAtBaseUrl(baseUrl, path, options);
+      } catch (error) {
+        lastError = error;
+        const isNotFoundError =
+          typeof error?.message === 'string' &&
+          error.message.includes('Biometric bridge request failed (404)');
+        const isConnectionError =
+          error?.name === 'TypeError' ||
+          /Failed to fetch|NetworkError|ERR_CONNECTION_REFUSED|Load failed/i.test(
+            String(error?.message || ''),
+          );
 
-      if (!isNotFoundError) {
-        throw error;
+        if (isConnectionError) {
+          sawConnectionFailure = true;
+          break;
+        }
+
+        if (!isNotFoundError) {
+          throw error;
+        }
       }
     }
+  }
+
+  if (sawConnectionFailure) {
+    throw createBridgeConnectionError(baseUrls);
   }
 
   throw lastError || new Error('Biometric bridge request failed.');
@@ -119,14 +208,14 @@ const callBridgeWithFallback = async (paths = [], options = {}) => {
 
 export const getBiometricBridgeStatus = async () => {
   try {
-    const data = await callBridge('/health', { method: 'GET' });
+    const data = await callBridge(['/health'], { method: 'GET' });
     const provider = asObject(data.provider);
     const isReady = data.ready !== false && provider.ready !== false && data.ok !== false;
 
     if (!isReady) {
       throw new Error(
         pickText(data?.message, provider?.message) ||
-          'Fingerprint bridge is installed but not configured yet. Finish the scanner setup, then refresh bridge status.',
+          'Fingerprint bridge is running, but no supported ZKT scanner is ready yet. Connect the ZKT fingerprint device, then refresh bridge status.',
       );
     }
 
@@ -141,11 +230,11 @@ export const getBiometricBridgeStatus = async () => {
 
 export const enrollFingerprint = async (payload = {}) => {
   try {
-    return await callBridgeWithFallback(
+    return await callBridge(
       ['/fingerprint/enroll', '/fingerprints/enroll', '/enroll'],
       {
-      method: 'POST',
-      body: JSON.stringify(payload),
+        method: 'POST',
+        body: JSON.stringify(payload),
       },
     );
   } catch (error) {
@@ -158,11 +247,11 @@ export const enrollFingerprint = async (payload = {}) => {
 
 export const identifyFingerprint = async (payload = {}) => {
   try {
-    return await callBridgeWithFallback(
+    return await callBridge(
       ['/fingerprint/identify', '/fingerprints/identify', '/identify'],
       {
-      method: 'POST',
-      body: JSON.stringify(payload),
+        method: 'POST',
+        body: JSON.stringify(payload),
       },
     );
   } catch (error) {
