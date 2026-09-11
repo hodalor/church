@@ -91,16 +91,56 @@ const resolveAllowedOrigin = (request) => {
   return requestOrigin || configuredOrigin || '*';
 };
 
+const resolveAllowedHeaders = (request) => {
+  const requestedHeaders = pickText(request.headers['access-control-request-headers']);
+  const allowedHeaders = new Set([
+    'Content-Type',
+    'Access-Control-Request-Method',
+    'Access-Control-Request-Private-Network',
+    'Origin',
+    'Accept',
+  ]);
+
+  if (requestedHeaders) {
+    requestedHeaders
+      .split(',')
+      .map((value) => value.trim())
+      .filter(Boolean)
+      .forEach((value) => allowedHeaders.add(value));
+  }
+
+  return Array.from(allowedHeaders).join(', ');
+};
+
+const buildCorsHeaders = (request) => {
+  const requestedPrivateNetwork = String(
+    request.headers['access-control-request-private-network'] || '',
+  )
+    .trim()
+    .toLowerCase();
+
+  return {
+    'Access-Control-Allow-Origin': resolveAllowedOrigin(request),
+    'Access-Control-Allow-Methods': 'GET,POST,OPTIONS',
+    'Access-Control-Allow-Headers': resolveAllowedHeaders(request),
+    'Access-Control-Allow-Private-Network':
+      requestedPrivateNetwork === 'true' ? 'true' : 'false',
+    'Access-Control-Max-Age': '600',
+    Vary: 'Origin, Access-Control-Request-Headers, Access-Control-Request-Private-Network',
+  };
+};
+
 const createJsonResponse = (request, response, statusCode, payload) => {
   response.writeHead(statusCode, {
     'Content-Type': 'application/json',
-    'Access-Control-Allow-Origin': resolveAllowedOrigin(request),
-    'Access-Control-Allow-Methods': 'GET,POST,OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type, Access-Control-Request-Private-Network',
-    'Access-Control-Allow-Private-Network': 'true',
-    Vary: 'Origin',
+    ...buildCorsHeaders(request),
   });
   response.end(JSON.stringify(payload));
+};
+
+const createEmptyResponse = (request, response, statusCode = 204) => {
+  response.writeHead(statusCode, buildCorsHeaders(request));
+  response.end();
 };
 
 const buildDeviceMeta = () => ({
@@ -266,7 +306,7 @@ const server = createServer(async (request, response) => {
   }
 
   if (request.method === 'OPTIONS') {
-    createJsonResponse(request, response, 204, {});
+    createEmptyResponse(request, response, 204);
     return;
   }
 

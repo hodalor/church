@@ -18,6 +18,15 @@ const pickText = (...values) => {
 
 const normalizeUrl = (value) => String(value || '').trim().replace(/\/+$/, '');
 
+const isLoopbackUrl = (value) => {
+  try {
+    const parsed = new URL(normalizeUrl(value));
+    return parsed.hostname === '127.0.0.1' || parsed.hostname === 'localhost';
+  } catch {
+    return false;
+  }
+};
+
 const resolveBridgeUrl = () => {
   const configuredUrl =
     process.env.REACT_APP_BIOMETRIC_BRIDGE_URL ||
@@ -152,14 +161,71 @@ const createBridgeConnectionError = (baseUrls = []) =>
     `Fingerprint bridge is not reachable on this computer. Start Prynova Fingerprint Bridge and confirm one of these local addresses is running: ${baseUrls.join(', ')}.`,
   );
 
-const callBridgeAtBaseUrl = async (baseUrl, path, options = {}) => {
-  const response = await fetch(`${baseUrl}${path}`, {
+const isEdgeWithLocalNetworkAccess = () => {
+  if (typeof navigator === 'undefined') {
+    return false;
+  }
+
+  const userAgent = String(navigator.userAgent || '');
+  const match = userAgent.match(/Edg\/(\d+)/);
+  return Boolean(match && Number(match[1]) >= 143);
+};
+
+const getLocalNetworkAccessState = async () => {
+  if (typeof navigator === 'undefined' || typeof navigator.permissions?.query !== 'function') {
+    return '';
+  }
+
+  try {
+    const result = await navigator.permissions.query({ name: 'local-network-access' });
+    return String(result?.state || '').trim().toLowerCase();
+  } catch {
+    return '';
+  }
+};
+
+const createLoopbackPermissionError = (permissionState = '') => {
+  if (permissionState === 'denied') {
+    return new Error(
+      'Edge blocked access to the local fingerprint bridge. Allow Local network access for this site in Edge, then click Refresh Bridge again.',
+    );
+  }
+
+  return new Error(
+    'This browser needs permission to reach the local fingerprint bridge. Click Refresh Bridge and allow the Local network access prompt in Edge, then try again.',
+  );
+};
+
+const buildBridgeRequestOptions = (baseUrl, options = {}) => {
+  const headers = {
+    ...(options.headers || {}),
+  };
+
+  if (
+    options.body !== null &&
+    options.body !== undefined &&
+    !headers['Content-Type'] &&
+    !headers['content-type']
+  ) {
+    headers['Content-Type'] = 'application/json';
+  }
+
+  const requestOptions = {
     ...options,
-    headers: {
-      'Content-Type': 'application/json',
-      ...(options.headers || {}),
-    },
-  });
+    mode: options.mode || 'cors',
+    cache: options.cache || 'no-store',
+    headers,
+  };
+
+  if (isLoopbackUrl(baseUrl)) {
+    requestOptions.targetAddressSpace = 'loopback';
+  }
+
+  return requestOptions;
+};
+
+const callBridgeAtBaseUrl = async (baseUrl, path, options = {}) => {
+  const response = await fetch(`${baseUrl}${path}`, buildBridgeRequestOptions(baseUrl, options));
 
   const data = await readJsonResponse(response);
   persistBridgeUrl(baseUrl);
@@ -200,6 +266,13 @@ const callBridge = async (paths = [], options = {}) => {
   }
 
   if (sawConnectionFailure) {
+    if (isEdgeWithLocalNetworkAccess() && baseUrls.some(isLoopbackUrl)) {
+      const permissionState = await getLocalNetworkAccessState();
+      if (permissionState === 'denied' || permissionState === 'prompt') {
+        throw createLoopbackPermissionError(permissionState);
+      }
+    }
+
     throw createBridgeConnectionError(baseUrls);
   }
 
