@@ -38,15 +38,15 @@ const tabs = [
   { label: 'Operations', value: 'operations' },
 ];
 const panelClass =
-  'rounded-[18px] border p-3.5 shadow-[0_12px_28px_rgba(0,0,0,0.18)]';
+  'rounded-[18px] border p-3.5 shadow-[0_2px_12px_rgba(15,23,42,0.05)]';
 const financePanel =
-  `${panelClass} border-sky-400/18 bg-[linear-gradient(135deg,rgba(56,189,248,0.14),rgba(13,19,32,0.98))]`;
+  `${panelClass} border-sky-200 bg-[linear-gradient(135deg,#eef7fc_0%,#dbeefe_100%)]`;
 const goldPanel =
-  `${panelClass} border-amber-400/18 bg-[linear-gradient(135deg,rgba(244,201,93,0.16),rgba(13,19,32,0.98))]`;
+  `${panelClass} border-amber-200 bg-[linear-gradient(135deg,#fbf4de_0%,#f3ead2_100%)]`;
 const emeraldPanel =
-  `${panelClass} border-emerald-400/18 bg-[linear-gradient(135deg,rgba(52,211,153,0.14),rgba(13,19,32,0.98))]`;
+  `${panelClass} border-emerald-200 bg-[linear-gradient(135deg,#eef8f3_0%,#dbeee7_100%)]`;
 const violetPanel =
-  `${panelClass} border-violet-400/18 bg-[linear-gradient(135deg,rgba(167,139,250,0.16),rgba(13,19,32,0.98))]`;
+  `${panelClass} border-violet-200 bg-[linear-gradient(135deg,#f4f0fb_0%,#e6def6_100%)]`;
 
 export default function IntelligencePage() {
   const { canViewIntelligence } = useAnalyticsAccess();
@@ -140,12 +140,12 @@ export default function IntelligencePage() {
             </div>
             <div className="grid gap-4 xl:grid-cols-[1fr_0.9fr]">
               <div className={financePanel}>
-                <h3 className="text-lg font-semibold text-white">Income per member by branch</h3>
+                <h3 className="text-lg font-semibold text-slate-950">Income per member by branch</h3>
                 <div className="mt-4 h-[260px]">
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart data={financeData.byBranch || []} layout="vertical">
-                      <XAxis type="number" stroke="#94A3B8" />
-                      <YAxis type="category" dataKey="branchName" stroke="#94A3B8" width={110} />
+                      <XAxis type="number" stroke="#64748B" />
+                      <YAxis type="category" dataKey="branchName" stroke="#64748B" width={110} />
                       <Tooltip />
                       <ReferenceLine x={financeBenchmark} stroke="#C9A84C" strokeDasharray="4 4" />
                       <Bar dataKey="incomePerMember" fill="#38BDF8" radius={[0, 8, 8, 0]} />
@@ -155,18 +155,18 @@ export default function IntelligencePage() {
               </div>
               <div className="space-y-4">
                 <div className={goldPanel}>
-                  <h3 className="text-lg font-semibold text-white">Forecast</h3>
-                  <p className="mt-3 text-3xl font-semibold text-white">
+                  <h3 className="text-lg font-semibold text-slate-950">Forecast</h3>
+                  <p className="mt-3 text-3xl font-semibold text-slate-950">
                     {formatAnalyticsCurrency(financeData.forecast?.nextMonthIncome || 0, currencyCode, currencySymbol)}
                   </p>
-                  <p className="mt-2 text-sm text-white/55">
+                  <p className="mt-2 text-sm text-slate-600">
                     Confidence {Number(financeData.forecast?.confidence || 0).toFixed(1)}% • {financeData.forecast?.basis || 'Based on the last 12 months'}
                   </p>
                   <div className="mt-4 h-[150px]">
                     <ResponsiveContainer width="100%" height="100%">
                       <LineChart data={financeData.forecast?.series || []}>
-                        <XAxis dataKey="month" stroke="#94A3B8" />
-                        <YAxis stroke="#94A3B8" />
+                        <XAxis dataKey="month" stroke="#64748B" />
+                        <YAxis stroke="#64748B" />
                         <Tooltip />
                         <Line type="monotone" dataKey="income" stroke="#C9A84C" strokeWidth={3} />
                       </LineChart>
@@ -174,17 +174,17 @@ export default function IntelligencePage() {
                   </div>
                 </div>
                 <div className={violetPanel}>
-                  <h3 className="text-lg font-semibold text-white">Financial anomalies</h3>
+                  <h3 className="text-lg font-semibold text-slate-950">Financial anomalies</h3>
                   <div className="mt-4 space-y-3">
                     <SummaryList
                       items={financeData.anomalies || []}
                       formatter={(item) => (
-                        <div className="rounded-2xl border border-violet-300/15 bg-violet-400/10 px-4 py-3">
-                          <p className="font-medium text-white">{item.branchName}</p>
-                          <p className="mt-1 text-sm text-white/55">
+                        <div className="rounded-2xl border border-violet-200 bg-violet-50 px-4 py-3">
+                          <p className="font-medium text-slate-950">{item.branchName}</p>
+                          <p className="mt-1 text-sm text-slate-500">
                             {item.month} • {item.type} • {Number(item.percent || 0).toFixed(1)}%
                           </p>
-                          <p className="mt-2 text-sm text-white/72">{item.message}</p>
+                          <p className="mt-2 text-sm text-slate-700">{item.message}</p>
                         </div>
                       )}
                     />
@@ -204,12 +204,12 @@ export default function IntelligencePage() {
               <KpiCard label="Projected 3M" value={formatAnalyticsNumber(growthData.projections?.length || 0)} helper="Forecast periods ready" tone="violet" compact />
             </div>
             <div className={emeraldPanel}>
-              <h3 className="text-lg font-semibold text-white">Historical and forecast trend</h3>
+              <h3 className="text-lg font-semibold text-slate-950">Historical and forecast trend</h3>
               <div className="mt-4 h-[280px]">
                 <ResponsiveContainer width="100%" height="100%">
                   <LineChart data={forecastSeries}>
-                    <XAxis dataKey="month" stroke="#94A3B8" />
-                    <YAxis stroke="#94A3B8" />
+                    <XAxis dataKey="month" stroke="#64748B" />
+                    <YAxis stroke="#64748B" />
                     <Tooltip />
                     <Line type="monotone" dataKey="value" stroke="#C9A84C" strokeWidth={3} />
                   </LineChart>
@@ -223,14 +223,14 @@ export default function IntelligencePage() {
           <div className="grid gap-4 xl:grid-cols-[0.9fr_1.1fr]">
             <div className="space-y-4">
               <div className={violetPanel}>
-                <h3 className="text-lg font-semibold text-white">Volunteer gaps calendar</h3>
+                <h3 className="text-lg font-semibold text-slate-950">Volunteer gaps calendar</h3>
                 <div className="mt-4 space-y-3">
                   <SummaryList
                     items={operations.volunteers?.upcomingGaps || []}
                     formatter={(item) => (
-                      <div className="rounded-2xl border border-white/8 bg-white/[0.03] px-4 py-3">
-                        <p className="font-medium text-white">{item.department}</p>
-                        <p className="mt-1 text-sm text-white/55">
+                      <div className="rounded-2xl border border-[#e8e1d3] bg-white px-4 py-3">
+                        <p className="font-medium text-slate-950">{item.department}</p>
+                        <p className="mt-1 text-sm text-slate-500">
                           {formatDateTime(item.date, 'PPP')} • {item.available}/{item.needed} available
                         </p>
                       </div>
@@ -238,8 +238,8 @@ export default function IntelligencePage() {
                   />
                 </div>
               </div>
-              <div className="rounded-[22px] border border-white/8 bg-[#0d1320] p-4">
-                <h3 className="text-lg font-semibold text-white">Communication health</h3>
+              <div className="rounded-[22px] border border-[#e8e1d3] bg-white p-4">
+                <h3 className="text-lg font-semibold text-slate-950">Communication health</h3>
                 <div className="mt-4 grid gap-3 md:grid-cols-3">
                   <KpiCard label="Last Broadcast" value={formatAnalyticsNumber(operations.communication?.lastBroadcastDays || 0)} helper="days ago" />
                   <KpiCard label="Delivery Rate" value={`${Number(operations.communication?.avgDeliveryRate || 0).toFixed(1)}%`} />
@@ -247,8 +247,8 @@ export default function IntelligencePage() {
                 </div>
               </div>
             </div>
-            <div className="rounded-[22px] border border-white/8 bg-[#0d1320] p-4">
-              <h3 className="text-lg font-semibold text-white">Pastor workload</h3>
+            <div className="rounded-[22px] border border-[#e8e1d3] bg-white p-4">
+              <h3 className="text-lg font-semibold text-slate-950">Pastor workload</h3>
               <div className="mt-4 space-y-3">
                 <SummaryList
                   items={operations.pastoral?.caseloadPerPastor || []}
@@ -256,12 +256,12 @@ export default function IntelligencePage() {
                     const total = Number(item.open || 0);
                     const tone = total > 15 ? 'text-rose-300' : total < 8 ? 'text-emerald-300' : 'text-amber-300';
                     return (
-                      <div className="rounded-2xl border border-white/8 bg-white/[0.03] px-4 py-3">
+                      <div className="rounded-2xl border border-[#e8e1d3] bg-[#faf8f2] px-4 py-3">
                         <div className="flex items-center justify-between gap-3">
-                          <p className="font-medium text-white">{item.name}</p>
+                          <p className="font-medium text-slate-950">{item.name}</p>
                           <p className={`text-sm font-medium ${tone}`}>{total} open</p>
                         </div>
-                        <div className="mt-3 h-2 rounded-full bg-white/8">
+                        <div className="mt-3 h-2 rounded-full bg-slate-200">
                           <div
                             className={`h-2 rounded-full ${total > 15 ? 'bg-rose-400' : total < 8 ? 'bg-emerald-400' : 'bg-amber-400'}`}
                             style={{ width: `${Math.min((total / 20) * 100, 100)}%` }}
@@ -285,14 +285,14 @@ export default function IntelligencePage() {
               <KpiCard label="Drifting" value={formatAnalyticsNumber(memberData.driftingCount || 0)} />
             </div>
             <div className="grid gap-4 xl:grid-cols-[1.2fr_0.8fr]">
-              <div className="rounded-[22px] border border-white/8 bg-[#0d1320] p-4">
-                <h3 className="text-lg font-semibold text-white">At-risk members</h3>
+              <div className="rounded-[22px] border border-[#e8e1d3] bg-white p-4">
+                <h3 className="text-lg font-semibold text-slate-950">At-risk members</h3>
                 {membersQuery.isLoading ? (
                   <TableRowSkeleton columns={8} rows={6} />
                 ) : (
                   <div className="mt-4 overflow-x-auto">
-                    <table className="min-w-full text-left text-sm text-white/75">
-                      <thead className="text-[11px] uppercase tracking-[0.2em] text-white/40">
+                    <table className="min-w-full text-left text-sm text-slate-700">
+                      <thead className="text-[11px] uppercase tracking-[0.2em] text-slate-500">
                         <tr>
                           <th className="pb-3">Name</th>
                           <th className="pb-3">Branch</th>
@@ -306,8 +306,8 @@ export default function IntelligencePage() {
                       </thead>
                       <tbody>
                         {(memberData.atRiskMembers || []).map((member) => (
-                          <tr key={member.memberId} className="border-t border-white/8">
-                            <td className="py-3 font-medium text-white">{member.name}</td>
+                          <tr key={member.memberId} className="border-t border-slate-200">
+                            <td className="py-3 font-medium text-slate-950">{member.name}</td>
                             <td>{member.branch || '-'}</td>
                             <td>{formatAnalyticsNumber(member.healthScore)}</td>
                             <td>{formatDateTime(member.lastAttended, 'PP')}</td>
@@ -316,7 +316,7 @@ export default function IntelligencePage() {
                             <td>
                               <div className="flex flex-wrap gap-2">
                                 {(member.riskFactors || []).map((factor) => (
-                                  <span key={factor} className="rounded-full border border-white/10 px-2 py-1 text-xs text-white/55">
+                                  <span key={factor} className="rounded-full border border-[#e8e1d3] bg-[#faf8f2] px-2 py-1 text-xs text-slate-600">
                                     {toTitleCase(factor)}
                                   </span>
                                 ))}
@@ -335,8 +335,8 @@ export default function IntelligencePage() {
                 )}
               </div>
               <div className="space-y-4">
-                <div className="rounded-[22px] border border-white/8 bg-[#0d1320] p-4">
-                  <h3 className="text-lg font-semibold text-white">Engagement distribution</h3>
+                <div className="rounded-[22px] border border-[#e8e1d3] bg-white p-4">
+                  <h3 className="text-lg font-semibold text-slate-950">Engagement distribution</h3>
                   <div className="mt-4 h-[250px]">
                     <ResponsiveContainer width="100%" height="100%">
                       <PieChart>
@@ -350,13 +350,13 @@ export default function IntelligencePage() {
                     </ResponsiveContainer>
                   </div>
                 </div>
-                <div className="rounded-[22px] border border-white/8 bg-[#0d1320] p-4">
-                  <h3 className="text-lg font-semibold text-white">Demographic insights</h3>
+                <div className="rounded-[22px] border border-[#e8e1d3] bg-white p-4">
+                  <h3 className="text-lg font-semibold text-slate-950">Demographic insights</h3>
                   <div className="mt-4 h-[220px]">
                     <ResponsiveContainer width="100%" height="100%">
                       <BarChart data={demographicAge}>
-                        <XAxis dataKey="name" stroke="#94A3B8" />
-                        <YAxis stroke="#94A3B8" />
+                        <XAxis dataKey="name" stroke="#64748B" />
+                        <YAxis stroke="#64748B" />
                         <Tooltip />
                         <Bar dataKey="value" fill="#60A5FA" radius={[8, 8, 0, 0]} />
                       </BarChart>
@@ -364,7 +364,7 @@ export default function IntelligencePage() {
                   </div>
                   <div className="mt-4 space-y-2">
                     {departmentCoverage.slice(0, 5).map((item) => (
-                      <div key={item.name} className="flex items-center justify-between text-sm text-white/70">
+                      <div key={item.name} className="flex items-center justify-between text-sm text-slate-700">
                         <span>{item.name}</span>
                         <span>{formatAnalyticsNumber(item.value)}</span>
                       </div>

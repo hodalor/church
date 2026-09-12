@@ -8,30 +8,30 @@ export const PERIOD_OPTIONS = [
 ];
 
 export const HEALTH_GRADE_STYLES = {
-  A: 'border-emerald-400/25 bg-emerald-500/15 text-emerald-300',
-  B: 'border-teal-400/25 bg-teal-500/15 text-teal-300',
-  C: 'border-amber-400/25 bg-amber-500/15 text-amber-300',
-  D: 'border-orange-400/25 bg-orange-500/15 text-orange-300',
-  F: 'border-rose-400/25 bg-rose-500/15 text-rose-300',
+  A: 'border-emerald-200 bg-emerald-50 text-emerald-700',
+  B: 'border-teal-200 bg-teal-50 text-teal-700',
+  C: 'border-amber-200 bg-amber-50 text-amber-700',
+  D: 'border-orange-200 bg-orange-50 text-orange-700',
+  F: 'border-rose-200 bg-rose-50 text-rose-700',
 };
 
 export const SEVERITY_STYLES = {
   critical: {
-    border: 'border-rose-500/35',
-    bg: 'bg-rose-500/10',
-    text: 'text-rose-300',
+    border: 'border-rose-200',
+    bg: 'bg-rose-50',
+    text: 'text-rose-700',
     icon: '🔴',
   },
   warning: {
-    border: 'border-amber-500/35',
-    bg: 'bg-amber-500/10',
-    text: 'text-amber-300',
+    border: 'border-amber-200',
+    bg: 'bg-amber-50',
+    text: 'text-amber-700',
     icon: '🟡',
   },
   info: {
-    border: 'border-sky-500/35',
-    bg: 'bg-sky-500/10',
-    text: 'text-sky-300',
+    border: 'border-sky-200',
+    bg: 'bg-sky-50',
+    text: 'text-sky-700',
     icon: '🔵',
   },
 };
@@ -41,7 +41,7 @@ export const TREND_STYLES = {
   improving: { icon: '↑', color: 'text-emerald-300' },
   down: { icon: '↓', color: 'text-rose-300' },
   declining: { icon: '↓', color: 'text-rose-300' },
-  stable: { icon: '→', color: 'text-white/45' },
+  stable: { icon: '→', color: 'text-slate-500' },
 };
 
 export const formatAnalyticsNumber = (value, options = {}) =>

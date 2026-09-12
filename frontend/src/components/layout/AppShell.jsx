@@ -15,14 +15,16 @@ export default function AppShell({ children }) {
   }
 
   return (
-    <div className="h-screen overflow-hidden bg-[#060b14] text-white">
-      <div className="flex h-screen overflow-hidden bg-[radial-gradient(circle_at_top_right,rgba(201,168,76,0.06),transparent_22%),linear-gradient(180deg,#060b14_0%,#050912_100%)]">
+    <div className="h-screen overflow-hidden bg-[#f6f3ea] text-slate-900">
+      <div className="flex h-screen overflow-hidden bg-[#f6f3ea]">
         <Sidebar isOpen={isOpen} onToggle={() => setIsOpen((current) => !current)} />
         <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
           <TopBar onMenuClick={() => setIsOpen(true)} />
-          <main className="flex-1 overflow-x-hidden overflow-y-auto px-4 py-4 lg:px-5 lg:py-5 xl:px-6">
+          <main className="flex-1 overflow-x-hidden overflow-y-auto px-4 py-4 lg:px-6 lg:py-5 xl:px-8">
             <ErrorBoundary>
-              <PageTransition>{children}</PageTransition>
+              <PageTransition>
+                <div className="mx-auto w-full max-w-[1560px]">{children}</div>
+              </PageTransition>
             </ErrorBoundary>
           </main>
         </div>

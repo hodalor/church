@@ -630,10 +630,10 @@ export default function MemberDetailPage() {
 
   return (
     <Shell>
-      <div className="space-y-6">
+      <div className="space-y-5">
         <PageHeader
           title={member ? `${member.firstName} ${member.lastName}` : 'Member Detail'}
-          subtitle="Review a member profile, church status, family links, QR identity, and profile health."
+          subtitle="Open one clean profile view for identity, church status, family links, and care history."
           action={
             <div className="flex flex-wrap gap-3">
               <Link to={isSuperAdmin ? '/superadmin/members' : '/members'}>
@@ -697,6 +697,32 @@ export default function MemberDetailPage() {
                   </div>
                 ) : null}
               </div>
+            </div>
+
+            <div className="grid gap-px overflow-hidden rounded-2xl border border-[#ebe4d6] bg-[#ebe4d6] md:grid-cols-2 xl:grid-cols-4">
+              {[
+                {
+                  label: 'Member ID',
+                  value: member?.memberId || '—',
+                },
+                {
+                  label: 'Status',
+                  value: member?.isDeleted ? 'Archived' : member?.isActive ? 'Active' : 'Inactive',
+                },
+                {
+                  label: 'Branch',
+                  value: member?.branch || 'Main branch',
+                },
+                {
+                  label: 'Health Score',
+                  value: `${member?.healthScore?.overall ?? 0}/100`,
+                },
+              ].map((item) => (
+                <div key={item.label} className="bg-[#faf8f2] px-4 py-3">
+                  <p className="text-[11px] uppercase tracking-[0.22em] text-slate-500">{item.label}</p>
+                  <p className="mt-1.5 text-sm font-semibold text-slate-950">{item.value}</p>
+                </div>
+              ))}
             </div>
 
             {isEditing ? (
@@ -1240,14 +1266,14 @@ export default function MemberDetailPage() {
             )}
           </Card>
 
-          <div className="space-y-6">
-            <Card className="space-y-4">
+          <Card className="space-y-6">
+            <section className="space-y-4 border-b border-[#ebe4d6] pb-6">
               <div className="flex items-center justify-between gap-3">
                 <div>
-                  <p className="text-sm uppercase tracking-[0.25em] text-accent">Health</p>
-                  <h3 className="mt-2 text-xl font-semibold text-white">Engagement score</h3>
+                  <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-500">Health</p>
+                  <h3 className="mt-1 text-lg font-semibold text-slate-950">Engagement score</h3>
                 </div>
-                <p className="text-3xl font-semibold text-white">{member?.healthScore?.overall ?? 0}/100</p>
+                <p className="text-3xl font-semibold tracking-tight text-slate-950">{member?.healthScore?.overall ?? 0}/100</p>
               </div>
               <div className="grid gap-3 md:grid-cols-2">
                 <Detail label="Status" value={member?.healthScore?.status} />
@@ -1262,15 +1288,13 @@ export default function MemberDetailPage() {
                   {recalculateMutation.isPending ? 'Recalculating...' : 'Recalculate Health Score'}
                 </Button>
               ) : null}
-            </Card>
+            </section>
 
-            <Card className="space-y-4">
+            <section className="space-y-4 border-b border-[#ebe4d6] pb-6">
               <div className="flex items-start justify-between gap-3">
                 <div>
-                  <p className="text-sm uppercase tracking-[0.25em] text-accent">Family</p>
-                  <h3 className="mt-2 text-xl font-semibold text-white">
-                    Related members
-                  </h3>
+                  <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-500">Family</p>
+                  <h3 className="mt-1 text-lg font-semibold text-slate-950">Related members</h3>
                 </div>
                 {isEditing ? (
                   <Button type="button" variant="secondary" onClick={addFamilyRelationship}>
@@ -1433,12 +1457,12 @@ export default function MemberDetailPage() {
                   No linked family group found for this member.
                 </p>
               )}
-            </Card>
+            </section>
 
-            <Card className="space-y-4">
+            <section className="space-y-4">
               <div>
-                <p className="text-sm uppercase tracking-[0.25em] text-accent">Actions</p>
-                <h3 className="mt-2 text-xl font-semibold text-white">Lifecycle controls</h3>
+                <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-500">Actions</p>
+                <h3 className="mt-1 text-lg font-semibold text-slate-950">Lifecycle controls</h3>
               </div>
               {member?.isDeleted ? (
                 <Button variant="secondary" onClick={() => restoreMutation.mutate()} disabled={restoreMutation.isPending}>
@@ -1449,17 +1473,25 @@ export default function MemberDetailPage() {
                   Archive Member
                 </Button>
               ) : null}
-            </Card>
-          </div>
+            </section>
+          </Card>
         </div>
 
         {canViewPastoralActivity ? (
-          <div className="grid gap-6 xl:grid-cols-3">
-            <Card className="space-y-4">
+          <Card className="space-y-5">
+            <div className="flex items-end justify-between gap-3 border-b border-[#ebe4d6] pb-4">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-500">Pastoral Activity</p>
+                <h3 className="mt-1 text-xl font-semibold text-slate-950">Care, growth, and appointments</h3>
+              </div>
+            </div>
+
+            <div className="grid gap-6 xl:grid-cols-3">
+              <section className="space-y-4">
               <div className="flex items-center justify-between gap-3">
                 <div>
-                  <p className="text-sm uppercase tracking-[0.25em] text-accent">Care Cases</p>
-                  <h3 className="mt-2 text-xl font-semibold text-white">Pastoral follow-up</h3>
+                  <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-500">Care Cases</p>
+                  <h3 className="mt-1 text-lg font-semibold text-slate-950">Pastoral follow-up</h3>
                 </div>
                 <Button variant="secondary" onClick={() => navigate(`/pastoral/cases/new?memberId=${member?.memberId || ''}`)}>
                   Open New Case
@@ -1485,12 +1517,12 @@ export default function MemberDetailPage() {
                   </p>
                 ) : null}
               </div>
-            </Card>
+              </section>
 
-            <Card className="space-y-4">
+              <section className="space-y-4">
               <div>
-                <p className="text-sm uppercase tracking-[0.25em] text-accent">Discipleship</p>
-                <h3 className="mt-2 text-xl font-semibold text-white">Growth progress</h3>
+                <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-500">Discipleship</p>
+                <h3 className="mt-1 text-lg font-semibold text-slate-950">Growth progress</h3>
               </div>
               <div className="space-y-3">
                 {activeEnrollments.map((enrollment) => (
@@ -1516,13 +1548,13 @@ export default function MemberDetailPage() {
                   </p>
                 ) : null}
               </div>
-            </Card>
+              </section>
 
-            <Card className="space-y-4">
+              <section className="space-y-4">
               <div className="flex items-center justify-between gap-3">
                 <div>
-                  <p className="text-sm uppercase tracking-[0.25em] text-accent">Appointments</p>
-                  <h3 className="mt-2 text-xl font-semibold text-white">Upcoming and past</h3>
+                  <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-500">Appointments</p>
+                  <h3 className="mt-1 text-lg font-semibold text-slate-950">Upcoming and past</h3>
                 </div>
                 <Button
                   variant="ghost"
@@ -1555,8 +1587,9 @@ export default function MemberDetailPage() {
                   </p>
                 ) : null}
               </div>
-            </Card>
-          </div>
+              </section>
+            </div>
+          </Card>
         ) : null}
       </div>
 
@@ -1593,9 +1626,9 @@ export default function MemberDetailPage() {
 
 function Detail({ label, value }) {
   return (
-    <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-4">
-      <p className="text-xs uppercase tracking-[0.22em] text-white/55">{label}</p>
-      <p className="mt-2 text-base font-semibold text-white">{value || '—'}</p>
+    <div className="rounded-2xl border border-[#ebe4d6] bg-[#faf8f2] px-4 py-4">
+      <p className="text-[11px] uppercase tracking-[0.22em] text-slate-500">{label}</p>
+      <p className="mt-2 text-base font-semibold text-slate-950">{value || '—'}</p>
     </div>
   );
 }

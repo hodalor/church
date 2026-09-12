@@ -23,7 +23,7 @@ const tabs = [
   { label: 'Actioned', value: 'actioned' },
 ];
 const panelClass =
-  'rounded-[18px] border border-violet-400/18 bg-[linear-gradient(135deg,rgba(167,139,250,0.16),rgba(13,19,32,0.98))] p-3.5 text-white shadow-[0_12px_28px_rgba(0,0,0,0.18)]';
+  'rounded-[18px] border border-violet-200 bg-[linear-gradient(135deg,#f4f0fb_0%,#e6def6_100%)] p-3.5 text-slate-900 shadow-[0_2px_12px_rgba(15,23,42,0.05)]';
 
 export default function InsightsPage() {
   const queryClient = useQueryClient();
@@ -96,7 +96,7 @@ export default function InsightsPage() {
         action={
           <div className="flex flex-wrap gap-2">
             <Button
-              variant="ghost"
+              variant="subtle"
               onClick={() => {
                 insights.filter((item) => !item.isRead).forEach((item) => readMutation.mutate(item));
               }}
@@ -114,7 +114,7 @@ export default function InsightsPage() {
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <FilterTabs tabs={tabs} value={tab} onChange={setTab} />
-              <p className="rounded-full border border-white/10 px-3 py-1 text-sm text-white/65">
+              <p className="rounded-full border border-[#e8e1d3] bg-white px-3 py-1 text-sm text-slate-600">
                 {unreadCount} unread
               </p>
             </div>
@@ -147,12 +147,12 @@ export default function InsightsPage() {
           </div>
 
           <div className={panelClass}>
-            <h3 className="text-lg font-semibold text-white">Insight type breakdown</h3>
+            <h3 className="text-lg font-semibold text-slate-950">Insight type breakdown</h3>
             <div className="mt-4 h-[210px]">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={chartData} layout="vertical">
-                  <XAxis type="number" stroke="#94A3B8" />
-                  <YAxis dataKey="name" type="category" stroke="#94A3B8" width={80} />
+                  <XAxis type="number" stroke="#64748B" />
+                  <YAxis dataKey="name" type="category" stroke="#64748B" width={80} />
                   <Tooltip />
                   <Bar dataKey="value" fill="#A78BFA" radius={[0, 8, 8, 0]} />
                 </BarChart>
@@ -160,18 +160,18 @@ export default function InsightsPage() {
             </div>
             <div className="mt-4 space-y-2">
               {chartData.map((item) => (
-                <div key={item.name} className="flex items-center justify-between text-sm text-white/65">
+                <div key={item.name} className="flex items-center justify-between text-sm text-slate-700">
                   <span>{item.name}</span>
                   <span>{item.value}</span>
                 </div>
               ))}
             </div>
-            <div className="mt-5 rounded-2xl border border-violet-300/15 bg-violet-400/10 p-3.5">
-              <h4 className="font-medium text-white">Team sharing</h4>
-              <p className="mt-2 text-sm text-white/58">
+            <div className="mt-5 rounded-2xl border border-violet-200 bg-white/70 p-3.5">
+              <h4 className="font-medium text-slate-950">Team sharing</h4>
+              <p className="mt-2 text-sm text-slate-600">
                 Share any insight with your team from the card actions. Team notification wiring can reuse the existing notification and communication flows.
               </p>
-              <Button variant="ghost" className="mt-4 w-full" onClick={() => showInfoToast('Use the insight cards to share with your team.')}>
+              <Button variant="subtle" className="mt-4 w-full" onClick={() => showInfoToast('Use the insight cards to share with your team.')}>
                 Share with Team
               </Button>
             </div>

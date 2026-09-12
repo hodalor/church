@@ -17,7 +17,7 @@ import useVisitorsAccess from '../../hooks/useVisitorsAccess';
 import { getStageMeta } from '../../utils/visitors';
 
 const filterInputClass =
-  'w-full rounded-[16px] border border-white/10 bg-[linear-gradient(135deg,rgba(34,211,238,0.1),rgba(16,24,39,0.98))] px-3.5 py-2.5 text-sm text-white outline-none transition placeholder:text-white/35 focus:border-cyan-300/40';
+  'w-full rounded-[16px] border border-slate-300 bg-white px-3.5 py-2.5 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-accent/40';
 
 export default function PipelinePage() {
   const navigate = useNavigate();
@@ -137,8 +137,8 @@ export default function PipelinePage() {
       <AppShell>
         <Card>
           <p className="text-sm uppercase tracking-[0.22em] text-accent">Visitors</p>
-          <h1 className="mt-3 text-2xl font-semibold text-white">Access limited</h1>
-          <p className="mt-3 text-sm text-white/60">
+          <h1 className="mt-3 text-2xl font-semibold text-slate-950">Access limited</h1>
+          <p className="mt-3 text-sm text-slate-600">
             Your account does not currently have access to the visitor pipeline.
           </p>
         </Card>
@@ -151,11 +151,11 @@ export default function PipelinePage() {
       <div className="space-y-6">
         <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
           <div>
-            <p className="text-[11px] uppercase tracking-[0.28em] text-white/45">Visitors</p>
-            <h1 className="mt-2 text-2xl font-semibold text-white">Pipeline Board</h1>
+            <p className="text-[11px] uppercase tracking-[0.28em] text-accent">Visitors</p>
+            <h1 className="mt-2 text-2xl font-semibold text-slate-950">Pipeline Board</h1>
           </div>
           <div className="flex flex-wrap gap-3">
-            <Button variant="ghost" onClick={() => navigate(`/visitors?${searchParams.toString()}`)}>
+            <Button variant="subtle" onClick={() => navigate(`/visitors?${searchParams.toString()}`)}>
               List View
             </Button>
             {canOpenRegister ? (
@@ -166,7 +166,7 @@ export default function PipelinePage() {
           </div>
         </div>
 
-        <Card className="space-y-4 border-white/10 bg-[linear-gradient(135deg,rgba(34,211,238,0.12),rgba(13,19,32,0.98))]">
+        <Card className="space-y-4">
           <div className="grid gap-3 lg:grid-cols-4">
             <FilterSelect
               label="Branch"
@@ -199,10 +199,10 @@ export default function PipelinePage() {
                     >
                       <div className="mb-4 flex items-center justify-between gap-3">
                         <div>
-                          <p className="font-semibold text-white">{column.label}</p>
-                          <p className="text-xs text-white/45">{column.items.length} visitors</p>
+                          <p className="font-semibold text-slate-950">{column.label}</p>
+                          <p className="text-xs text-slate-500">{column.items.length} visitors</p>
                         </div>
-                        <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs font-semibold text-white/70">
+                        <span className="rounded-full border border-[#e8e1d3] bg-white px-3 py-1 text-xs font-semibold text-slate-700">
                           {column.items.length}
                         </span>
                       </div>
@@ -261,7 +261,7 @@ export default function PipelinePage() {
 function FilterSelect({ label, value, onChange, options }) {
   return (
     <label className="block space-y-1.5">
-      <span className="text-[13px] font-medium text-white/75">{label}</span>
+      <span className="text-[13px] font-medium text-slate-700">{label}</span>
       <select
         value={value}
         onChange={(event) => onChange(event.target.value)}
@@ -280,7 +280,7 @@ function FilterSelect({ label, value, onChange, options }) {
 function InputDate({ label, value, onChange }) {
   return (
     <label className="block space-y-1.5">
-      <span className="text-[13px] font-medium text-white/75">{label}</span>
+      <span className="text-[13px] font-medium text-slate-700">{label}</span>
       <input
         type="date"
         value={value}

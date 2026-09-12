@@ -339,8 +339,8 @@ export default function SuperAdminShell({ children }) {
   };
 
   return (
-    <div className="h-screen overflow-hidden bg-[#060b14] text-white">
-      <div className="flex h-screen overflow-hidden bg-[radial-gradient(circle_at_top_right,rgba(201,168,76,0.06),transparent_22%),linear-gradient(180deg,#060b14_0%,#050912_100%)]">
+    <div className="h-screen overflow-hidden bg-[#f6f3ea] text-slate-900">
+      <div className="flex h-screen overflow-hidden bg-[#f6f3ea]">
         <aside
           className={`fixed inset-y-0 left-0 z-40 flex w-[206px] transform flex-col overflow-hidden border-r border-white/8 bg-[#09101c] px-3 py-4 text-white transition duration-300 lg:static lg:translate-x-0 ${
             isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
@@ -380,18 +380,18 @@ export default function SuperAdminShell({ children }) {
         </aside>
 
         <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
-          <header className="sticky top-0 z-30 flex w-full items-center justify-between border-b border-white/8 bg-[#09101c]/92 px-4 py-3 backdrop-blur xl:px-6">
+          <header className="sticky top-0 z-30 flex w-full items-center justify-between border-b border-[#e8e1d3] bg-[#f8f5ee]/95 px-4 py-3 backdrop-blur xl:px-6">
             <div className="flex items-center gap-4">
               <Button variant="subtle" className="lg:hidden" onClick={() => setIsOpen(true)}>
                 <Menu className="h-4 w-4" />
               </Button>
               <div className="hidden items-center gap-3 lg:flex">
-                <div className="flex h-10 w-10 items-center justify-center rounded-2xl border border-accent/50 bg-accent/10 text-accent">
+                <div className="flex h-10 w-10 items-center justify-center rounded-2xl border border-[#d9ccb0] bg-white text-[#8b6b22]">
                   <Building2 className="h-4 w-4" />
                 </div>
                 <div>
-                  <p className="text-sm font-semibold text-white">{globalBranding.appName || 'Ecclesia'}</p>
-                  <p className="text-[11px] uppercase tracking-[0.22em] text-white/35">
+                  <p className="text-sm font-semibold text-slate-900">{globalBranding.appName || 'Ecclesia'}</p>
+                  <p className="text-[11px] uppercase tracking-[0.22em] text-slate-500">
                     {globalBranding.tagline || 'Church OS'}
                   </p>
                 </div>
@@ -410,9 +410,11 @@ export default function SuperAdminShell({ children }) {
               </Button>
             </div>
           </header>
-          <main className="flex-1 overflow-x-hidden overflow-y-auto px-4 py-4 lg:px-5 lg:py-5 xl:px-6">
+          <main className="flex-1 overflow-x-hidden overflow-y-auto px-4 py-4 lg:px-6 lg:py-5 xl:px-8">
             <ErrorBoundary>
-              <PageTransition>{children}</PageTransition>
+              <PageTransition>
+                <div className="mx-auto w-full max-w-[1560px]">{children}</div>
+              </PageTransition>
             </ErrorBoundary>
           </main>
         </div>

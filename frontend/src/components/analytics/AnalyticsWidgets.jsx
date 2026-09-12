@@ -29,52 +29,52 @@ import {
 const KPI_CARD_THEMES = {
   default: {
     shell:
-      'border-white/8 bg-[linear-gradient(135deg,rgba(17,26,42,0.98),rgba(10,15,26,0.94))] hover:border-accent/25 hover:bg-[linear-gradient(135deg,rgba(22,33,55,0.98),rgba(12,18,30,0.94))]',
-    glow: 'bg-accent/20',
-    chip: 'border-white/10 bg-white/6 text-white/65',
-    value: 'text-white',
+      'border-[#e8e1d3] bg-[linear-gradient(135deg,#ffffff_0%,#f7f2e8_100%)] hover:border-accent/25 hover:bg-[linear-gradient(135deg,#fffdfa_0%,#f4eddf_100%)]',
+    glow: 'bg-accent/12',
+    chip: 'border-[#eadfbf] bg-[#faf2dc] text-[#9a7524]',
+    value: 'text-slate-950',
   },
   gold: {
     shell:
-      'border-[#f0c96a]/30 bg-[linear-gradient(135deg,rgba(201,168,76,0.22),rgba(17,24,39,0.96))] hover:border-[#f0c96a]/55',
-    glow: 'bg-[#f0c96a]/30',
-    chip: 'border-[#f0c96a]/30 bg-[#f0c96a]/12 text-[#f4d98c]',
-    value: 'text-[#fff0bf]',
+      'border-[#e6cf93] bg-[linear-gradient(135deg,#fbf4de_0%,#f3ead2_100%)] hover:border-[#cfb06b]',
+    glow: 'bg-[#f0c96a]/18',
+    chip: 'border-[#e4ca8b] bg-[#f8edca] text-[#9a7524]',
+    value: 'text-[#3b2f15]',
   },
   blue: {
     shell:
-      'border-sky-400/25 bg-[linear-gradient(135deg,rgba(56,189,248,0.16),rgba(12,20,36,0.96))] hover:border-sky-300/50',
-    glow: 'bg-sky-400/30',
-    chip: 'border-sky-400/25 bg-sky-400/10 text-sky-200',
-    value: 'text-sky-100',
+      'border-sky-200 bg-[linear-gradient(135deg,#eef7fc_0%,#dbeefe_100%)] hover:border-sky-300',
+    glow: 'bg-sky-300/18',
+    chip: 'border-sky-200 bg-sky-50 text-sky-700',
+    value: 'text-slate-950',
   },
   emerald: {
     shell:
-      'border-emerald-400/25 bg-[linear-gradient(135deg,rgba(52,211,153,0.16),rgba(10,22,24,0.96))] hover:border-emerald-300/50',
-    glow: 'bg-emerald-400/30',
-    chip: 'border-emerald-400/25 bg-emerald-400/10 text-emerald-200',
-    value: 'text-emerald-100',
+      'border-emerald-200 bg-[linear-gradient(135deg,#eef8f3_0%,#dbeee7_100%)] hover:border-emerald-300',
+    glow: 'bg-emerald-300/18',
+    chip: 'border-emerald-200 bg-emerald-50 text-emerald-700',
+    value: 'text-slate-950',
   },
   violet: {
     shell:
-      'border-violet-400/25 bg-[linear-gradient(135deg,rgba(167,139,250,0.18),rgba(18,14,32,0.96))] hover:border-violet-300/50',
-    glow: 'bg-violet-400/30',
-    chip: 'border-violet-400/25 bg-violet-400/10 text-violet-200',
-    value: 'text-violet-100',
+      'border-violet-200 bg-[linear-gradient(135deg,#f4f0fb_0%,#e6def6_100%)] hover:border-violet-300',
+    glow: 'bg-violet-300/18',
+    chip: 'border-violet-200 bg-violet-50 text-violet-700',
+    value: 'text-slate-950',
   },
   rose: {
     shell:
-      'border-rose-400/25 bg-[linear-gradient(135deg,rgba(251,113,133,0.16),rgba(28,12,20,0.96))] hover:border-rose-300/50',
-    glow: 'bg-rose-400/30',
-    chip: 'border-rose-400/25 bg-rose-400/10 text-rose-200',
-    value: 'text-rose-100',
+      'border-rose-200 bg-[linear-gradient(135deg,#fbf1f2_0%,#f7e0e4_100%)] hover:border-rose-300',
+    glow: 'bg-rose-300/18',
+    chip: 'border-rose-200 bg-rose-50 text-rose-700',
+    value: 'text-slate-950',
   },
   cyan: {
     shell:
-      'border-cyan-400/25 bg-[linear-gradient(135deg,rgba(34,211,238,0.15),rgba(8,22,28,0.96))] hover:border-cyan-300/50',
-    glow: 'bg-cyan-400/30',
-    chip: 'border-cyan-400/25 bg-cyan-400/10 text-cyan-200',
-    value: 'text-cyan-100',
+      'border-cyan-200 bg-[linear-gradient(135deg,#edf9fb_0%,#d8eef3_100%)] hover:border-cyan-300',
+    glow: 'bg-cyan-300/18',
+    chip: 'border-cyan-200 bg-cyan-50 text-cyan-700',
+    value: 'text-slate-950',
   },
 };
 
@@ -93,9 +93,9 @@ export function AnalyticsPage({
       <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
         <div>
           {!hideEyebrow ? <p className="text-[11px] uppercase tracking-[0.28em] text-accent">{eyebrow}</p> : null}
-          <h1 className={`${hideEyebrow ? '' : 'mt-3'} text-3xl font-semibold text-white ${titleClassName}`}>{title}</h1>
+          <h1 className={`${hideEyebrow ? '' : 'mt-3'} text-3xl font-semibold text-slate-950 ${titleClassName}`}>{title}</h1>
           {subtitle ? (
-            <p className={`mt-3 max-w-3xl text-sm leading-6 text-white/62 ${subtitleClassName}`}>{subtitle}</p>
+            <p className={`mt-3 max-w-3xl text-sm leading-6 text-slate-600 ${subtitleClassName}`}>{subtitle}</p>
           ) : null}
         </div>
         {action ? <div className="shrink-0">{action}</div> : null}
@@ -110,8 +110,8 @@ export function AnalyticsSection({ title, subtitle, action, children, className 
     <Card className={className}>
       <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
         <div>
-          <h2 className="text-xl font-semibold text-white">{title}</h2>
-          {subtitle ? <p className="mt-2 text-sm text-white/58">{subtitle}</p> : null}
+          <h2 className="text-xl font-semibold text-slate-950">{title}</h2>
+          {subtitle ? <p className="mt-2 text-sm text-slate-600">{subtitle}</p> : null}
         </div>
         {action ? <div className="shrink-0">{action}</div> : null}
       </div>
@@ -150,7 +150,7 @@ export function KpiCard({ label, value, change, helper, to, tone = 'default', co
           <h3 className={`${compact ? 'text-[1.6rem]' : 'text-3xl'} font-semibold ${theme.value}`}>{value}</h3>
         </div>
       </div>
-      {helper ? <p className={`${compact ? 'mt-auto pt-2.5' : 'mt-auto pt-3'} text-sm text-white/62`}>{helper}</p> : null}
+      {helper ? <p className={`${compact ? 'mt-auto pt-2.5' : 'mt-auto pt-3'} text-sm text-slate-600`}>{helper}</p> : null}
     </div>
   );
 
@@ -171,7 +171,7 @@ export function HealthBadge({ grade = 'C', score }) {
       )}`}
     >
       <span>{formatBranchHealthGrade(grade)}</span>
-      {score !== undefined ? <span className="text-white/65">{formatAnalyticsNumber(score)}</span> : null}
+      {score !== undefined ? <span className="text-slate-500">{formatAnalyticsNumber(score)}</span> : null}
     </span>
   );
 }
@@ -187,7 +187,7 @@ export function FilterTabs({ tabs, value, onChange }) {
           className={`rounded-full border px-4 py-2 text-sm font-medium transition ${
             value === tab.value
               ? 'border-accent bg-accent/15 text-accent'
-              : 'border-white/10 bg-white/[0.03] text-white/62 hover:text-white'
+              : 'border-[#e8e1d3] bg-white text-slate-700 hover:border-accent/35 hover:text-slate-950'
           }`}
         >
           {tab.label}
@@ -200,8 +200,8 @@ export function FilterTabs({ tabs, value, onChange }) {
 export function ChartPanel({ title, subtitle, children, className = '' }) {
   return (
     <Card className={className}>
-      <h3 className="text-lg font-semibold text-white">{title}</h3>
-      {subtitle ? <p className="mt-2 text-sm text-white/58">{subtitle}</p> : null}
+      <h3 className="text-lg font-semibold text-slate-950">{title}</h3>
+      {subtitle ? <p className="mt-2 text-sm text-slate-600">{subtitle}</p> : null}
       <div className="mt-5">{children}</div>
     </Card>
   );
@@ -216,18 +216,18 @@ export function InsightCard({ insight, onRead, onAction, readLabel = 'Mark as Re
     <div className={`rounded-[22px] border-l-4 border px-4 py-4 ${severity.border} ${severity.bg}`}>
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <div className="flex items-center gap-2 text-xs uppercase tracking-[0.2em] text-white/55">
+          <div className={`flex items-center gap-2 text-xs uppercase tracking-[0.2em] ${severity.text}`}>
             <span>{severity.icon}</span>
             <span>{toTitleCase(insight?.type || 'insight')}</span>
           </div>
-          <h3 className="mt-2 text-lg font-semibold text-white">{insight?.title || 'Untitled insight'}</h3>
-          <p className="mt-2 text-sm leading-6 text-white/72">
+          <h3 className="mt-2 text-lg font-semibold text-slate-950">{insight?.title || 'Untitled insight'}</h3>
+          <p className="mt-2 text-sm leading-6 text-slate-700">
             {expanded ? message : `${message.slice(0, 120)}${message.length > 120 ? '...' : ''}`}
           </p>
         </div>
         <button
           type="button"
-          className="shrink-0 text-white/55 transition hover:text-white"
+          className="shrink-0 text-slate-400 transition hover:text-slate-700"
           onClick={() => setExpanded((current) => !current)}
         >
           {expanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
@@ -235,9 +235,9 @@ export function InsightCard({ insight, onRead, onAction, readLabel = 'Mark as Re
       </div>
 
       {expanded && insight?.recommendations?.length ? (
-        <div className="mt-4 space-y-2 rounded-2xl border border-white/10 bg-[#09101c] p-3">
+        <div className="mt-4 space-y-2 rounded-2xl border border-[#e8e1d3] bg-white p-3">
           {insight.recommendations.map((item, index) => (
-            <p key={`${item}-${index}`} className="text-sm text-white/70">
+            <p key={`${item}-${index}`} className="text-sm text-slate-700">
               {index + 1}. {item}
             </p>
           ))}
@@ -245,10 +245,10 @@ export function InsightCard({ insight, onRead, onAction, readLabel = 'Mark as Re
       ) : null}
 
       <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
-        <p className="text-xs text-white/45">{formatTimeAgo(insight?.createdAt)}</p>
+        <p className="text-xs text-slate-500">{formatTimeAgo(insight?.createdAt)}</p>
         <div className="flex flex-wrap gap-2">
           {onRead ? (
-            <Button variant="ghost" className="text-xs" onClick={() => onRead(insight)}>
+            <Button variant="subtle" className="text-xs" onClick={() => onRead(insight)}>
               {readLabel}
             </Button>
           ) : null}
@@ -335,7 +335,7 @@ export function RefreshPill({ label, onClick }) {
     <button
       type="button"
       onClick={onClick}
-      className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.03] px-3 py-2 text-xs text-white/65 transition hover:text-white"
+      className="inline-flex items-center gap-2 rounded-full border border-[#e8e1d3] bg-white px-3 py-2 text-xs text-slate-600 transition hover:text-slate-950"
     >
       <RefreshCcw className="h-3.5 w-3.5" />
       <span>{label}</span>

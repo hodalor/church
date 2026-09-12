@@ -386,13 +386,13 @@ export default function MembersListPage() {
 
   return (
     <Shell>
-      <div className="space-y-6">
+      <div className="space-y-5">
         <PageHeader
           title="Member Directory"
           subtitle={
             isSuperAdmin
-              ? 'Select a tenant church and manage its members from the master console.'
-              : 'Search, review, and manage members from the central church workspace.'
+              ? 'Select a tenant, filter once, and work from one clean member table.'
+              : 'Search, filter, and manage members from one simple directory view.'
           }
           action={
             <div className="flex flex-wrap gap-3">
@@ -436,110 +436,120 @@ export default function MembersListPage() {
           }
         />
 
-        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-          {[
-            {
-              label: 'Total Members',
-              value: stats.total ?? rows.length,
-              helper: 'Across the selected workspace',
-            },
-            {
-              label: 'Active Members',
-              value: stats.active ?? summary.active ?? 0,
-              helper: 'Healthy ongoing participation',
-            },
-            {
-              label: 'Inactive Members',
-              value: stats.inactive ?? summary.inactive ?? 0,
-              helper: 'Requires re-engagement follow-up',
-            },
-            {
-              label: 'New Members',
-              value: summary.new ?? stats.byHealthStatus?.new ?? 0,
-              helper: 'Recently added profiles',
-            },
-          ].map((item) => (
-            <Card key={item.label} className="min-h-[110px] p-4">
-              <p className="text-[11px] uppercase tracking-[0.22em] text-slate-500">{item.label}</p>
-              <p className="mt-3 font-serif text-4xl font-semibold leading-none text-slate-900">{item.value}</p>
-              <p className="mt-2 text-xs text-slate-500">{item.helper}</p>
-            </Card>
-          ))}
-        </div>
+        <Card className="overflow-hidden p-0">
+          <div className="grid gap-px bg-[#e8e1d3] md:grid-cols-2 xl:grid-cols-4">
+            {[
+              {
+                label: 'Total Members',
+                value: stats.total ?? rows.length,
+                helper: 'All profiles',
+              },
+              {
+                label: 'Active Members',
+                value: stats.active ?? summary.active ?? 0,
+                helper: 'Steady engagement',
+              },
+              {
+                label: 'Inactive Members',
+                value: stats.inactive ?? summary.inactive ?? 0,
+                helper: 'Needs follow-up',
+              },
+              {
+                label: 'New Members',
+                value: summary.new ?? stats.byHealthStatus?.new ?? 0,
+                helper: 'Recently added',
+              },
+            ].map((item) => (
+              <div key={item.label} className="bg-white px-4 py-4">
+                <p className="text-[11px] uppercase tracking-[0.22em] text-slate-500">{item.label}</p>
+                <p className="mt-2 text-3xl font-semibold tracking-tight text-slate-950">{item.value}</p>
+                <p className="mt-1 text-xs text-slate-500">{item.helper}</p>
+              </div>
+            ))}
+          </div>
+        </Card>
 
         <Card className="space-y-5">
-          {isSuperAdmin ? (
-            <div className="grid gap-4 lg:grid-cols-[320px_1fr]">
-              <label className="block space-y-2">
-                <span className="text-sm font-medium text-slate-700">Church Tenant</span>
-                <select
-                  value={selectedTenantId}
+          <div className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
+            <div className="grid flex-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+              {isSuperAdmin ? (
+                <label className="block space-y-2">
+                  <span className="text-sm font-medium text-slate-700">Church Tenant</span>
+                  <select
+                    value={selectedTenantId}
+                    onChange={(event) => {
+                      setSelectedTenantId(event.target.value);
+                      setPage(1);
+                    }}
+                    className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none focus:border-accent"
+                  >
+                    <option value="">Select a church</option>
+                    {(tenantsQuery.data?.tenants || []).map((tenant) => (
+                      <option key={tenant.tenantId} value={tenant.tenantId}>
+                        {tenant.churchName} ({tenant.tenantId})
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              ) : null}
+
+              <div className={isSuperAdmin ? '' : 'md:col-span-2 xl:col-span-2'}>
+                <SearchInput
+                  value={search}
                   onChange={(event) => {
-                    setSelectedTenantId(event.target.value);
+                    setPage(1);
+                    setSearch(event.target.value);
+                  }}
+                  placeholder="Search by member name, phone, email, or member ID"
+                />
+              </div>
+
+              <label className="block space-y-2">
+                <span className="text-sm font-medium text-slate-700">Status</span>
+                <select
+                  value={membershipStatus}
+                  onChange={(event) => {
+                    setMembershipStatus(event.target.value);
                     setPage(1);
                   }}
                   className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none focus:border-accent"
                 >
-                  <option value="">Select a church</option>
-                  {(tenantsQuery.data?.tenants || []).map((tenant) => (
-                    <option key={tenant.tenantId} value={tenant.tenantId}>
-                      {tenant.churchName} ({tenant.tenantId})
+                  {membershipStatuses.map((option) => (
+                    <option key={option.value || 'all'} value={option.value}>
+                      {option.label}
                     </option>
                   ))}
                 </select>
               </label>
-              <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600">
-                {selectedTenantId
-                  ? `Showing members for tenant "${selectedTenantId}".`
-                  : 'Choose a tenant to load member records.'}
-              </div>
             </div>
-          ) : null}
 
-          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-            <div className="w-full max-w-xl">
-              <SearchInput
-                value={search}
-                onChange={(event) => {
-                  setPage(1);
-                  setSearch(event.target.value);
-                }}
-                placeholder="Search by member name, phone, email, or member ID"
-              />
-            </div>
-            <div className="flex flex-wrap gap-2">
-              {membershipStatuses.map((option) => (
-                <button
-                  key={option.value || 'all'}
-                  type="button"
-                  onClick={() => {
-                    setMembershipStatus(option.value);
-                    setPage(1);
-                  }}
-                  className={`rounded-full px-4 py-2 text-sm font-semibold transition ${
-                    membershipStatus === option.value
-                      ? 'bg-accent text-primary'
-                      : 'border border-slate-300 bg-white text-slate-700 hover:border-accent/35 hover:bg-slate-50 hover:text-slate-900'
-                  }`}
-                >
-                  {option.label}
-                </button>
-              ))}
+            <div className="rounded-2xl border border-[#ebe4d6] bg-[#faf8f2] px-4 py-3 text-sm text-slate-600 xl:max-w-sm">
+              {isSuperAdmin
+                ? selectedTenantId
+                  ? `Showing member records for tenant "${selectedTenantId}".`
+                  : 'Choose a tenant to load member records.'
+                : 'Use the filters above to narrow the list before opening a profile.'}
             </div>
           </div>
 
-          <DataTable
-            columns={columns}
-            data={rows}
-            tone="light"
-            emptyMessage={
-              isSuperAdmin && !selectedTenantId
-                ? 'Select a tenant to view members.'
-                : membersQuery.isLoading
-                  ? 'Loading members...'
-                  : 'No members found yet.'
-            }
-          />
+          <div className="rounded-2xl border border-[#ebe4d6] bg-[#faf8f2] px-4 py-3 text-xs uppercase tracking-[0.18em] text-slate-500">
+            Member records
+          </div>
+
+          <div className="w-full">
+            <DataTable
+              columns={columns}
+              data={rows}
+              tone="light"
+              emptyMessage={
+                isSuperAdmin && !selectedTenantId
+                  ? 'Select a tenant to view members.'
+                  : membersQuery.isLoading
+                    ? 'Loading members...'
+                    : 'No members found yet.'
+              }
+            />
+          </div>
 
           <Pagination
             currentPage={membersQuery.data?.page || page}

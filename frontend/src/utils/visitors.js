@@ -12,43 +12,43 @@ export const VISITOR_STAGE_ORDER = [
 export const VISITOR_STAGE_META = {
   new_visitor: {
     label: 'New Visitor',
-    badgeClassName: 'bg-slate-400/15 text-slate-200 border border-slate-300/20',
-    columnClassName: 'bg-slate-300/6 border-slate-300/14',
+    badgeClassName: 'bg-slate-100 text-slate-700 border border-slate-200',
+    columnClassName: 'bg-slate-50 border-slate-200',
   },
   contacted: {
     label: 'Contacted',
-    badgeClassName: 'bg-sky-500/15 text-sky-200 border border-sky-400/20',
-    columnClassName: 'bg-sky-500/6 border-sky-400/14',
+    badgeClassName: 'bg-sky-50 text-sky-700 border border-sky-200',
+    columnClassName: 'bg-sky-50/70 border-sky-200',
   },
   second_visit: {
     label: 'Second Visit',
-    badgeClassName: 'bg-teal-500/15 text-teal-200 border border-teal-400/20',
-    columnClassName: 'bg-teal-500/6 border-teal-400/14',
+    badgeClassName: 'bg-teal-50 text-teal-700 border border-teal-200',
+    columnClassName: 'bg-teal-50/70 border-teal-200',
   },
   connected: {
     label: 'Connected',
-    badgeClassName: 'bg-violet-500/15 text-violet-200 border border-violet-400/20',
-    columnClassName: 'bg-violet-500/6 border-violet-400/14',
+    badgeClassName: 'bg-violet-50 text-violet-700 border border-violet-200',
+    columnClassName: 'bg-violet-50/70 border-violet-200',
   },
   assimilated: {
     label: 'Assimilated',
-    badgeClassName: 'bg-amber-500/15 text-amber-200 border border-amber-400/20',
-    columnClassName: 'bg-amber-500/6 border-amber-400/14',
+    badgeClassName: 'bg-amber-50 text-amber-700 border border-amber-200',
+    columnClassName: 'bg-amber-50/80 border-amber-200',
   },
   converted: {
     label: 'Converted',
-    badgeClassName: 'bg-emerald-500/15 text-emerald-200 border border-emerald-400/20',
-    columnClassName: 'bg-emerald-500/6 border-emerald-400/14',
+    badgeClassName: 'bg-emerald-50 text-emerald-700 border border-emerald-200',
+    columnClassName: 'bg-emerald-50/75 border-emerald-200',
   },
   inactive: {
     label: 'Inactive',
-    badgeClassName: 'bg-orange-500/15 text-orange-200 border border-orange-400/20',
-    columnClassName: 'bg-orange-500/6 border-orange-400/14',
+    badgeClassName: 'bg-orange-50 text-orange-700 border border-orange-200',
+    columnClassName: 'bg-orange-50/75 border-orange-200',
   },
   lost: {
     label: 'Lost',
-    badgeClassName: 'bg-rose-500/15 text-rose-200 border border-rose-400/20',
-    columnClassName: 'bg-rose-500/6 border-rose-400/14',
+    badgeClassName: 'bg-rose-50 text-rose-700 border border-rose-200',
+    columnClassName: 'bg-rose-50/75 border-rose-200',
   },
 };
 

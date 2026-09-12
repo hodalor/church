@@ -54,38 +54,38 @@ const stageOrder = [
 const stageMeta = {
   initial_contact: {
     label: 'Initial Contact',
-    badgeClassName: 'bg-slate-500/15 text-slate-200',
-    columnClassName: 'border-slate-500/20 bg-slate-500/5',
+    badgeClassName: 'bg-slate-100 text-slate-700 border border-slate-200',
+    columnClassName: 'border-slate-200 bg-slate-50',
   },
   interested: {
     label: 'Interested',
-    badgeClassName: 'bg-sky-500/15 text-sky-200',
-    columnClassName: 'border-sky-500/20 bg-sky-500/5',
+    badgeClassName: 'bg-sky-50 text-sky-700 border border-sky-200',
+    columnClassName: 'border-sky-200 bg-sky-50/70',
   },
   studying: {
     label: 'Studying',
-    badgeClassName: 'bg-teal-500/15 text-teal-200',
-    columnClassName: 'border-teal-500/20 bg-teal-500/5',
+    badgeClassName: 'bg-teal-50 text-teal-700 border border-teal-200',
+    columnClassName: 'border-teal-200 bg-teal-50/70',
   },
   advanced_study: {
     label: 'Advanced Study',
-    badgeClassName: 'bg-violet-500/15 text-violet-200',
-    columnClassName: 'border-violet-500/20 bg-violet-500/5',
+    badgeClassName: 'bg-violet-50 text-violet-700 border border-violet-200',
+    columnClassName: 'border-violet-200 bg-violet-50/70',
   },
   baptism_candidate: {
     label: 'Baptism Candidate',
-    badgeClassName: 'bg-amber-400/20 text-amber-100',
-    columnClassName: 'border-amber-400/35 bg-amber-400/10',
+    badgeClassName: 'bg-amber-50 text-amber-700 border border-amber-200',
+    columnClassName: 'border-amber-200 bg-amber-50/80',
   },
   baptised: {
     label: 'Baptised',
-    badgeClassName: 'bg-emerald-500/15 text-emerald-200',
-    columnClassName: 'border-emerald-500/30 bg-emerald-500/8',
+    badgeClassName: 'bg-emerald-50 text-emerald-700 border border-emerald-200',
+    columnClassName: 'border-emerald-200 bg-emerald-50/75',
   },
   member: {
     label: 'Member',
-    badgeClassName: 'bg-emerald-700/25 text-emerald-100',
-    columnClassName: 'border-emerald-700/30 bg-emerald-700/10',
+    badgeClassName: 'bg-emerald-100 text-emerald-800 border border-emerald-300',
+    columnClassName: 'border-emerald-300 bg-emerald-50/80',
   },
 };
 
@@ -149,11 +149,11 @@ const formatLabel = (value) =>
 const getStage = (stage) =>
   stageMeta[stage] || {
     label: formatLabel(stage),
-    badgeClassName: 'bg-white/10 text-white/75',
-    columnClassName: 'border-white/10 bg-white/5',
+    badgeClassName: 'bg-slate-100 text-slate-700 border border-slate-200',
+    columnClassName: 'border-slate-200 bg-slate-50',
   };
 
-function Badge({ children, className = 'bg-white/10 text-white/75' }) {
+function Badge({ children, className = 'bg-slate-100 text-slate-700 border border-slate-200' }) {
   return (
     <span className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] ${className}`}>
       {children}
@@ -1386,10 +1386,10 @@ export function CBSPipelinePage() {
                     >
                       <div className="mb-4 flex items-center justify-between gap-3">
                         <div>
-                          <p className="font-semibold text-white">
+                          <p className="font-semibold text-slate-950">
                             {column.stage === 'baptised' ? '🎉 ' : ''}{column.label}
                           </p>
-                          <p className="text-xs text-white/45">{column.items.length} prospects</p>
+                          <p className="text-xs text-slate-500">{column.items.length} prospects</p>
                         </div>
                         <Badge className={meta.badgeClassName}>{column.items.length}</Badge>
                       </div>
